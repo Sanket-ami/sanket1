@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Container-fluid starts-->
+<div class="container-fluid">
+    <div class="card-body">
+        <div class="row shopping-wizard">
+          <div class="col-12"> 
+            <div class="row shipping-form g-5">
+              <div class="col-xl-8 shipping-border">
+                <div class="nav nav-pills horizontal-options shipping-options" id="cart-options-tab" role="tablist" aria-orientation="vertical"><a class="nav-link b-r-0 active" id="bill-wizard-tab" data-bs-toggle="pill" href="#bill-wizard" role="tab" aria-controls="bill-wizard" aria-selected="true"> 
+                    <div class="cart-options">
+                      <div class="stroke-icon-wizard"><i class="fa fa-comments-o"></i></div>
+                      <div class="cart-options-content"> 
+                        <h4>Campaign</h4>
+                      </div>
+                    </div></a><a class="nav-link b-r-0" id="ship-wizard-tab" data-bs-toggle="pill" href="#ship-wizard" role="tab" aria-controls="ship-wizard" aria-selected="false"> 
+                    <div class="cart-options">
+                      <div class="stroke-icon-wizard"><i class="fa fa-user"></i></div>
+                      <div class="cart-options-content"> 
+                        <h4>Agent</h4>
+                      </div>
+                    </div></a><a class="nav-link b-r-0" id="payment-wizard-tab" data-bs-toggle="pill" href="#payment-wizard" role="tab" aria-controls="payment-wizard" aria-selected="false"> 
+                    <div class="cart-options">
+                      <div class="stroke-icon-wizard"><i class="fa fa-phone"></i></div>
+                      <div class="cart-options-content"> 
+                        <h4>Contacts</h4>
+                      </div>
+                    </div></a><a class="nav-link b-r-0" id="finish-wizard-tab" data-bs-toggle="pill" href="#finish-wizard" role="tab" aria-controls="finish-wizard" aria-selected="false"> 
+                    <div class="cart-options">
+                      <div class="stroke-icon-wizard"><i class="fa fa-check-square"></i></div>
+                      <div class="cart-options-content"> 
+                        <h4>Finish</h4>
+                      </div>
+                    </div></a></div>
+                <div class="tab-content dark-field shipping-content" id="cart-options-tabContent">
+                  <div class="tab-pane fade show active" id="bill-wizard" role="tabpanel" aria-labelledby="bill-wizard-tab">
+                    <h3>Campaign Information </h3>
+                    <p class="f-light">Fill up the following information </p>
+                    <form class="row g-3 needs-validation" novalidate="">
+                        <div class="col-sm-6">
+                          <label class="form-label" for="campaignName">Campaign Name<span class="txt-danger">*</span></label>
+                          <input class="form-control" id="campaignName" type="text" placeholder="Enter campaign name" required="">
+                          <div class="valid-feedback">Looks good!</div>
+                        </div>
+                        
+                        <div class="col-sm-6">
+                          <label class="form-label" for="organisationName">Organisation Name<span class="txt-danger">*</span></label>
+                          <input class="form-control" id="organisationName" type="text" placeholder="Enter organisation name" required="">
+                          <div class="valid-feedback">Looks good!</div>
+                        </div>
+                        
+                        <div class="col-sm-6">
+                          <label class="form-label" for="processType">Process Type<span class="txt-danger">*</span></label>
+                          <input class="form-control" id="processType" type="text" placeholder="Enter process type" required="">
+                          <div class="valid-feedback">Looks good!</div>
+                        </div>
+                        
+                        <div class="col-sm-6">
+                          <label class="form-label" for="provider">Provider<span class="txt-danger">*</span></label>
+                          <select class="form-select" id="provider" required="">
+                            {<!-- dynamically populate provider options -->}
+                            <option selected disabled value="">Select Provider</option>
+                            {% for provider in telephony_providers_list %}
+                               <option value="{{ provider.id }}">{{ provider.provider_name }}</option>
+                            {% endfor %}
+                          </select>
+                          <div class="invalid-feedback">Please select a valid provider.</div>
+                        </div>
+
+                        
+                        <div class="col-12">
+                          <div class="form-check">
+                            <input class="form-check-input" id="showTranscript" type="checkbox">
+                            <label class="form-check-label" for="showTranscript">Show Transcript</label>
+                          </div>
+                        </div>
+                        
+                        <div class="col-12">
+                          <div class="form-check">
+                            <input class="form-check-input" id="showRecording" type="checkbox">
+                            <label class="form-check-label" for="showRecording">Show Recording</label>
+                          </div>
+                        </div>
+                      
+                        <div class="col-12">
+                          <div class="form-check">
+                            <input class="form-check-input" id="showNumbers" type="checkbox">
+                            <label class="form-check-label" for="showNumbers">Show Numbers</label>
+                          </div>
+                        </div>
+                      
+                        <div class="col-12 text-end">
+                          <button class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
+                        </div>
+                      </form>
+                  </div>
+                  <div class="tab-pane fade shipping-wizard" id="ship-wizard" role="tabpanel" aria-labelledby="ship-wizard-tab">
+                    <h5 class="f-w-600">Agent Information</h5>
+                    <p class="f-light">Select the agent for the calls</p>
+                    <div class="shipping-title">
+                      <h6 class="mb-2">Available Agents</h6>
+                      <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#exampleModalgetbootstrap" data-whatever="@getbootstrap"> <i class="fa fa-plus-square f-20"></i></button>
+
+                    </div>
+                    <div class="row g-3">
+
+                      <div class="col-xxl-4 col-sm-6"> 
+                        <div class="col-sm-6">
+                            <label class="form-label" for="Agents">Agents<span class="txt-danger">*</span></label>
+                            <select class="form-select" id="Agents" required="">
+                              <option selected="" disabled="" value="">Select Agents</option>
+                              <!-- dynamically populate Agents options -->
+                            </select>
+                            <div class="invalid-feedback">Please select a valid provider.</div>
+                          </div>
+                      </div>
+                    </div>
+                    <h5 class="f-w-600 mt-4 mb-2">Prompts</h5>
+                    <div class="row shipping-method g-3">
+                        <div class="col-12"> 
+                            <label class="form-label" for="exampleFormControlTextarea1">Description</label>
+                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" readonly></textarea>
+                          </div>
+                          
+                     <h5 class="f-w-600 mt-4 mb-2">Voice</h5> 
+                      <div class="col-sm-6">
+                        <div class="card-wrapper border rounded-3 h-100 light-card">
+                          <div class="form-check radio radio-primary">
+                            <input class="form-check-input" id="shipping-choose4" type="radio" name="radio2" value="option1" checked="">
+                            <label class="form-check-label mb-0" for="shipping-choose4">Vocie Name</label>
+                          </div>
+                          <P>Estimated 1-2 days shipping</P>
+                        </div>
+                      </div>  
+
+                      <div class="col-12 text-end">
+                        <button class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="tab-pane fade shipping-wizard" id="payment-wizard" role="tabpanel" aria-labelledby="payment-wizard-tab">
+                    <h3>Contacts Information</h3>
+                    <p class="f-light">Upload a csv file with "phone_number" as a column</p>
+                    <div class="payment-info-wrapper">
+                      <div class="row shipping-method g-3">
+ 
+                        <div class="col-12">
+                          <div class="card-wrapper border rounded-3 pay-info light-card">
+ 
+                            <form class="row g-3 needs-validation" novalidate="">
+                               
+                              <div class="col-12"> 
+                                <label class="form-label" for="formFile3">Upload Contacts</label>
+                                <input class="form-control" id="formFile3" type="file" aria-label="file example" required="">
+                                <div class="invalid-feedback">Invalid form file selected</div>
+                              </div>
+                              <div class="col-12">
+                                <div class="form-check">
+                                  <input class="form-check-input" id="invalidCheck-c" type="checkbox" value="" required="">
+                                  <label class="form-check-label" for="invalidCheck-c">All the above information is correct</label>
+                                  <div class="invalid-feedback">You must agree before submitting.</div>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                        <div class="col-12">
+                          <div class="card-wrapper border rounded-3 light-card">
+                            <div>
+                              <div class="form-check radio radio-primary">
+                                <input class="form-check-input" id="shipping-choose7" type="radio" name="radio3" value="option1">
+                                <label class="form-check-label mb-0 f-w-600" for="shipping-choose7">Cash On Delivery</label>
+                              </div>
+                              <p>After your order is delivered, make a cash payment</p>
+                            </div>
+                            <div> <img src="{% static 'assets/images/forms/delivery.png' %}" alt="delivery"></div>
+                          </div>
+                        </div>
+                        <div class="col-12 text-end">
+                          <button class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tab-pane fade shipping-wizard finish-wizard1" id="finish-wizard" role="tabpanel" aria-labelledby="finish-wizard-tab">
+                    <div class="order-confirm"><img src="{% static 'assets/images/gif/dashboard-8/successful.gif' %}" alt="popper">
+                      <h5>Thank you! Your order is confirmed.</h5>
+                      <p class="mb-0">An email with your order's specifics will be sent to you as order confirmation.</p>
+                      <p class="text-center f-w-600 mt-2">Order ID: <a class="text-decoration-underline" href="javascript:void(0)">GE34598 </a></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-4"> 
+                <div class="shipping-info">
+                  <h4 class="f-w-600">Tools</h4>
+                  <br>
+                  <div class="overflow-auto">
+                    <div class="card-body social-list filter-cards-view">
+                       
+                      <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/3.jpg">
+                        <div class="flex-grow-1"><span class="d-block">Agent Library</span><a href="#">Add or update Agent</a></div>
+                      </div>
+                      <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/10.jpg">
+                        <div class="flex-grow-1"><span class="d-block">Voice Library</span><a href="#">Add or update Voice</a></div>
+                      </div>
+                      <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/11.png">
+                        <div class="flex-grow-1"><span class="d-block">Tools Library</span><a href="#">Add or update Actions</a></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Container-fluid Ends-->
+        </div>
+      </div>
+  </div>
+  <!-- Container-fluid Ends-->
+
+{% endblock %}
+
+{% block scriptcontent %}
+
+{% endblock %}
