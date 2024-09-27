@@ -9,7 +9,9 @@ class Voice(models.Model):
     create_at=models.DateTimeField(auto_now_add=True)
     modified_at=models.DateTimeField(auto_now=True)
     is_delete=models.BooleanField(default=False)
-
+    created_by = models.CharField(max_length=255, null=True,default='SYSTEM')
+    modified_by = models.CharField(max_length=255, null=True,default='SYSTEM')
+    
     class Meta:
         db_table = 'voice'  
 
