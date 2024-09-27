@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+
+{% include 'applications/projects/components/projects.html' %}
+
+{% endblock %}
+
+{% block scriptcontent %}
+
+<script src="{% static 'assets/js/typeahead/handlebars.js' %}"></script>
+<script src="{% static 'assets/js/typeahead/typeahead.bundle.js' %}"></script>
+<script src="{% static 'assets/js/typeahead/typeahead.custom.js' %}"></script>
+<script src="{% static 'assets/js/typeahead-search/handlebars.js' %}"></script>
+<script src="{% static 'assets/js/typeahead-search/typeahead-custom.js' %}"></script>
+
+{% endblock %}

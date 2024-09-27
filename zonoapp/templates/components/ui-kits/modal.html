@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+
+{% include 'components/ui-kits/components/modal.html' %}
+
+{% endblock %}
+
+{% block scriptcontent %}
+
+<script src="{% static 'assets/js/height-equal.js' %}"></script>
+<script src="{% static 'assets/js/popover-custom.js' %}"></script>
+<script src="{% static 'assets/js/tooltip-init.js' %}"></script>
+<script src="{% static 'assets/js/modalpage/validation-modal.js' %}"></script>
+
+{% endblock %}

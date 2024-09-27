@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/vendors/datatables.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/vendors/owlcarousel.css' %}">
+
+{% endblock %}
+
+
+{% block content %}
+
+{% include 'general/dashboard/components/minimal.html' %}
+
+{% endblock %}
+
+{% block scriptcontent %} 
+       
+<script src="{% static 'assets/js/chart/morris-chart/raphael.js' %}"></script>
+<script src="{% static 'assets/js/chart/morris-chart/morris.js' %}"> </script>
+<script src="{% static 'assets/js/chart/morris-chart/prettify.min.js' %}"></script>
+<script src="{% static 'assets/js/chart/apex-chart/apex-chart.js' %}"></script>
+<script src="{% static 'assets/js/chart/apex-chart/stock-prices.js' %}"></script>
+<script src="{% static 'assets/js/chart/apex-chart/moment.min.js' %}"></script>
+<script src="{% static 'assets/js/notify/bootstrap-notify.min.js' %}"></script>
+<script src="{% static 'assets/js/dashboard/default.js' %}"></script>
+<script src="{% static 'assets/js/notify/index.js' %}"></script>
+<script src="{% static 'assets/js/datatable/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'assets/js/datatable/datatables/datatable.custom.js' %}"></script>
+<script src="{% static 'assets/js/datatable/datatables/datatable.custom1.js' %}"></script>
+<script src="{% static 'assets/js/owlcarousel/owl.carousel.js' %}"></script>
+<script src="{% static 'assets/js/owlcarousel/owl-custom.js' %}"></script>
+<script src="{% static 'assets/js/typeahead/handlebars.js' %}"></script>
+<script src="{% static 'assets/js/typeahead/typeahead.bundle.js' %}"></script>
+<script src="{% static 'assets/js/typeahead/typeahead.custom.js' %}"></script>
+<script src="{% static 'assets/js/typeahead-search/handlebars.js' %}"></script>
+<script src="{% static 'assets/js/typeahead-search/typeahead-custom.js' %}"></script>
+<script src="{% static 'assets/js/height-equal.js' %}"></script>
+
+{% endblock %}
+  

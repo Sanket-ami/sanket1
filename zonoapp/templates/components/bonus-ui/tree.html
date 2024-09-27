@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/vendors/tree.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{% include 'components/bonus-ui/components/tree.html' %}
+
+{% endblock %}
+
+{% block scriptcontent %}
+
+<script src="{% static 'assets/js/tree/jstree.min.js' %}"></script>
+<script src="{% static 'assets/js/tree/tree.min.js' %}"></script>
+<script src="{% static 'assets/js/tree/tree.js' %}"></script>
+
+{% endblock %}

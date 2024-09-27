@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/vendors/quill.snow.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{% include 'applications/letter-box/components/letter-box.html' %}
+
+{% endblock %}
+
+{% block scriptcontent %}
+
+<script src="{% static 'assets/js/letter-box/custom-mail-pagination.js' %}"></script>
+<script src="{% static 'assets/js/letter-box/custom-usermail.js' %}"></script>
+<script src="{% static 'assets/js/editors/quill.js' %}"></script>
+<script src="{% static 'assets/js/editors/custom-quill.js' %}"></script>
+<script src="{% static 'assets/js/print.js' %}"></script>
+<script src="{% static 'assets/js/tooltip-init.js' %}"></script>
+
+{% endblock %}

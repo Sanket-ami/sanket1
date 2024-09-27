@@ -1,0 +1,287 @@
+{% load static %}
+{% load sass_tags %}
+
+
+<!-- Page Sub Header Start-->
+<div class="left-header main-sub-header p-0">
+    <div class="left-menu-header">
+      <ul class="header-left"> 
+        <li class="onhover-dropdown"> <span class="f-w-700">General </span>
+          <ul class="onhover-show-div left-dropdown">
+            <li class="flyout-right"><a href="#">Dashboards</a><i class="fa fa-angle-right"></i>
+              <ul>
+                <li> <a href="/index">Default  </a></li>
+                <li> <a href="/dashboard_02">Ecommerce</a></li>
+              </ul>
+            </li>
+            <li class="flyout-right"><a href="#">Widgets</a><i class="fa fa-angle-right"></i>
+              <ul>
+                <li><a href="/general_widget">General</a></li>
+                <li> <a href="/chart_widget">chart</a></li>
+              </ul>
+            </li>
+            <li class="flyout-right"> <a href="#">Page layout</a><i class="fa fa-angle-right"></i>
+              <ul>
+                <li> <a href="/box_layout">Boxed </a></li>
+                <li> <a href="/layout_rtl">RTL</a></li>
+                <li> <a href="/layout_dark">Dark Layout</a></li>
+                <li><a href="/footer_light">Footer Light</a></li>
+                <li><a href="/footer_dark">Footer Dark</a></li>
+                <li><a href="/footer_fixed">Footer Fixed</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li class="onhover-dropdown"><span class="f-w-700">Components</span>
+          <ul class="onhover-show-div left-dropdown">
+            <li class="flyout-right"><a href="#">Ui Kits</a>
+              <ul>
+                <li><a href="/typography">Typography</a></li>
+                <li><a href="/avatars">Avatars</a></li>
+                <li><a href="/helper_classes">helper classes</a></li>
+                <li><a href="/grid">Grid</a></li>
+                <li><a href="/tag-pills">Tag & pills</a></li>
+                <li><a href="/progressbar">Progress</a></li>
+                <li><a href="/modal">Modal</a></li>
+                <li><a href="/alert">Alert</a></li>
+                <li><a href="/popover">Popover</a></li>
+                <li><a href="/tooltip">Tooltip</a></li>
+                <li><a href="/dropdown">Dropdown</a></li>
+                <li><a href="/accordion">Accordion</a></li>
+                <li><a href="/bootstraptab">Tabs</a></li>
+                <li><a href="/lists">Lists</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Bonus Ui</a>
+              <ul>
+                <li><a href="/scrollable/">Scrollable</a></li>
+                <li><a href="/tree/">Tree view</a></li>
+                <li><a href="/toasts/">Toasts</a></li>
+                <li><a href="/rating/">Rating</a></li>
+                <li><a href="/dropzone/">dropzone</a></li>
+                <li><a href="/tour/">Tour</a></li>
+                <li><a href="/sweetalert2/">SweetAlert2</a></li>
+                <li><a href="/animatedmodal/">Animated Modal</a></li>
+                <li><a href="/owlcarousel/">Owl Carousel</a></li>
+                <li><a href="/ribbons/">Ribbons</a></li>
+                <li><a href="/pagination/">Pagination</a></li>
+                <li><a href="/breadcrumb/">Breadcrumb</a></li>
+                <li><a href="/rangeslider/">Range Slider</a></li>
+                <li><a href="/imagecropper/">Image cropper</a></li>
+                <li><a href="/basiccard/">Basic Card</a></li>
+                <li><a href="/creativecard/">Creative Card</a></li>
+                <li><a href="/draggablecard/">Draggable Card</a></li>
+                <li><a href="/timeline/">Timeline </a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Animation</a>
+              <ul>
+                <li><a href="/animate/">Animate</a></li>
+                <li><a href="/scrollreval/">Scroll Reveal</a></li>
+                <li><a href="/AOS/">AOS animation</a></li>
+                <li><a href="/tilt/">Tilt Animation</a></li>
+                <li><a href="/wow/">Wow Animation</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Icons</a>
+              <ul>
+                <li><a href="/flagicon/">Flag icon</a></li>
+                <li><a href="/fontawesome/">Fontawesome Icon</a></li>
+                <li><a href="/icoicon/">Ico Icon</a></li>
+                <li><a href="/themify/">Themify Icon</a></li>
+                <li><a href="/feather/">Feather icon</a></li>
+                <li><a href="/whether/">Whether Icon</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Buttons</a>
+              <ul>
+                <li><a href="/buttons/">Default Style</a></li>
+                <li><a href="/button_group/">Button Group</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Charts</a>
+              <ul>
+                <li><a href="/echarts">Echarts</a></li>
+                <li><a href="/apex">Apex Chart</a></li>
+                <li><a href="/google">Google Chart</a></li>
+                <li><a href="/sparkline">Sparkline chart</a></li>
+                <li><a href="/flot">Flot Chart</a></li>
+                <li><a href="/knob">Knob Chart</a></li>
+                <li><a href="/morris">Morris Chart</a></li>
+                <li><a href="/chartjs">Chatjs Chart</a></li>
+                <li><a href="/chartist">Chartist Chart</a></li>
+                <li><a href="/peity">Peity Chart</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+          </ul>
+        </li>
+        <li class="onhover-dropdown"> <span class="f-w-700">Applications</span>
+          <ul class="onhover-show-div left-dropdown">
+            <li class="flyout-right"><a href="#">Project</a>
+              <ul>
+                <li><a href="/projects">Project List</a></li>
+                <li><a href="/projectcreate">Create new</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li><a href="/file_manager">File manager</a></li>
+            <li><a href="/kanban">kanban Board </a></li>
+            <li class="flyout-right"> <a href="#">Ecommerce </a>
+              <ul>
+                <li><a href="/add_products">Add Product</a></li>
+                <li><a href="/product">Product</a></li>
+                <li><a href="/product_page">Product page</a></li>
+                <li><a href="/list_products">Product list</a></li>
+                <li><a href="/payment_details">Payment Details</a></li>
+                <li><a href="/order_history">Order History</a></li>
+                <li class="flyout-right"><a class="submenu-title" href="#">Invoices</a>
+                  <ul>
+                    <li><a href="/invoice_1">Invoice-1</a></li>
+                    <li><a href="/invoice_2">Invoice-2</a></li>
+                    <li><a href="/invoice_3">Invoice-3</a></li>
+                    <li><a href="/invoice_4">Invoice-4</a></li>
+                    <li><a href="/invoice_5">Invoice-5</a></li>
+                    <li><a href="/invoice_6">Invoice-6</a></li>
+                  </ul>
+                </li>
+                <li><a href="/cart">Cart</a></li>
+                <li><a href="/list_wish">Wishlist</a></li>
+                <li><a href="/checkout">Checkout</a></li>
+                <li><a href="/pricing">Pricing </a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Email</a>
+              <ul>
+                <li><a href="/letter_box">Letter Box</a></li>
+              </ul><i class="fa fa-angle-right"> </i>
+            </li>
+            <li class="flyout-right"> <a href="#">Chat</a>
+              <ul>
+                <li><a href="/private_chat">Private Chat</a></li>
+                <li><a href="/group_chat">Group Chat</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">User</a>
+              <ul>
+                <li><a href="/user_profile">Users Profile</a></li>
+                <li><a href="/edit_profile">Users Edit</a></li>
+                <li><a href="/user_cards">Users Cards</a></li>
+              </ul><i class="fa fa-angle-right"> </i>
+            </li>
+            <li><a href="/bookmark">Bookmarks</a></li>
+            <li><a href="/contacts">Contacts</a></li>
+            <li><a href="/task">Task</a></li>
+            <li><a href="/calendar_basic">Calendar</a></li>
+            <li><a href="/social_app">Social-app</a></li>
+            <li><a href="/to_do">To-Do</a></li>
+            <li><a href="/search">Search Result</a></li>
+          </ul>
+        </li>
+        <li class="onhover-dropdown"><span class="f-w-700">Pages</span>
+          <ul class="onhover-show-div left-dropdown">
+            <li><a href="/sample_page">Sample page</a></li>
+            <li class="flyout-right"><a href="#">Others </a><i class="fa fa-angle-right"></i>
+              <ul>
+                <li class="flyout-right"><a href="#">Error Page</a>
+                  <ul>
+                    <li><a href="/error_400">Error 400</a></li>
+                    <li><a href="/error_401">Error 401</a></li>
+                    <li><a href="/error_403">Error 403</a></li>
+                    <li><a href="/error_404">Error 404</a></li>
+                    <li><a href="/error_500">Error 500</a></li>
+                    <li><a href="/error_503">Error 503</a></li>
+                  </ul><i class="fa fa-angle-right"> </i>
+                </li>
+                <li class="flyout-right"> <a href="#">Authentication</a>
+                  <ul>
+                    <li><a href="/login_simple" target="_blank">Login Simple</a></li>
+                    <li><a href="/login_one" target="_blank">Login with bg image</a></li>
+                    <li><a href="/login_two" target="_blank">Login with image two                      </a></li>
+                    <li><a href="/login_bs_validation" target="_blank">Login With validation</a></li>
+                    <li><a href="/login_tt_validation" target="_blank">Login with tooltip</a></li>
+                    <li><a href="/login_validation" target="_blank">Login with sweetalert</a></li>
+                    <li><a href="/sign_up/" target="_blank">Register Simple</a></li>
+                    <li><a href="/sign_one" target="_blank">Register with Bg Image                              </a></li>
+                    <li><a href="/sign_two" target="_blank">Register with image two</a></li>
+                    <li><a href="/sign_wizard" target="_blank">Register wizard</a></li>
+                    <li><a href="/unlock">Unlock User</a></li>
+                    <li><a href="/forget_password">Forget Password</a></li>
+                    <li><a href="/reset_password">Reset Password</a></li>
+                    <li><a href="/maintenance">Maintenance</a></li>
+                  </ul>
+                </li>
+                <li class="flyout-right"> <a href="#">Coming Soon</a>
+                  <ul> 
+                    <li><a href="/comingsoon">Coming Simple</a></li>
+                    <li><a href="/comingsoon_video">Coming with Bg video</a></li>
+                    <li><a href="/comingsoon_img">Coming with Bg Image</a></li>
+                  </ul><i class="fa fa-angle-right"> </i>
+                </li>
+                <li class="flyout-right"><a href="#">Email templates</a>
+                  <ul>
+                    <li><a href="/basic_temp">Basic Email</a></li>
+                    <li><a href="/email_header">Basic With Header</a></li>
+                    <li><a href="/template_email">Ecomerce Template</a></li>
+                    <li><a href="/template_email_2">Email Template 2</a></li>
+                    <li><a href="/ecommerce_temp">Ecommerce Email</a></li>
+                    <li><a href="/email_order">Order Success</a></li>
+                  </ul><i class="fa fa-angle-right"></i>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li class="onhover-dropdown p-0"><span class="f-w-700">Miscellaneous</span>
+          <ul class="onhover-show-div left-dropdown">
+            <li class="flyout-right"><a href="#">Gallery</a>
+              <ul> 
+                <li><a href="/gallery_grid">Gallery Grid</a></li>
+                <li><a href="/gallery_description">Gallery Grid Desc</a></li>
+                <li><a href="/masonry_gallery">Masonry Gallery</a></li>
+                <li><a href="/masonry_disc">Masonry with Desc</a></li>
+                <li><a href="/hover">Hover Effects</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Blog</a>
+              <ul>
+                <li><a href="/blog_details">Blog Details</a></li>
+                <li><a href="/blog_single">Blog Single</a></li>
+                <li><a href="/add_post">Add Post</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li><a href="/FAQ">FAQ</a></li>
+            <li class="flyout-right"><a href="#">Job Search</a>
+              <ul>
+                <li><a href="/job_cards">Cards view</a></li>
+                <li><a href="/job_list">List View</a></li>
+                <li><a href="/job_details">Job Details</a></li>
+                <li><a href="/apply">Apply</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Job Search</a>
+              <ul> 
+                <li><a href="/course_list">Learning List</a></li>
+                <li><a href="/course_detailed">Detailed Course</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Maps</a>
+              <ul>
+                <li><a href="/data_map">Maps JS</a></li>
+                <li><a href="/vector_maps">Vector Maps</a></li>
+              </ul><i class="fa fa-angle-right"></i>
+            </li>
+            <li class="flyout-right"><a href="#">Editors </a>
+              <ul>
+                <li><a href="/summernote">Summer Note</a></li>
+                <li><a href="/ckeditor">CK editor</a></li>
+                <li><a href="/simple_mde">MDE editor</a></li>
+                <li><a href="/ace_code">ACE code editor </a></li>
+              </ul><i class="fa fa-angle-right"> </i>
+            </li>
+            <li><a href="/knowledgebase">Knowledgebase </a></li>
+            <li> <a href="/support_ticket">Support Ticket</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+</div>
+<!-- Page Sub Header end -->

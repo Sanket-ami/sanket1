@@ -1,0 +1,695 @@
+{% load static %}
+
+<!-- Container-fluid starts-->
+<div class="container-fluid ecommerce-dashboard">
+    <div class="row">
+      <div class="col-xl-6 proorder-xl-1">
+        <div class="card">
+          <div class="card-body selling-card"> 
+            <div class="row">
+              <div class="col-md-4">
+                <div class="sale-card"> 
+                  <div class="sale-date">
+                    <h4>Total Sale</h4><a href="/order_history"><span class="txt-primary f-w-700">(See all sales)</span></a>
+                  </div><span class="f-w-700 f-14 pb-4">Jan 1,2024 - Jun 30,2022</span>
+                  <div class="sale-data">
+                    <ul>
+                      <li>
+                        <h4>$654.85K</h4>
+                        <div class="sale-value"> 
+                          <svg>
+                            <use href="{% static 'assets/svg/icon-sprite.svg' %}#drop-menu"> </use>
+                          </svg>
+                          <div class="sales-value"><span class="txt-danger">95%</span><span>6 month before </span></div>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div class="latest-chart" id="latestSales-chart"> </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-6 proorder-xl-2">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4>Summary</h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown12" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg>
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown12"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly </a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body pt-0 summary-card"><span class="f-w-700 f-14">Jan 1,2024 - Jun 30,2022</span>
+            <div class="summary-progressbar">
+              <ul>
+                <li>
+                  <div>
+                    <h4>$654.85K</h4><span>Summary</span>
+                  </div>
+                  <div class="progress-showcase">
+                    <div class="progress sm-progress-bar progress-border-primary">
+                      <div class="progress-bar bg-primary" role="progressbar" style="width: 30%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"> </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div> 
+                    <h4>$34.5K</h4><span>Orders </span>
+                  </div>
+                  <div>
+                    <div class="progress sm-progress-bar progress-border-secondary">
+                      <div class="progress-bar bg-secondary" role="progressbar" style="width: 45%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"> </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <h4>$3.86K</h4><span>Avg. Order Value </span>
+                  </div>
+                  <div>
+                    <div class="progress-showcase"> 
+                      <div class="progress sm-progress-bar progress-border-secondary">
+                        <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div> 
+                    <h4>$3.86K</h4><span>Avg. Order Value </span>
+                  </div>
+                  <div>
+                    <div class="progress sm-progress-bar progress-border-secondary">
+                      <div class="progress-bar bg-secondary" role="progressbar" style="width: 65%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"> </div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-7 proorder-xl-3 box-col-6">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4>Recent Orders </h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown4" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg>
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown4"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly</a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive custom-scrollbar">
+              <table class="last-orders-table table" id="last-orders">
+                <thead>
+                  <tr> 
+                    <th class="checkbox-checked">
+                      <div class="form-check"> 
+                        <input class="form-check-input" id="flexCheckDefault" type="checkbox" value="">
+                      </div>
+                    </th>
+                    <th>Product Name</th>
+                    <th>Date & Time </th>
+                    <th>Customer</th>
+                    <th>Price </th>
+                    <th>Status</th>
+                    <th>Action </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="checkbox-checked">
+                      <div class="form-check">
+                        <input class="form-check-input" id="flexCheckDefaults" type="checkbox" value="">
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-data">
+                        <div><img src="{% static 'assets/images/product/16.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Camera Lens</h4></a><span class="f-w-600"> Canon Camera</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>14 Mar 2024</h4></a><span class="f-w-600"> 10:00 AM</span></div>
+                    </td>
+                    <td>Brooklyn Simmons</td>
+                    <td>$ 247.92</td>
+                    <td class="txt-success">Succeed</td>
+                    <td>
+                      <div class="dropdown icon-dropdown">
+                        <button class="btn dropdown-toggle" id="userdropdownes5" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <div class="drop-menu"><i class="icon-more-alt"></i></div>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdownes5"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="checkbox-checked">
+                      <div class="form-check">
+                        <input class="form-check-input" id="flexCheckDefault1" type="checkbox" value="">
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-data">
+                        <div><img src="{% static 'assets/images/product/17.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Black Dress</h4></a><span class="f-w-600">Shasmi</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>12 Mar 2024</h4></a><span class="f-w-600"> 05:00 AM</span></div>
+                    </td>
+                    <td>Savannah Nguyen</td>
+                    <td>$ 695.20</td>
+                    <td class="txt-warning">Waiting</td>
+                    <td>
+                      <div class="dropdown icon-dropdown">
+                        <button class="btn dropdown-toggle" id="userdropdownes6" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <div class="drop-menu"><i class="icon-more-alt"></i></div>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdownes6"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="checkbox-checked">
+                      <div class="form-check">
+                        <input class="form-check-input" id="flexCheckDefault2" type="checkbox" value="">
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-data">
+                        <div><img src="{% static 'assets/images/product/19.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Argan Oil</h4></a><span class="f-w-600">Moroccan</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>10 Mar 2024</h4></a><span class="f-w-600"> 12:30 AM</span></div>
+                    </td>
+                    <td>Ronald Richards</td>
+                    <td>$ 189.30</td>
+                    <td class="txt-success">Succeed</td>
+                    <td>
+                      <div class="dropdown icon-dropdown">
+                        <button class="btn dropdown-toggle" id="userdropdownes7" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <div class="drop-menu"><i class="icon-more-alt"></i></div>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdownes7"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="checkbox-checked">
+                      <div class="form-check">
+                        <input class="form-check-input" id="flexCheckDefault3" type="checkbox" value="">
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-data">
+                        <div><img src="{% static 'assets/images/product/18.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Parfum</h4></a><span class="f-w-600">Bella Vita </span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>01 Mar 2024</h4></a><span class="f-w-600"> 09:20 AM</span></div>
+                    </td>
+                    <td>Marvin McKinney</td>
+                    <td>$ 249.21 </td>
+                    <td class="txt-danger">Canceled </td>
+                    <td>
+                      <div class="dropdown icon-dropdown">
+                        <button class="btn dropdown-toggle" id="userdropdownes8" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <div class="drop-menu"> <i class="icon-more-alt"></i></div>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdownes8"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-5 proorder-xl-4 col-lg-6 box-col-6">
+        <div class="card">
+          <div class="card-header custom-border-bottom">
+            <div class="header-top">
+              <h4>Customer Growth</h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg>
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly </a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body"> 
+            <div class="row"> 
+              <div class="col-xxl-8">
+                <div class="map-world"> 
+                  <div class="map">
+                    <div class="jvector-map-height" id="world-map2"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xxl-4 d-xxl-block d-none">
+                <ul class="customer-growth">
+                  <li>
+                    <div class="customer-details">
+                      <div> <img src="{% static 'assets/images/dashboard-2/flags/1.png' %}" alt="flag"></div>
+                      <div>
+                        <h6 class="f-w-600 f-14">United States</h6><span class="f-w-600">70%</span>
+                      </div>
+                    </div>
+                    <div class="progress progress-striped-primary b-r-2">
+                      <div class="progress-bar" role="progressbar" style="width: 70%" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="customer-details">
+                      <div><img src="{% static 'assets/images/dashboard-2/flags/2.png' %}" alt="flag"></div>
+                      <div>
+                        <h6 class="f-w-600 f-14">Sweden </h6><span class="f-w-600">50% </span>
+                      </div>
+                    </div>
+                    <div class="progress progress-striped-primary b-r-2">
+                      <div class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="customer-details">
+                      <div><img src="{% static 'assets/images/dashboard-2/flags/3.png' %}" alt="flag"></div>
+                      <div>
+                        <h6 class="f-w-600 f-14">Australia</h6><span class="f-w-600">20%</span>
+                      </div>
+                    </div>
+                    <div class="progress progress-striped-primary b-r-2">
+                      <div class="progress-bar" role="progressbar" style="width: 20%" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="customer-details">
+                      <div><img src="{% static 'assets/images/dashboard-2/flags/4.png' %}" alt="flag"></div>
+                      <div>
+                        <h6 class="f-w-600 f-14">France </h6><span class="f-w-600">80% </span>
+                      </div>
+                    </div>
+                    <div class="progress progress-striped-primary b-r-2">
+                      <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xxl-4 col-lg-6 proorder-xl-5 box-col-6">
+        <div class="card">
+          <div class="card-header">
+            <div class="header-top"> 
+              <h4>Top Transaction</h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown21" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg>
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown21"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly </a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive custom-scrollbar">
+              <table class="last-orders-table table">
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Date</th>
+                    <th>Payment</th>
+                    <th>Purchase</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="user-data">
+                        <div><img src="{% static 'assets/images/product/5.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Leather Crop</h4></a><span> #854692</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>30 Mar 2024</h4></a></div>
+                    </td>
+                    <td>Credit Card</td>
+                    <td>$3,658</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-data">
+                        <div><img src="{% static 'assets/images/product/9.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Female Bag</h4></a><span>#315984</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>25 Mar 2024</h4></a></div>
+                    </td>
+                    <td>Bank Transfer</td>
+                    <td>$6,954</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-data">
+                        <div><img src="{% static 'assets/images/product/6.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Shoes leather</h4></a><span>#315984 </span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>20 Mar 2024</h4></a></div>
+                    </td>
+                    <td>Credit Card</td>
+                    <td>$1,945</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-data">
+                        <div> <img src="{% static 'assets/images/product/7.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Headphone</h4></a><span>#874596</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>14 Mar 2024 </h4></a></div>
+                    </td>
+                    <td>Bank Transfer</td>
+                    <td>$3,942 </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xxl-4 col-md-6 proorder-xl-6 box-col-6">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4>Weekly User Activity</h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown23" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg>
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown23"><a class="dropdown-item" href="#">Weekly </a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body pt-0">
+            <div class="user-activity" id="UserActivity"> </div>
+            <div class="user-activity">
+              <ul>
+                <li>
+                  <div class="applications-menu">
+                    <div class="rounded-btn-primary"></div>
+                    <h3>Online Applications</h3>
+                  </div>
+                  <h4>55%</h4>
+                </li>
+                <li>
+                  <div class="applications-menu">
+                    <div class="rounded-btn-secondary"></div>
+                    <h3>Offline Applications</h3>
+                  </div>
+                  <h4>45%</h4>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xxl-4 col-md-6 proorder-xl-7 box-col-12">
+        <div class="card">
+          <div class="card-header"> 
+            <div class="header-top">
+              <h4>Monthly Selling Product (Mar 2024) </h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown34" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg> 
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown34"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly</a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive custom-scrollbar">
+              <table class="table monthly-selling">
+                <thead> 
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Orders </th>
+                    <th>Status </th>
+                    <th class="text-end">Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td> 
+                      <div class="user-data">
+                        <div class="product-image"><img src="{% static 'assets/images/dashboard-2/product/20.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Iphone</h4></a><span>#654892</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>652</h4></a></div>
+                    </td>
+                    <td class="txt-primary">In Stock</td>
+                    <td>$20.00</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-data">
+                        <div class="product-image"><img src="{% static 'assets/images/dashboard-2/product/21.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Woolen hat</h4></a><span>#324856</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>123</h4></a></div>
+                    </td>
+                    <td class="txt-warning">Low stock</td>
+                    <td>$12.25</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-data">
+                        <div class="product-image"><img src="{% static 'assets/images/dashboard-2/product/23.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Flower pot</h4></a><span>#954123</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>200</h4></a></div>
+                    </td>
+                    <td class="txt-primary">In Stock</td>
+                    <td>$30.99</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-data"> 
+                        <div class="product-image"> <img src="{% static 'assets/images/dashboard-2/product/22.png' %}" alt="product"></div>
+                        <div><a href="/product">
+                            <h4>Athletic top</h4></a><span>#954026</span></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="user-time"><a href="/product">
+                          <h4>501</h4></a></div>
+                    </td>
+                    <td class="txt-danger">Out of stock</td>
+                    <td>$34.68 </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xxl-6 proorder-xl-9 box-col-12"> 
+        <div class="card">
+          <div class="card-header">
+            <div class="header-top"> 
+              <h4>Sales Details</h4>
+              <div class="sales-details"> 
+                <div class="user-activity">
+                  <ul> 
+                    <li>
+                      <div class="applications-menu">
+                        <div class="rounded-btn-primary"></div>
+                        <h3>Running Orders</h3>
+                      </div>
+                    </li>
+                    <li> 
+                      <div class="applications-menu">
+                        <div class="rounded-btn-secondary"> </div>
+                        <h3>Complete Delivery</h3>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+                <div class="dropdown icon-dropdown setting-menu">
+                  <button class="btn dropdown-toggle" id="userdropdown15" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <svg>
+                      <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                    </svg>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown15"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body"> 
+            <div class="overview-wrapper"> 
+              <div class="overview-dash-line" id="orderoverview"></div>
+            </div>
+            <div class="chart-dash-2-line" id="chart-dash-2-line"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-6 proorder-xl-8 box-col-12">
+        <div class="card">
+          <div class="card-header">
+            <div class="header-top"> 
+              <h4>Latest Offer Product</h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown25" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg> 
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown25"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body product-page-main pt-0">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="product-slider owl-carousel owl-theme product-slides" id="sync3">
+                  <div class="item"> <img src="{% static 'assets/images/dashboard-2/product/10.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/11.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/12.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/13.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/10.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/11.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/12.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/13.png' %}" alt="product"></div>
+                </div>
+                <div class="owl-carousel owl-theme product-data" id="sync4">
+                  <div class="item"> <img src="{% static 'assets/images/dashboard-2/product/10.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/11.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/12.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/13.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/10.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/11.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/12.png' %}" alt="product"></div>
+                  <div class="item"> <img src="{% static 'assets/images/dashboard-2/product/13.png' %}" alt="product"></div>
+                </div>
+              </div>
+              <div class="col-lg-6"> 
+                <div class="product-details"><a href="/product_page">
+                    <h4>Apple iphone 13 Mini (512 GB) Green </h4></a>
+                  <div class="product-Price">
+                    <h2 class="txt-primary">$89,999 </h2>
+                    <div>
+                      <del>$1,19,999</del>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2 variants-title"> <span>Color :</span><span>Green</span></div>
+                  <div class="color-variants">
+                    <div class="form-check radio radio-primary">
+                      <input class="form-check-input" id="radio22" type="radio" name="radio1" value="option1" checked="">
+                      <label class="form-check-label" for="radio22"></label>
+                    </div>
+                    <div class="form-check radio radio-secondary">
+                      <input class="form-check-input" id="radio23" type="radio" name="radio1" value="option2">
+                      <label class="form-check-label" for="radio23"></label>
+                    </div>
+                    <div class="form-check radio radio-warning"> 
+                      <input class="form-check-input" id="radio24" type="radio" name="radio1" value="option3">
+                      <label class="form-check-label" for="radio24"></label>
+                    </div>
+                    <div class="form-check radio radio-info">
+                      <input class="form-check-input" id="radio25" type="radio" name="radio1" value="option4">
+                      <label class="form-check-label" for="radio25"></label>
+                    </div>
+                    <div class="form-check radio radio-danger">
+                      <input class="form-check-input" id="radio27" type="radio" name="radio1" value="option6">
+                      <label class="form-check-label" for="radio27"></label>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2 variants-title"><span>Size :</span><span>512GB </span></div>
+                  <div class="variants-button">
+                    <button class="btn btn-outline-primary btn-md" type="button" title="btn btn-pill btn-outline-primary btn-md">512GB</button>
+                    <button class="btn btn-outline-lights btn-md txt-dark" type="button" title="btn btn-pill btn-outline-light btn-md">256GB</button>
+                  </div>
+                  <div class="discount-box">
+                    <h6>Special Discount</h6>
+                  </div>
+                  <h3 class="text-truncate">Deal of the  Day From</h3>
+                  <div class="countdown" id="clock-arrival" data-hours="1" data-minutes="2" data-seconds="3">
+                    <ul>
+                      <li> <span class="days time"> </span><span class="title">Days</span></li>
+                      <li><span class="hours time"></span><span class="title">Hours</span></li>
+                      <li class="px-3"><span class="minutes time"></span><span class="title">Min</span></li>
+                      <li class="px-3"><span class="seconds time"></span><span class="title">Sec</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Container-fluid Ends -->
