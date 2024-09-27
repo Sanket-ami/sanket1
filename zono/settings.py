@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 from django.contrib import messages
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'zonoapp',
     'sass_processor',
     'widget_tweaks',
+    'voice',
+    'provider',
 ]
 
 MIDDLEWARE = [
@@ -75,13 +77,18 @@ WSGI_APPLICATION = 'zono.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'callbot',     # Replace with your database name
+        'USER': 'postgres',     # Replace with your database username
+        'PASSWORD': 'callbot123',  # Replace with your database password
+        'HOST': 'localhost',               # Set to 'localhost' or your database server address
+        'PORT': '5432',                    # Default PostgreSQL port
     }
 }
+
+
 
 
 # Password validation
@@ -142,3 +149,4 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
 }   
+AUTH_USER_MODEL = 'zonoapp.User'
