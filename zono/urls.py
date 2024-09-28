@@ -21,6 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('zonoapp.urls')),
     path('provider/', include('provider.urls')),
-    path('voice', include('provider.urls'))
+    path('voice', include('provider.urls')),
     path('content',include('campaign.urls'))
 ]
