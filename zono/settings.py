@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 from django.contrib import messages
 import os
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,6 +45,8 @@ INSTALLED_APPS = [
     'agent',
     'sass_processor',
     'widget_tweaks',
+    'voice',
+    'provider',
 ]
 
 MIDDLEWARE = [
@@ -93,6 +94,8 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+
+
 
 
 # Password validation
@@ -153,3 +156,4 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
 }   
+AUTH_USER_MODEL = 'zonoapp.User'
