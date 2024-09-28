@@ -5,7 +5,7 @@ class Provider(models.Model):
     provider_name=models.CharField(max_length=255)
     provider_config=models.JSONField()
     provider_type=models.CharField(max_length=255)
-    is_delete=models.CharField(default=False)
+    is_delete=models.BooleanField(default=False)
     
     
     class Meta:
