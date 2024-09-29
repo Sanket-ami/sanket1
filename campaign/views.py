@@ -10,8 +10,8 @@ from .models import Campaign
 from django.contrib.auth import login,logout,authenticate
 import json
 from provider.models import Provider
- 
-
+from .models import Campaign
+from django.core.paginator import Paginator
 
 
 
@@ -42,11 +42,13 @@ def create_campaign(request):
         
         return render(request,'pages/campaign/create_campaign.html',context)
     elif request.method == "POST":
-
         data = json.loads(request.body)
+        print("datad ",data)
 
         provider = Provider.objects.get(id=data['provider'])
         agent = Agent.objects.get(id=data['agent'])
+        agent.agent_prompt = data['prompt']
+        agent.save()
 
         campaign = Campaign.objects.create(
             campaign_name=data['campaign_name'],
@@ -55,7 +57,6 @@ def create_campaign(request):
             show_transcript=data['show_transcript'],
             process_type=data['process_type'],
             provider=provider,
-            prompt=data['prompt'],
             contact_list = data['contact_list'],
             agent=agent,
             show_recording=data['show_recording'],
@@ -68,4 +69,24 @@ def create_campaign(request):
 
     return JsonResponse({"error": "Invalid request method","success":False, "error":True }, status=500)
     
+## render view campaign page
+@login_required(login_url="/login_home")    
+def campaign_list(request):
+    search_query = request.GET.get('q', '')  # Get the search query from the URL
+    campaigns = Campaign.objects.filter(campaign_name__icontains=search_query)  # Filter campaigns based on the search query
     
+    paginator = Paginator(campaigns, 10)  # Show 10 campaigns per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+    }
+    return render(request, 'pages/campaign/list_campaign.html', context)
+
+
+def edit_campaign():
+    pass
+def delete_campaign():
+    pass
