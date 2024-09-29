@@ -45,8 +45,7 @@ INSTALLED_APPS = [
     'agent',
     'sass_processor',
     'widget_tweaks',
-    'voice',
-    'provider',
+
 ]
 
 MIDDLEWARE = [
@@ -89,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.' + os.getenv('DB_ENGINE', 'postgresql'),  # Append the correct backend prefix
         'NAME': os.getenv('DB_NAME', 'callbotics'),
         'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'admin'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
