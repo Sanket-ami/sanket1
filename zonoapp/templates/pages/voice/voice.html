@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+<!-- Additional CSS for the page can be added here if necessary -->
+{% endblock %}
+
+{% block content %}
+<!-- Add Voice Button -->
+<button class="btn btn-primary-gradien" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Voice</button>
+
+<!-- Add Voice Modal -->
+<div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAgentModalLabel">Add New Voice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form class="needs-validation" method="post" id="voiceForm" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Voice Name -->
+                    <div class="mb-3">
+                        <label for="voice_name" class="form-label">Voice Name</label>
+                        <input type="text" class="form-control" id="voice_name" name="voice_name" required>
+                        <div class="invalid-feedback">Please provide a valid voice name.</div>
+                    </div>
+                    
+                    <!-- Voice ID -->
+                    <div class="mb-3">
+                        <label for="voice_id" class="form-label">Voice ID</label>
+                        <input type="text" class="form-control" id="voice_id" name="voice_id" required>
+                        <div class="invalid-feedback">Please provide a valid voice ID.</div>
+                    </div>
+
+                    <!-- Organisation Name -->
+                    <div class="mb-3">
+                        <label for="organisationName" class="form-label">Organisation Name</label>
+                        <select class="form-select" id="organisationName" name="organisation_name" required>
+                            {% for org in org_names %}
+                            <option value="{{ org }}">{{ org }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a valid organisation name.</div>
+                    </div>
+                    
+                    <!-- Voice Provider -->
+                    <div class="mb-3">
+                        <label for="voice_provider" class="form-label">Voice Provider</label>
+                        <select class="form-select" id="voice_provider" name="voice_provider" required>
+                            <option selected disabled value="">Choose...</option>
+                            {% for provider in providers_list %}
+                            <option value="{{ provider.id }}" data-config='{{ provider.provider_config }}'>
+                                {{ provider.provider_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a valid provider.</div>
+                    </div>
+
+                    <!-- Ace Code Editor Container -->
+                    <div id="jsonEditorContainer" class="mt-3" style="display:none;">
+                        <label for="voice_config" class="form-label">Provider Configuration</label>
+                        <div id="voice_config" style="height: 200px; width: 100%; border: 1px solid #ced4da;"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" type="submit">Add Voice</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- List of Existing Voices -->
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header pb-0">
+            <h4>Voices</h4>
+        </div>
+        <div class="card-body">
+            <div class="row g-sm-4 g-3">
+                {% for voice in voices %}
+                <div class="col-xl-4 col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title" style="font-weight: bold;">{{ voice.voice_name }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
+                            <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-success">▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="pagination"></div>
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?search={{ search_query }}&page=1">&laquo; first</a>
+                <a href="?search={{ search_query }}&page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+    
+            {% if page_obj.has_next %}
+                <a href="?search={{ search_query }}&page={{ page_obj.next_page_number }}">next</a>
+                <a href="?search={{ search_query }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+</div>
+<!-- Container-fluid Ends-->
+
+<!-- Ace Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector(".needs-validation");
+        const submitButton = form.querySelector("button[type='submit']");
+        const providerSelect = document.getElementById("voice_provider");
+        const aceEditorContainer = document.getElementById("jsonEditorContainer");
+
+        // Initialize Ace Code Editor
+        const editor = ace.edit("voice_config");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/json");
+
+        // Populate JSON editor based on selected provider
+        providerSelect.addEventListener('change', function () {
+            const selectedOption = providerSelect.options[providerSelect.selectedIndex];
+            let configData = selectedOption.getAttribute('data-config');
+
+            if (configData) {
+                configData = configData.replace(/'/g, '"');
+                try {
+                    aceEditorContainer.style.display = 'block';
+                    editor.setValue(JSON.stringify(JSON.parse(configData), null, 2), 1);
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                }
+            } else {
+                aceEditorContainer.style.display = 'none';
+            }
+        });
+
+        // Handle form submission using AJAX
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            if (!form.checkValidity()) {
+                form.classList.add("was-validated");
+                return;
+            }
+
+            let formData = {
+                'voice_name': document.getElementById("voice_name").value,
+                'voice_id': document.getElementById("voice_id").value,
+                'organisation_name': document.getElementById("organisationName").value,
+                'voice_provider': document.getElementById("voice_provider").value,
+                'voice_config': editor.getValue()
+            };
+            
+            submitButton.disabled = true;
+
+            // AJAX request
+            fetch("/voice", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                submitButton.disabled = false;
+                console.log("Form submission successful", data);
+                showToast('success', 'Form submitted successfully!');
+            })
+            .catch(error => {
+                console.error("Form submission error", error);
+                showToast('error', 'Form submission failed!');
+            });
+           
+        });
+
+        
+    });
+    function showToast(type, message) {
+        Swal.fire({
+            title: type === 'success' ? 'Success' : 'Error',
+            text: message,
+            icon: type,
+            confirmButtonText: 'OK'
+        }).then(() => { location.reload(); });
+    }
+</script>
+{% endblock %}
+
+{% block scriptcontent %}
+<!-- Additional JavaScript for the page can be added here if necessary -->
+{% endblock %}
