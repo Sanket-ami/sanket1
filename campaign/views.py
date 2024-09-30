@@ -90,3 +90,12 @@ def edit_campaign():
     pass
 def delete_campaign():
     pass
+
+## render view campaign page
+@login_required(login_url="/login_home") 
+def contact_list(request, campaign_id):
+    # Fetch the contact list based on the campaign_id
+    contact_list = Campaign.objects.get(id=campaign_id).contact_list
+    # Example: contact_list = get_contact_list_from_db(campaign_id)
+
+    return render(request, 'pages/campaign/contact_list.html', {"contact_list": contact_list})
