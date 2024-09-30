@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Container-fluid starts-->
 <div class="container-fluid">
@@ -20,27 +21,28 @@
                       <div class="cart-options-content"> 
                         <h4>Campaign</h4>
                       </div>
-                    </div></a><a class="nav-link b-r-0" id="ship-wizard-tab" data-bs-toggle="pill" href="#ship-wizard" role="tab" aria-controls="ship-wizard" aria-selected="false"> 
-                    <div class="cart-options">
-                      <div class="stroke-icon-wizard"><i class="fa fa-user"></i></div>
-                      <div class="cart-options-content"> 
-                        <h4>Agent</h4>
+                    </div></a><a class="nav-link b-r-0" id="ship-wizard-tab" data-bs-toggle="pill" href="#ship-wizard" role="tab" aria-controls="ship-wizard" aria-selected="false" disabled> 
+                      <div class="cart-options">
+                        <div class="stroke-icon-wizard"><i class="fa fa-phone"></i></div>
+                        <div class="cart-options-content"> 
+                          <h4>Contacts</h4>
+                        </div>
                       </div>
-                    </div></a><a class="nav-link b-r-0" id="payment-wizard-tab" data-bs-toggle="pill" href="#payment-wizard" role="tab" aria-controls="payment-wizard" aria-selected="false"> 
-                    <div class="cart-options">
-                      <div class="stroke-icon-wizard"><i class="fa fa-phone"></i></div>
-                      <div class="cart-options-content"> 
-                        <h4>Contacts</h4>
-                      </div>
-                    </div></a><a class="nav-link b-r-0" id="finish-wizard-tab" data-bs-toggle="pill" href="#finish-wizard" role="tab" aria-controls="finish-wizard" aria-selected="false"> 
+                      </a><a class="nav-link b-r-0" id="payment-wizard-tab" data-bs-toggle="pill" href="#payment-wizard" role="tab" aria-controls="payment-wizard" aria-selected="false" > 
+                        <div class="cart-options">
+                          <div class="stroke-icon-wizard"><i class="fa fa-user"></i></div>
+                          <div class="cart-options-content"> 
+                            <h4>Agent</h4>
+                          </div>
+                        </div></a><a class="nav-link b-r-0" id="finish-wizard-tab" data-bs-toggle="pill" href="#finish-wizard" role="tab" aria-controls="finish-wizard" aria-selected="false"> 
                     <div class="cart-options">
                       <div class="stroke-icon-wizard"><i class="fa fa-check-square"></i></div>
                       <div class="cart-options-content"> 
-                        <h4>Finish</h4>
+                        <h4>Submit</h4>
                       </div>
                     </div></a></div>
                 <div class="tab-content dark-field shipping-content" id="cart-options-tabContent">
-                  <div class="tab-pane fade show active" id="bill-wizard" role="tabpanel" aria-labelledby="bill-wizard-tab">
+                  <div class="tab-pane fade show active" id="bill-wizard" role="tabpanel" aria-labelledby="bill-wizard-tab" disabled>
                     <h3>Campaign Information </h3>
                     <p class="f-light">Fill up the following information </p>
                     <form class="row g-3 needs-validation" novalidate="">
@@ -52,7 +54,12 @@
                         
                         <div class="col-sm-6">
                           <label class="form-label" for="organisationName">Organisation Name<span class="txt-danger">*</span></label>
-                          <input class="form-control" id="organisationName" type="text" placeholder="Enter organisation name" required="">
+                          <select class="form-select" id="organisationName" required="">
+                            {<!-- dynamically populate provider options -->}
+                            {% for org in org_names %}
+                               <option value="{{ org }}">{{ org }}</option>
+                            {% endfor %}
+                          </select>
                           <div class="valid-feedback">Looks good!</div>
                         </div>
                         
@@ -66,7 +73,6 @@
                           <label class="form-label" for="provider">Provider<span class="txt-danger">*</span></label>
                           <select class="form-select" id="provider" required="">
                             {<!-- dynamically populate provider options -->}
-                            <option selected disabled value="">Select Provider</option>
                             {% for provider in telephony_providers_list %}
                                <option value="{{ provider.id }}">{{ provider.provider_name }}</option>
                             {% endfor %}
@@ -76,32 +82,32 @@
 
                         
                         <div class="col-12">
-                          <div class="form-check">
-                            <input class="form-check-input" id="showTranscript" type="checkbox">
-                            <label class="form-check-label" for="showTranscript">Show Transcript</label>
+                          <div class="form-check form-switch">
+                            <input class="form-check-input" id="showTranscript" type="checkbox" checked>
+                            <label class="form-check-label " for="showTranscript">Show Transcript</label>
                           </div>
                         </div>
                         
                         <div class="col-12">
-                          <div class="form-check">
-                            <input class="form-check-input" id="showRecording" type="checkbox">
+                          <div class="form-check form-switch">
+                            <input class="form-check-input" id="showRecording" type="checkbox" checked>
                             <label class="form-check-label" for="showRecording">Show Recording</label>
                           </div>
                         </div>
                       
                         <div class="col-12">
-                          <div class="form-check">
-                            <input class="form-check-input" id="showNumbers" type="checkbox">
+                          <div class="form-check form-switch">
+                            <input class="form-check-input" id="showNumbers" type="checkbox" checked>
                             <label class="form-check-label" for="showNumbers">Show Numbers</label>
                           </div>
                         </div>
                       
                         <div class="col-12 text-end">
-                          <button class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
+                          <button id="step1btn" type="button" onclick="validateStep1(event)" class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
                         </div>
                       </form>
                   </div>
-                  <div class="tab-pane fade shipping-wizard" id="ship-wizard" role="tabpanel" aria-labelledby="ship-wizard-tab">
+                  <div class="tab-pane fade shipping-wizard" id="payment-wizard" role="tabpanel" aria-labelledby="payment-wizard-tab"   >
                     <h5 class="f-w-600">Agent Information</h5>
                     <p class="f-light">Select the agent for the calls</p>
                     <div class="shipping-title">
@@ -109,46 +115,52 @@
                       <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#exampleModalgetbootstrap" data-whatever="@getbootstrap"> <i class="fa fa-plus-square f-20"></i></button>
 
                     </div>
-                    <div class="row g-3">
+                    <div class="row g-3"  >
 
-                      <div class="col-xxl-4 col-sm-6"> 
+                      <div class="col-xxl-4 col-sm-6" style="width: 100%;" > 
                         <div class="col-sm-6">
                             <label class="form-label" for="Agents">Agents<span class="txt-danger">*</span></label>
                             <select class="form-select" id="Agents" required="">
-                              <option selected="" disabled="" value="">Select Agents</option>
+                              {% for agent in available_agents %}
                               <!-- dynamically populate Agents options -->
+                              <option selected=""  value="{{agent.id}}">{{agent.agent_name}}</option>
+                              {% endfor %}
                             </select>
                             <div class="invalid-feedback">Please select a valid provider.</div>
-                          </div>
+                     </div>
+                    <h5 class="f-w-600 mt-4 mb-2">Prompt</h5>
+                      <div class="row shipping-method g-3">
+                        <div class="col-12">
+                          <label class="form-label" for="agentPrompt">Add variable in the prompt by using {variable_name} syntax.</label>
+                          <h6> Available variables are: </h6><br>
+                          <textarea class="form-control" id="availableVariabes"> </textarea>
+                          <div id="agentPromptEditor" style="height: 200px; width: 100%; border: 1px solid #ddd;"></div>
+                          <div class="invalid-feedback" id="promptError" style="display:none;">Invalid variables used in the prompt.</div>
+                        </div>
                       </div>
-                    </div>
-                    <h5 class="f-w-600 mt-4 mb-2">Prompts</h5>
-                    <div class="row shipping-method g-3">
-                        <div class="col-12"> 
-                            <label class="form-label" for="exampleFormControlTextarea1">Description</label>
-                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" readonly></textarea>
-                          </div>
                           
                      <h5 class="f-w-600 mt-4 mb-2">Voice</h5> 
                       <div class="col-sm-6">
-                        <div class="card-wrapper border rounded-3 h-100 light-card">
-                          <div class="form-check radio radio-primary">
-                            <input class="form-check-input" id="shipping-choose4" type="radio" name="radio2" value="option1" checked="">
-                            <label class="form-check-label mb-0" for="shipping-choose4">Vocie Name</label>
-                          </div>
-                          <P>Estimated 1-2 days shipping</P>
+                        <label class="form-label" for="voice">voice<span class="txt-danger">*</span></label>
+                        <select class="form-select" id="voice" required="">
+                          {% for voice in available_agents %}
+                          <!-- dynamically populate Agents options -->
+                          <option selected="" value="{{voice.voice.id}}">{{voice.voice.voice_name}}</option>
+                          {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a valid provider.</div>
                         </div>
                       </div>  
 
                       <div class="col-12 text-end">
-                        <button class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
+                        <button id="step3btn" type="button" onclick="validateStep3(event)" class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
                       </div>
                     </div>
                   </div>
                   
-                  <div class="tab-pane fade shipping-wizard" id="payment-wizard" role="tabpanel" aria-labelledby="payment-wizard-tab">
+                  <div class="tab-pane fade shipping-wizard" id="ship-wizard" role="tabpanel" aria-labelledby="ship-wizard-tab">
                     <h3>Contacts Information</h3>
-                    <p class="f-light">Upload a csv file with "phone_number" as a column</p>
+                    <p class="f-light">Upload a csv file with "contact_number" as a column</p>
                     <div class="payment-info-wrapper">
                       <div class="row shipping-method g-3">
  
@@ -173,29 +185,26 @@
                           </div>
                         </div>
                         <div class="col-12">
-                          <div class="card-wrapper border rounded-3 light-card">
-                            <div>
-                              <div class="form-check radio radio-primary">
-                                <input class="form-check-input" id="shipping-choose7" type="radio" name="radio3" value="option1">
-                                <label class="form-check-label mb-0 f-w-600" for="shipping-choose7">Cash On Delivery</label>
-                              </div>
-                              <p>After your order is delivered, make a cash payment</p>
-                            </div>
-                            <div> <img src="{% static 'assets/images/forms/delivery.png' %}" alt="delivery"></div>
-                          </div>
+
                         </div>
                         <div class="col-12 text-end">
-                          <button class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
+                          <button id="step2btn" type="button" onclick="validateStep2(event)" class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div class="tab-pane fade shipping-wizard finish-wizard1" id="finish-wizard" role="tabpanel" aria-labelledby="finish-wizard-tab">
-                    <div class="order-confirm"><img src="{% static 'assets/images/gif/dashboard-8/successful.gif' %}" alt="popper">
-                      <h5>Thank you! Your order is confirmed.</h5>
-                      <p class="mb-0">An email with your order's specifics will be sent to you as order confirmation.</p>
-                      <p class="text-center f-w-600 mt-2">Order ID: <a class="text-decoration-underline" href="javascript:void(0)">GE34598 </a></p>
+                  <div class="tab-pane fade shipping-wizard finish-wizard1" id="finish-wizard" role="tabpanel" aria-labelledby="finish-wizard-tab" disabled>
+                    <div class="order-confirm"><img src="{% static 'assets/images/gif/successful.gif' %}" alt="popper">
+                      <h5>Confirm the Campaign details before submitting.</h5>
+                      <p class="mb-0">The created Campaign can be accessed in Campaign Managent page.</p>
+                    </br>
+                      <!-- <p class="text-center f-w-600 mt-2">Order ID: <a class="text-decoration-underline" href="javascript:void(0)">GE34598 </a></p> -->
+                      <div class="col-12 text-center">
+                        <button id="step4btn" type="button" onclick="createCampaign(event)" class="btn btn-primary">Save <i class="icon-save"></i></i></button>
+                      </div>
                     </div>
+
+
                   </div>
                 </div>
               </div>
@@ -207,13 +216,13 @@
                     <div class="card-body social-list filter-cards-view">
                        
                       <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/3.jpg">
-                        <div class="flex-grow-1"><span class="d-block">Agent Library</span><a href="#">Add or update Agent</a></div>
+                        <div class="flex-grow-1"><span class="d-block">Agent Library</span><a href="{% url 'agent_create' %}">Add or update Agent</a></div>
                       </div>
                       <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/10.jpg">
-                        <div class="flex-grow-1"><span class="d-block">Voice Library</span><a href="#">Add or update Voice</a></div>
+                        <div class="flex-grow-1"><span class="d-block">Voice Library</span><a href=" ">Add or update Voice</a></div>
                       </div>
                       <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/11.png">
-                        <div class="flex-grow-1"><span class="d-block">Tools Library</span><a href="#">Add or update Actions</a></div>
+                        <div class="flex-grow-1"><span class="d-block">Tools Library</span><a href="{% url 'manage_campaign' %}">Update or Schedule Campaign</a></div>
                       </div>
                     </div>
                   </div>
@@ -224,8 +233,243 @@
           <!-- Container-fluid Ends-->
         </div>
       </div>
-  </div>
-  <!-- Container-fluid Ends-->
+</div>
+<!-- Container-fluid Ends-->
+ 
+<!-- Ace Editor codeblock -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- Script block -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  // csv related declarations 
+  let columnNames ;
+  let csvData;
+  let rows;
+  let contactList;
+  let agent_prompt;
+
+
+  // Function to show toast
+  function showToast(type, message) {
+    Swal.fire({
+                title: 'Alert',
+                text: message, // Dynamic message from Django
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+    }
+  // Function to validate the prompt
+  function validatePrompt() {
+    agent_prompt = editor.getValue();
+    let regex = /{\s*([\w_]+)\s*}/g; // Regex to find variables in {}
+
+    let match;
+    let invalidVariables = [];
+
+    while ((match = regex.exec(agent_prompt)) !== null) {
+      let variable = match[1]; // Extract the variable name
+      if (!columnNames.includes(variable)) {
+        invalidVariables.push(variable); // Collect invalid variables
+      }
+    }
+
+    if (invalidVariables.length > 0) {
+      document.getElementById("promptError").style.display = 'block';
+      editor.session.setAnnotations([{
+        row: 0,
+        column: 0,
+        text: 'Invalid variables: ' + invalidVariables.join(', '),
+        type: 'error' // Other types include 'info' and 'warning'
+      }]);
+      return false;
+    } else {
+      document.getElementById("promptError").style.display = 'none';
+      editor.session.clearAnnotations();
+      return true;
+    }
+  }
+
+  // Initialize Ace Editor
+  let editor = ace.edit("agentPromptEditor");
+  editor.setTheme("ace/theme/monokai"); // You can choose other themes if needed
+  editor.session.setMode("ace/mode/text"); // Set the mode to plain text
+
+  
+  // step1 validataion
+  function validateStep1(e) {
+    // e.preventDefault(); // Prevent the default form submission
+
+    // validation logic. For example:
+    const campaignName = $("#campaignName").val();
+    const organisationName = $("#organisationName").val();
+    const processType = $("#processType").val();
+    const provider = $("#provider").val();
+
+    // Check if the required fields are filled (basic validation)
+    if (campaignName && organisationName && processType && provider) {
+        // alert("step1 clicked");
+
+        // Move to step 2 by enabling the next tab and activating it
+        $("#ship-wizard-tab").removeAttr("disabled");
+        document.getElementById("ship-wizard-tab").click()
+
+    } else {
+        // Handle validation failure (e.g., show an alert or highlight invalid fields)
+        alert("Please fill in all required fields.");
+    }
+  }
+
+  // step2 validataion
+    function validateStep2(e){
+    // alert("step2 clicked")
+    uploadedFile = $("#formFile3");
+    
+    if (uploadedFile){
+      // Move to step 2 by enabling the next tab and activating it
+        $("#payment-wizard-tab").removeAttr("disabled");
+        document.getElementById("payment-wizard-tab").click()
+    }else{
+      alert("upload the contact list correctly")
+    }
+  
+  }
+
+  // step3 validataion
+  function validateStep3(e){
+    if (validatePrompt()) {
+    // Proceed if validation passes
+    console.log("Prompt is valid!");
+    
+    /// move to finish tab
+    $("#finish-wizard-tab").removeAttr("disabled");
+    document.getElementById("finish-wizard-tab").click()
+
+    } else {
+      console.log("Invalid prompt. Please fix errors.");
+    }
+  }
+
+  // submit and save campaign
+  function createCampaign(){
+    event.preventDefault();
+    // Prepare data to be sent
+    let data = {
+        agent: $('#Agents').val(),        // Assuming you're using the agent's ID
+        campaign_name: $('#campaignName').val(),
+        is_schedule: $('#isSchedule').is(':checked'),
+        organisation_name: $('#organisationName').val(),
+        show_transcript: $('#showTranscript').is(':checked'),
+        process_type: $('#processType').val(),
+        contact_list:contactList,
+        prompt:agent_prompt,
+        provider: $('#provider').val(),  // Assuming you're using the provider's ID
+        show_recording: $('#showRecording').is(':checked'),
+        show_numbers: $('#showNumbers').is(':checked'),
+        csrfmiddlewaretoken: '{{ csrf_token }}'  // Make sure you include CSRF token for Django
+    };
+
+    $.ajax({
+        url: "{% url 'create_campaign' %}",
+        type: 'POST',
+        data: JSON.stringify(data),  // Convert the data to JSON
+        contentType: 'application/json',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        success: function(response) {
+            // Handle the successful response, maybe show a success message
+            console.log("Campaign created successfully");
+            // alert("Campaign created successfully!");
+            showToast("success", "Agent added successfully!");
+        },
+        error: function(xhr, status, error) {
+            // Handle errors here
+            console.error("Error creating campaign:", error);
+            // alert("Error creating campaign: " + xhr.responseText);
+            showToast("error", "Failed to add Agent! "+ error);
+        }
+     });
+  }
+      
+
+
+  // file upload validation
+  $('#formFile3').on('change', function(event) {
+    const file = event.target.files[0];
+
+    if (!file) {
+      alert("Please select a file.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      csvData = e.target.result;
+      rows = csvData.split('\n').map(row => row.split(','));
+
+      if (rows.length < 1) {
+        alert("The CSV file is empty or invalid.");
+        return;
+      }
+
+      // Get header row and process column names
+      const headerRow = rows[0];
+      columnNames = $.map(headerRow, function(col) {
+        return col.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      });
+
+      // Check for contact_number column
+      console.log(columnNames)
+      document.getElementById("availableVariabes").value=columnNames.join(' , ') //comma seprated list
+
+      const phoneNumberIndex = headerRow.indexOf('contact_number');
+      console.log(phoneNumberIndex)
+      if (phoneNumberIndex === -1) {
+        alert('CSV must contain a "contact_number" column.');
+        return;
+      }
+
+      // Validate that contact_number column contains only 10-digit numbers
+      const invalidNumbers = rows.slice(1).some(function(row) {
+        const contactNumber = row[phoneNumberIndex]; // Get the contact number from the row
+        console.log(contactNumber)
+        // Check if contactNumber is defined and then trim and validate
+        if (contactNumber === undefined) {
+          return true; // Treat as invalid if undefined
+        }
+        
+        // Trim and validate the contact number
+        return !/^\d{10}$/.test(contactNumber.trim());
+      });
+
+      if (invalidNumbers) {
+        alert('The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.');
+        return;
+      }
+
+      // Store CSV data as JSON array of objects
+      const data = $.map(rows.slice(1), function(row) {
+        let obj = {};
+        $.each(row, function(i, cell) {
+          obj[columnNames[i]] = $.trim(cell);
+        });
+        return obj;
+      });
+
+      // Enable the proceed button after validation
+      $('#proceedButton').prop('disabled', false);
+      contactList = data
+      console.log("Column Names: ", columnNames);
+      console.log("File Data: ", data);
+      alert('contacts upload successfull')
+
+      // You can store the data in a global variable or handle it as needed
+      window.csvData = data;
+    };
+
+    reader.readAsText(file);
+  });
+</script>
 
 {% endblock %}
 

@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<!-- Add Agent Button -->
+<button class="btn btn-primary-gradien" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Agent</button>
+
+<!-- Add Agent Modal -->
+<div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAgentModalLabel">Add New Agent</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form class="needs-validation" method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Agent Name -->
+                    <div class="mb-3">
+                        <label for="agentName" class="form-label">Agent Name</label>
+                        <input type="text" class="form-control" id="agentName" name="agent_name" required>
+                        <div class="invalid-feedback">Please provide a valid agent name.</div>
+                    </div>
+                    
+                    <!-- Organisation Name -->
+                    <div class="mb-3">
+                        <label for="organisationName" class="form-label">Organisation Name</label>
+                        <!-- <input type="text" class="form-control" id="organisationName" name="organisation_name" required> -->
+                        <select class="form-select" id="organisationName" name="organisation_name" required>
+                            {% for org in org_names %}
+                            <option value="{{ org }}">{{ org }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please provide a valid organisation name.</div>
+                    </div>
+                    
+                    <!-- Agent Provider -->
+                    <div class="mb-3">
+                        <label for="agentProvider" class="form-label">Agent Provider</label>
+                        <select class="form-select" id="agentProvider" name="agent_provider" required>
+                            <option selected disabled value="">Choose...</option>
+                            {% for provider in llm_providers_list %}
+                            <option value="{{ provider.provider_name }}" data-config='{{ provider.provider_config }}'>
+                                {{ provider.provider_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a valid provider.</div>
+                    </div>
+
+                    <!-- Ace Code Editor Container -->
+                    <div id="jsonEditorContainer" class="mt-3" style="display:none;">
+                        <label for="providerConfigEditor" class="form-label">Provider Configuration</label>
+                        <div id="providerConfigEditor" style="height: 200px; width: 100%; border: 1px solid #ced4da;"></div>
+                    </div>
+                    
+                    <!-- Voice -->
+                    <div class="mb-3">
+                        <label for="agentVoice" class="form-label">Voice</label>
+                        <select class="form-select" id="agentVoice" name="voice" required>
+                            <option selected disabled value="">Choose...</option>
+                            {% for voice in voices %}
+                            <option value="{{ voice.id }}">{{ voice.voice_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a valid voice.</div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" type="submit">Add Agent</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid" >
+    <form method="get" class="form-control" style="display: flex; width: 30%; float: right;" action="{% url 'agent_create' %}">
+        <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search agents...">
+        <button class="btn btn-info" type="submit">Search</button>
+    </form>
+    <br>
+    <div class="row">
+        {% for agent in page_obj %}
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header pb-0 border-t-primary">
+                    <h4>{{ agent.agent_name }}</h4>
+                    <p class="mt-1 f-m-light">{{ agent.organisation_name }}</p>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ agent.voice }}</p>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <p>No agents found.</p>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination Controls -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?search={{ search_query }}&page=1">&laquo; first</a>
+                <a href="?search={{ search_query }}&page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+    
+            {% if page_obj.has_next %}
+                <a href="?search={{ search_query }}&page={{ page_obj.next_page_number }}">next</a>
+                <a href="?search={{ search_query }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+    
+</div>
+<!-- Container-fluid Ends-->
+
+<!-- Ace Editor codeblock -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector(".needs-validation");
+        const submitButton = form.querySelector("button[type='submit']");
+        const providerSelect = document.getElementById("agentProvider");
+        const aceEditorContainer = document.getElementById("jsonEditorContainer");
+
+        const editor = ace.edit("providerConfigEditor");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/json");
+
+        // Initialize Ace Code Editor when provider is selected
+        providerSelect.addEventListener('change', function () {
+            const selectedOption = providerSelect.options[providerSelect.selectedIndex];
+            let configData = selectedOption.getAttribute('data-config');
+
+            if (configData) {
+                // Replace single quotes with double quotes to make it valid JSON
+                configData = configData.replace(/'/g, '"');
+
+                try {
+                    // Show the editor and populate it with the provider's JSON configuration
+                    aceEditorContainer.style.display = 'block';
+                    editor.setValue(JSON.stringify(JSON.parse(configData), null, 2), 1);
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                }
+            } else {
+                // Hide the editor if no provider is selected
+                aceEditorContainer.style.display = 'none';
+            }
+        });
+
+        // Handle form submission
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            if (!form.checkValidity()) {
+                form.classList.add("was-validated");
+                return;
+            }
+
+            // Get form data
+            const jsonData = {
+                agent_name: document.getElementById("agentName").value,
+                organisation_name: document.getElementById("organisationName").value,
+                agent_provider: document.getElementById("agentProvider").value,
+                voice: document.getElementById("agentVoice").value,
+                agent_configuration: editor.getValue()  // Ensure this gets Ace editor content
+            };
+
+            // Disable submit button
+            submitButton.disabled = true;
+
+            // Send AJAX request
+            fetch("/agent/agent", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                },
+                body: JSON.stringify(jsonData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable submit button
+                submitButton.disabled = false;
+
+                if (data.success) {
+                    showToast("primary", "Agent added successfully!");
+                    alert('Agent added successfully!')
+                } else {
+                    showToast("danger", "Error adding agent: " + (data.error || "Unknown error"));
+                }
+            })
+            .catch(error => {
+                submitButton.disabled = false;
+                showToast("danger", "Error: " + error.message);
+                alert('Failed to add agent!')
+            });
+        });
+
+        // Function to show toast
+        function showToast(type, message) {
+            const toastHTML = `
+                <div class="alert alert-${type} dark alert-dismissible fade show" role="alert">  
+                    <p>${message}</p> 
+                    <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            document.body.insertAdjacentHTML("beforeend", toastHTML);
+        }
+    });
+</script>
+{% endblock %}
+
+{% block scriptcontent %}
+
+{% endblock %}

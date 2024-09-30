@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("provider", "0003_provider_provider_type"),
+        ('provider', '0003_provider_provider_type'),
     ]
 
     operations = [

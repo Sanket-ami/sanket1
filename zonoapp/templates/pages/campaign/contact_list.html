@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Contact List</h2>
+    <table id="contactTable" class="display">
+        <thead>
+            <tr>
+                {% if contact_list %}
+                    {% for key in contact_list.0.keys %}
+                        <th>{{ key }}</th>
+                    {% endfor %}
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for contact in contact_list %}
+            <tr>
+                {% for value in contact.values %}
+                    <td>{{ value }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Include jQuery and DataTables JS and CSS files from CDN -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // $('#contactTable').DataTable({
+        //     "paging": true,       // Enable pagination
+        //     "searching": true,    // Enable search
+        //     "ordering": true,     // Enable sorting
+        // });
+        new DataTable('#contactTable',
+            {
+                paging: true,
+                responsive: true,
+                scroller: {
+                        loadingIndicator: true
+                    },
+                searching: true,    // Enable search
+                ordering: true,     // Enable sorting
+                    
+            }
+        );
+    });
+</script>
+
+
+{% endblock %}
