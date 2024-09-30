@@ -7,7 +7,7 @@ import json
 
 def provider_view(request):
     if request.method == 'GET':
-        providers = Provider.objects.all().filter(is_delete='false')
+        providers = Provider.objects.all().filter(is_delete=False).order_by('-id')
         paginator = Paginator(providers, 10) 
         page_number = request.GET.get('page')  
         providers = paginator.get_page(page_number)  
