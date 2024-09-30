@@ -35,14 +35,13 @@ def agent_create(request):
         paginator = Paginator(agents, 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Sample Page"},"llm_providers_list":llm_providers_list,"org_names":org_names,'page_obj': page_obj, 'search_query': search_query,'voices':voices}   
+        context = {"breadcrumb":{"title":"Create Agent","parent":"Pages", "child":"Sample Page"},"llm_providers_list":llm_providers_list,"org_names":org_names,'page_obj': page_obj, 'search_query': search_query,'voices':voices}   
         
         return render(request,'pages/agent/agent_list.html',context)
     elif request.method == "POST":
         try:
             print("request recieved!!!!!!!")
             # Parse the incoming JSON data
-            import pdb;pdb.set_trace()
             data = json.loads(request.body)
             print('agent_data ',data)
             # Extract the form fields

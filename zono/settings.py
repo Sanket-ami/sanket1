@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-f7$wb+d842u9h#k7-=fnfe%uk31im2dy*pn8h1e$!z7r7xiccy
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
+CALL_SERVER_BASE_URL="https://sweet-heron-master.ngrok-free.app"
 AUTH_USER_MODEL = 'zonoapp.User'
 
 # Application definition
@@ -86,16 +86,17 @@ WSGI_APPLICATION = 'zono.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.' + os.getenv('DB_ENGINE', 'postgresql'),  # Append the correct backend prefix
-        'NAME': os.getenv('DB_NAME', 'callbotics'),
+        'NAME': os.getenv('DB_NAME', 'callbotics2'),
         'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'admin'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
-
-
+import mongoengine
+mongoengine.connect(db='callbotics',port=27017, host="localhost" )
+ 
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators

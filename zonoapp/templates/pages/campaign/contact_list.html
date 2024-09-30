@@ -2,14 +2,19 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid mt-4">
     <h2>Contact List</h2>
-    <table id="contactTable" class="display">
+    <table id="contactTable" class="table table-inverse table-striped dataTable" style="margin-left: 0px;">
         <thead>
             <tr>
+                <th class="">
+                    <button class="btn btn-pill btn-primary btn-air-primary" id="deleteSelected" type="button">
+                        <i class="icofont icofont-ui-delete"></i>
+                    </button>
+                </th>
                 {% if contact_list %}
                     {% for key in contact_list.0.keys %}
-                        <th>{{ key }}</th>
+                        <th class="sorting_asc">{{ key }}</th>
                     {% endfor %}
                 {% endif %}
             </tr>
@@ -17,6 +22,10 @@
         <tbody>
             {% for contact in contact_list %}
             <tr>
+                <td class="sorting_1">
+                    <!-- Assign class 'contact-checkbox' to the actual checkbox input -->
+                    <input class="form-switch contact-checkbox" data-contact-id="{{ contact.contact_id }}" type="checkbox">
+                </td>
                 {% for value in contact.values %}
                     <td>{{ value }}</td>
                 {% endfor %}
@@ -30,28 +39,147 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<!-- Script block -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 <script>
     $(document).ready(function() {
-        // $('#contactTable').DataTable({
-        //     "paging": true,       // Enable pagination
-        //     "searching": true,    // Enable search
-        //     "ordering": true,     // Enable sorting
-        // });
-        new DataTable('#contactTable',
-            {
-                paging: true,
-                responsive: true,
-                scroller: {
-                        loadingIndicator: true
-                    },
-                searching: true,    // Enable search
-                ordering: true,     // Enable sorting
-                    
+        ///
+        function showToast(type, message) {
+        Swal.fire({
+                    title: 'Alert',
+                    text: message, // Dynamic message from Django
+                    icon: type,
+                    confirmButtonText: 'OK'
+                } 
+            ).then(() => { location.reload(); });
+        }
+
+        /// confirm delete
+        function showConfirm( ) {
+        Swal.fire({
+                    text: 'Are you sure?', // Dynamic message from Django
+                    icon: type,
+                    type: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes'
+                } 
+            ).then((result) => { if (result.isConfirmed) { console.log('confirmed')} });;
+        }
+
+        // Initialize DataTables
+        new DataTable('#contactTable', {
+            paging: true,
+            responsive: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            searching: true,
+            ordering: true
+        });
+
+        /// Handling contact deletion
+        let selectedContacts = [];
+
+        // When the user checks/unchecks the checkbox
+        $(document).on('change', '.contact-checkbox', function() {
+            console.log('Checkbox clicked!');
+            const contactId = $(this).data('contact-id');
+
+            if ($(this).is(':checked')) {
+                // Add contactId to the array if checked
+                if (!selectedContacts.includes(contactId)) {
+                    selectedContacts.push(contactId);
+                }
+            } else {
+                // Remove contactId from the array if unchecked
+                selectedContacts = selectedContacts.filter(id => id !== contactId);
             }
-        );
+            console.log('Selected Contacts:', selectedContacts);
+        });
+
+        // When the delete button is clicked
+        // $('#deleteSelected').on('click', function() {
+        //     if (selectedContacts.length === 0) {
+        //         alert("No contacts selected for deletion.");
+        //         return;
+        //     }
+
+        //     // Confirm deletion
+        //     if (confirm("Are you sure you want to delete the selected contacts?")) {
+        //         $.ajax({
+        //             url: "{% url 'delete_contacts' campaign_id %}",   // Update this URL with your Django view URL
+        //             method: "POST",
+        //             data: JSON.stringify({ contact_ids: selectedContacts, "campaign_id": {{ campaign_id }} }),
+        //             contentType: "application/json",
+        //             headers: {
+        //                 'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+        //             },
+        //             success: function(response) {
+        //                 // Handle success, such as reloading the page or updating the UI
+        //                 // alert(response.message);
+        //                  showToast("success", response.message);
+        //              },
+        //             error: function(xhr, status, error) {
+        //                 // Handle error
+        //                 // alert("An error occurred: " + error);
+        //                 showToast("error", "Failed to delete contact! "+ error);
+        //              }
+        //         });
+        //     }
+        // });
+
+// When the delete button is clicked
+$('#deleteSelected').on('click', function() {
+    if (selectedContacts.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            text: 'No contacts selected for deletion.',
+        });
+        return;
+    }
+
+    // Confirm deletion using SweetAlert2
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You won\'t be able to revert this!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete them!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Proceed with the deletion via AJAX
+                    $.ajax({
+                        url: "{% url 'delete_contacts' campaign_id %}", // Django URL
+                        method: "POST",
+                        data: JSON.stringify({ contact_ids: selectedContacts, "campaign_id": {{ campaign_id }} }),
+                        contentType: "application/json",
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                        },
+                        success: function(response) {
+                            // Show success message using SweetAlert2
+                            Swal.fire({
+                                icon: 'success',
+                                text: response.message
+                            });
+                            showToast("success", response.message);
+                        },
+                        error: function(xhr, status, error) {
+                            // Show error message using SweetAlert2
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'Failed to delete contacts: ' + error
+                            });
+                            showToast("error", "Failed to delete contact! " + error);
+                        }
+                    });
+                }
+            });
+        });
+
     });
 </script>
-
-
 {% endblock %}
