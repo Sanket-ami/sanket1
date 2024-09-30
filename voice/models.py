@@ -4,10 +4,9 @@ from provider.models import Provider
 class Voice(models.Model):
     voice_name= models.CharField(max_length=255,null=True) # adding voice name field
     voice_id= models.CharField(max_length=255)
-    voice_name=models.CharField(max_length=255)
     voice_provider=models.ForeignKey(Provider, on_delete=models.SET_NULL, null=True)
     oragnisation_name=models.CharField(max_length=255)
-    voice_configuration=models.CharField(max_length=255)
+    voice_configuration=models.JSONField()
     create_at=models.DateTimeField(auto_now_add=True)
     modified_at=models.DateTimeField(auto_now=True)
     is_delete=models.BooleanField(default=False)

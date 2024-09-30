@@ -1,36 +1,47 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views import View
+from django.shortcuts import render
 import json
 from .models import Voice
+from provider.models import Provider 
+from zonoapp.models import User
+from provider.models import Provider
+from django.core.paginator import Paginator
 
 
 def voice_view(request):
     if request.method == 'GET':
+        voices_list = []
         voices = Voice.objects.all()
-        voice_list = [
-            {
-                'id': voice.id,
-                'voice_id': voice.voice_id,
-                'voice_provider': voice.voice_provider.id if voice.voice_provider else None,
-                'organisation_name': voice.oragnisation_name,
-                'voice_configuration': voice.voice_configuration,
-                'created_at': voice.create_at,
-                'modified_at': voice.modified_at,
-                'is_delete': voice.is_delete
-            }
-            for voice in voices
-        ]
-        return JsonResponse(voice_list, safe=False)
+        for voice in voices:
+            try:
+                voice_config = json.loads(voice.voice_configuration)
+                print(voice_config)
+            except json.JSONDecodeError:
+                voice_config = {}  # 
+            voices_list.append({
+                'voice_name': voice.voice_name,
+                'voice_provider': voice.voice_provider,
+                'voice_configuration': voice_config
+            })
+        org_names = User.objects.all()
+        voice_provider = Provider.objects.all()
+        paginator = Paginator(voices, 10)
+        page_number = request.GET.get('page')
+        voices_list = paginator.get_page(page_number)
+        return render(request, 'pages/voice/voice.html', {'page_obj': voices_list, 'voices': voices_list, 'org_names': org_names, 'providers_list': voice_provider})
 
     elif request.method == 'POST':
         try:
             data = json.loads(request.body)
+            voice_provider = Provider.objects.get(id=data['voice_provider'])
             voice = Voice.objects.create(
                 voice_id=data['voice_id'],
-                voice_provider_id=data.get('voice_provider'),  # Use voice_provider_id to link by ID
+                voice_provider=voice_provider,  # Use voice_provider_id to link by ID
                 oragnisation_name=data['organisation_name'],
-                voice_configuration=data['voice_configuration']
+                voice_configuration=data['voice_config'],
+                voice_name=data.get('voice_name')
             )
             return JsonResponse({'id': voice.id}, status=201)
 
