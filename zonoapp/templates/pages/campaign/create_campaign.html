@@ -117,7 +117,7 @@
                     </div>
                     <div class="row g-3"  >
 
-                      <div class="col-xxl-4 col-sm-6" > 
+                      <div class="col-xxl-4 col-sm-6" style="width: 100%;" > 
                         <div class="col-sm-6">
                             <label class="form-label" for="Agents">Agents<span class="txt-danger">*</span></label>
                             <select class="form-select" id="Agents" required="">
@@ -216,13 +216,13 @@
                     <div class="card-body social-list filter-cards-view">
                        
                       <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/3.jpg">
-                        <div class="flex-grow-1"><span class="d-block">Agent Library</span><a href="#">Add or update Agent</a></div>
+                        <div class="flex-grow-1"><span class="d-block">Agent Library</span><a href="{% url 'agent_create' %}">Add or update Agent</a></div>
                       </div>
                       <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/10.jpg">
-                        <div class="flex-grow-1"><span class="d-block">Voice Library</span><a href="#">Add or update Voice</a></div>
+                        <div class="flex-grow-1"><span class="d-block">Voice Library</span><a href=" ">Add or update Voice</a></div>
                       </div>
                       <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/11.png">
-                        <div class="flex-grow-1"><span class="d-block">Tools Library</span><a href="#">Add or update Actions</a></div>
+                        <div class="flex-grow-1"><span class="d-block">Tools Library</span><a href="{% url 'manage_campaign' %}">Update or Schedule Campaign</a></div>
                       </div>
                     </div>
                   </div>
@@ -240,6 +240,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <!-- Script block -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
   // csv related declarations 
   let columnNames ;
@@ -251,13 +253,12 @@
 
   // Function to show toast
   function showToast(type, message) {
-      const toastHTML = `
-          <div class="alert alert-${type} dark alert-dismissible fade show" role="alert">  
-              <p>${message}</p> 
-              <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-      `;
-      document.body.insertAdjacentHTML("beforeend", toastHTML);
+    Swal.fire({
+                title: 'Alert',
+                text: message, // Dynamic message from Django
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
     }
   // Function to validate the prompt
   function validatePrompt() {
@@ -323,9 +324,9 @@
   // step2 validataion
     function validateStep2(e){
     // alert("step2 clicked")
-    contactList = $("#formFile3");
+    uploadedFile = $("#formFile3");
     
-    if (contactList){
+    if (uploadedFile){
       // Move to step 2 by enabling the next tab and activating it
         $("#payment-wizard-tab").removeAttr("disabled");
         document.getElementById("payment-wizard-tab").click()
@@ -355,6 +356,7 @@
     event.preventDefault();
     // Prepare data to be sent
     let data = {
+        agent: $('#Agents').val(),        // Assuming you're using the agent's ID
         campaign_name: $('#campaignName').val(),
         is_schedule: $('#isSchedule').is(':checked'),
         organisation_name: $('#organisationName').val(),
@@ -363,7 +365,6 @@
         contact_list:contactList,
         prompt:agent_prompt,
         provider: $('#provider').val(),  // Assuming you're using the provider's ID
-        agent: $('#agent').val(),        // Assuming you're using the agent's ID
         show_recording: $('#showRecording').is(':checked'),
         show_numbers: $('#showNumbers').is(':checked'),
         csrfmiddlewaretoken: '{{ csrf_token }}'  // Make sure you include CSRF token for Django
@@ -379,13 +380,13 @@
             // Handle the successful response, maybe show a success message
             console.log("Campaign created successfully");
             // alert("Campaign created successfully!");
-            showToast("primary", "Agent added successfully!");
+            showToast("success", "Agent added successfully!");
         },
         error: function(xhr, status, error) {
             // Handle errors here
             console.error("Error creating campaign:", error);
             // alert("Error creating campaign: " + xhr.responseText);
-            showToast("danger", "Failed to add Agent! "+ error);
+            showToast("error", "Failed to add Agent! "+ error);
         }
      });
   }
@@ -457,7 +458,7 @@
 
       // Enable the proceed button after validation
       $('#proceedButton').prop('disabled', false);
-
+      contactList = data
       console.log("Column Names: ", columnNames);
       console.log("File Data: ", data);
       alert('contacts upload successfull')

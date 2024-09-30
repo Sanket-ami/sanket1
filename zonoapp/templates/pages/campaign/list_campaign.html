@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <!-- Search form -->
+    <form method="GET" action="{% url 'manage_campaign' %}" style="display: flex; flex-direction: row; justify-content: flex-end;">
+        <div class="form-group" style="margin-right: 0.5%;">
+            <input type="text" name="q" class="form-control" placeholder="Search campaigns" value="{{ search_query }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <!-- Campaign cards -->
+    <div class="row mt-4">
+        {% for campaign in page_obj %}
+        <div class="col-xxl-9 col-xl-8 box-col-12 mb-4">
+            <div class="card">
+                <div class="job-search">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <img class="img-40 img-fluid m-r-20" src="{% static 'assets/images/customizer/4.png' %}" alt="campaign image">
+                            <div class="flex-grow-1">
+                                <h6 class="f-w-600">
+                                    {{ campaign.campaign_name }}
+                                    <span class="badge badge-primary pull-right">{{ campaign.modified_at|date:"M d, Y" }}</span>
+                                </h6>
+                                <p>{{ campaign.organisation_name }}</p>
+                                
+                                <!-- Edit and Delete Icons -->
+                                <div class="d-flex align-items-center">
+                                    
+                                    <a href="{% url 'edit_campaign' campaign.id %}" class="btn btn-link p-0" title="Edit">
+                                        <i class="fa fa-edit text-warning"></i>
+                                    </a>
+                                    <a href="{% url 'delete_campaign' campaign.id %}" class="btn btn-link p-0 ml-2" title="Delete">
+                                        <i class="fa fa-trash text-danger"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Process Type and Prompt -->
+                        <p><strong>Process Type:</strong> {{ campaign.process_type }}</p>
+                        <p><strong>Prompt:</strong> {{ campaign.agent.agent_prompt | truncatechars:100 }}</p>
+
+                        <!-- Schedule and Contact List Buttons -->
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="" class="btn btn-sm btn-info mr-2">
+                                <i class="fa fa-calendar"></i> Schedule
+                            </a>
+                            <a href="{% url 'contact_list' campaign.id %}" class="btn btn-sm btn-primary">
+                                <i class="fa fa-list"></i> Contact List
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No campaigns found.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination controls -->
+    <div class="job-pagination">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination pagination-primary">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&q={{ search_query }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
