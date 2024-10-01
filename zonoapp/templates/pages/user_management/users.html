@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+      <h4>Striped Row with Inverse Table</h4><span>Use <code>.table-striped</code> to add zebra-striping to any table row within the <code></code>. This styling doesn't work in IE8 and below as :nth-child CSS selector isn't supported.</span>
+    </div>
+    <div class="card-block row">
+      <div class="col-sm-12 col-lg-12 col-xl-12">
+        <div class="table-responsive custom-scrollbar">
+          <table class="table table-inverse table-striped">
+            <thead>
+              <tr>
+                <th scope="col">UserName</th>
+                <th scope="col">Email</th>
+                <th scope="col">Role</th>
+                <th scope="col">Organisation</th>
+                <th scope="col">Date Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <th scope="row">{{ user.username }}</th>
+                    <td>{{ user.email }}</td>
+                    {% if user.role %}
+                      <td>{{ user.role.role }}</td>
+                    {% else %}
+                      <td> role </td>
+                    {% endif %}
+                    <td>{{ user.organisation }}</td>
+                    <td>{{ user.date_joined }}</td>
+                </tr>
+                {% endfor %}
+          
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scriptcontent %}
+{% endblock %}
