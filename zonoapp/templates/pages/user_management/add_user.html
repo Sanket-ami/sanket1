@@ -7,6 +7,7 @@
 {% block content %}
 
 
+
     <!-- Button to Add User -->
     <button class="btn btn-primary-gradien" style="margin: 1%;" type="button" id="addUserButton">Add user</button>
 
@@ -35,9 +36,20 @@
                                 <th scope="row">{{ user.username }}</th>
                                 <td>{{ user.email }}</td>
                                 <td>{{ user.role.role }}</td>
-                                <td>{{ user.organisation }}</td>
+                                <td>{{ user.organisation_name }}</td>
                                 <td>{{ user.date_joined }}</td>
+                                <td> 
+                                    <button class=" btn-info edit-agent-button" id="editAgentModal">
+                                    <i class="fa fa-edit"></i>
+                                </button></td>
+                                <td>
+                                <button  class=" btn-danger" onclick=deleteAgent("{{ user.id }}") >
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+
                             </tr>
+                          
                             {% endfor %}
                         </tbody>
                     </table>
@@ -45,7 +57,7 @@
             </div>
         </div>
     </div>
-
+    
     <!-- User Form (Hidden Initially) -->
     <div class="card-body custom-input addAgentModal d-none" id="addAgentModal">
         <form class="row g-3 needs-validation" novalidate>
@@ -120,22 +132,109 @@
             </div>
         </form>
     </div>
+    <div class="card-body custom-input editAgentModal d-none" id="editAgentModal">
+        <form class="row g-3 needs-validation" novalidate>
+            {% csrf_token %}
+            <input type="hidden" id="edit-user-id"> <!-- Hidden field for user ID -->
+            
+            <div class="col-12">
+                <label class="form-label" for="edit-user-name">UserName</label>
+                <input class="form-control" id="edit-user-name" type="text" placeholder="user name" aria-label="user name" required="">
+            </div>
+    
+            <div class="col-12">
+                <label class="form-label" for="edit-email">Email address</label>
+                <input class="form-control" id="edit-email" type="email" required="">
+            </div>
+    
+            <div class="col-12">
+                <div class="card-wrapper border rounded-3 checkbox-checked">
+                    <h6 class="sub-title">Select Role</h6>
+                    <div class="radio-form">
+                        {% for role in roles %}
+                        <div class="form-check">
+                            <input class="form-check-input" id="editRole{{ role.id }}" type="radio" name="editRole" value="{{ role.id }}">
+                            <label class="form-check-label" for="editRole{{ role.id }}">{{ role.role }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col-12">
+                <button class="btn btn-primary" type="submit">Update</button>
+            </div>
+        </form>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+
+
+
+
+        function deleteAgent(user_id,agent_name){
+        Swal.fire({
+                title: 'Are you sure?',
+                text: 'You won\'t be able to revert this!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                    // Proceed with the deletion via AJAX
+                    $.ajax({
+                        url: "{% url 'list-user' %}", // Django URL
+                        method: "DELETE",
+                        data: JSON.stringify({ "user_id": user_id }),
+                        contentType: "application/json",
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                        },
+        
+                        success: function(response) {
+                            // Show success message using SweetAlert2
+ 
+                            showToast("success", "Delete User");
+                        },
+                        error: function(xhr, status, error) {
+                            // Show error message using SweetAlert2
+                            showToast("error", "Failed to delete contact! " + error,"Delete User");
+                        }
+                    });
+                }
+            });
+
+    }
+
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.querySelector(".needs-validation");
             const addUserButton = document.getElementById("addUserButton");
             const modal = document.getElementById("addAgentModal");
             const userTable = document.getElementById("userTable");
+            const editModal = document.getElementById("editAgentModal");
+
 
             // Show form and hide table when the "Add user" button is clicked
             addUserButton.addEventListener("click", function () {
                 modal.classList.remove("d-none");
                 userTable.classList.add("d-none");
             });
+            editModal.addEventListener("click", function () {
+                editModal.classList.remove("d-none");
+                // userTable.classList.add("d-none");
+            });
+
 
             // Handle form submission using AJAX
+
+
+            
+
+
+
+
             form.addEventListener("submit", function (event) {
                 event.preventDefault();
 
@@ -181,7 +280,7 @@
                 text: message,
                 icon: type,
                 confirmButtonText: 'OK'
-            });
+            }).then(() => { location.reload(); });
         }
     </script>
 
