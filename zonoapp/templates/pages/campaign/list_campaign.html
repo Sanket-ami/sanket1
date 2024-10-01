@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container-fluid">
     <!-- Search form -->
     <form method="GET" action="{% url 'manage_campaign' %}" style="display: flex; flex-direction: row; justify-content: flex-end;">
         <div class="form-group" style="margin-right: 0.5%;">
@@ -48,10 +52,16 @@
                         <div class="d-flex justify-content-end mt-4">
                             <a href="" class="btn btn-sm btn-info mr-2">
                                 <i class="fa fa-calendar"></i> Schedule
-                            </a>
+                            </a>&nbsp;
                             <a href="{% url 'contact_list' campaign.id %}" class="btn btn-sm btn-primary">
                                 <i class="fa fa-list"></i> Contact List
                             </a>
+                        </div>
+                        <!-- Start campaign Buttons -->
+                        <div class="d-flex justify-content-start mt-4">
+                            <button class="btn btn-sm btn-primary mr-2"  onclick="startCampaign({{campaign.id}},'{{ campaign.campaign_name }}' )">
+                                <i class="fa fa-play"> </i> Start Campaign
+                            </button>&nbsp;
                         </div>
                     </div>
                 </div>
@@ -95,4 +105,53 @@
         </nav>
     </div>
 </div>
+
+<!-- Script block -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    function startCampaign(campaign_id,campaign_name){
+        // alert("started "+campaign_id)
+        // Confirm deletion using SweetAlert2
+        Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do tou really want to start the campaign '+ campaign_name,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                     console.log("started1111111")
+
+                     $.ajax({
+                        url: "{% url 'start_campaign' %}", // Django URL
+                        method: "POST",
+                        data: JSON.stringify({ "campaign_id": campaign_id }),
+                        contentType: "application/json",
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                        },
+                        success: function(response) {
+                            // Show success message using SweetAlert2
+                            Swal.fire({
+                                icon: 'success',
+                                text: response.message
+                            });
+                            showToast("success", response.message);
+                        },
+                        error: function(xhr, status, error) {
+                            // Show error message using SweetAlert2
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'Failed to delete contacts: ' + error
+                            });
+                            showToast("error", "Failed to delete contact! " + error);
+                        }
+                    });
+                }
+            });
+      
+    }
+</script>
 {% endblock %}

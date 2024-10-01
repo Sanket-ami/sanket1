@@ -222,7 +222,7 @@
                         <div class="flex-grow-1"><span class="d-block">Voice Library</span><a href=" ">Add or update Voice</a></div>
                       </div>
                       <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/11.png">
-                        <div class="flex-grow-1"><span class="d-block">Tools Library</span><a href="{% url 'manage_campaign' %}">Update or Schedule Campaign</a></div>
+                        <div class="flex-grow-1"><span class="d-block">Manage Campaign</span><a href="{% url 'manage_campaign' %}">Update or Schedule Campaign</a></div>
                       </div>
                     </div>
                   </div>
@@ -415,7 +415,7 @@
       // Get header row and process column names
       const headerRow = rows[0];
       columnNames = $.map(headerRow, function(col) {
-        return col.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        return col.toLowerCase() ;
       });
 
       // Check for contact_number column
@@ -434,14 +434,14 @@
         const contactNumber = row[phoneNumberIndex]; // Get the contact number from the row
         console.log(contactNumber)
         // Check if contactNumber is defined and then trim and validate
-        if (contactNumber === undefined) {
-          return true; // Treat as invalid if undefined
-        }
+        // if (contactNumber === undefined) {
+        //   return true; // Treat as invalid if undefined
+        // }
         
         // Trim and validate the contact number
         return !/^\d{10}$/.test(contactNumber.trim());
       });
-
+      console.log(invalidNumbers)
       if (invalidNumbers) {
         alert('The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.');
         return;
