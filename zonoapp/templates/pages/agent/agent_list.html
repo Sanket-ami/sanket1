@@ -8,7 +8,10 @@
 {% block content %}
 <!-- Add Agent Button -->
 <button class="btn btn-primary-gradien" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Agent</button>
-
+<form method="get" class="form-control" style="display: flex; width: 30%; float: right;" action="{% url 'agent_create' %}">
+    <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search agents...">
+    <button class="btn btn-info" type="submit">Search</button>
+</form>
 <!-- Add Agent Modal -->
 <div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -82,19 +85,106 @@
     </div>
 </div>
 
+<!-- Edit Agent Modal -->
+<div class="modal fade" id="editAgentModal" tabindex="-1" aria-labelledby="editAgentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAgentModalLabel">Edit Agent</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form class="edit-agent-form needs-validation" method="post" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" id="editAgentId" name="agent_id">
+
+                    <!-- Agent Name -->
+                    <div class="mb-3">
+                        <label for="editAgentName" class="form-label">Agent Name</label>
+                        <input type="text" class="form-control" id="editAgentName" name="agent_name" required>
+                        <div class="invalid-feedback">Please provide a valid agent name.</div>
+                    </div>
+
+                    <!-- Organisation Name -->
+                    <div class="mb-3">
+                        <label for="editOrganisationName" class="form-label">Organisation Name</label>
+                        <select class="form-select" id="editOrganisationName" name="organisation_name" required>
+                            {% for org in org_names %}
+                            <option value="{{ org }}">{{ org }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please provide a valid organisation name.</div>
+                    </div>
+
+                    <!-- Agent Provider -->
+                    <div class="mb-3">
+                        <label for="editAgentProvider" class="form-label">Agent Provider</label>
+                        <select class="form-select" id="editAgentProvider" name="agent_provider" required>
+                            <option selected disabled value="">Choose...</option>
+                            {% for provider in llm_providers_list %}
+                            <option value="{{ provider.provider_name }}" data-config='{{ provider.provider_config }}'>
+                                {{ provider.provider_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a valid provider.</div>
+                    </div>
+
+                    <!-- Ace Code Editor Container -->
+                    <div id="editJsonEditorContainer" class="mt-3">
+                        <label for="editProviderConfigEditor" class="form-label">Provider Configuration</label>
+                        <div id="editProviderConfigEditor" style="height: 200px; width: 100%; border: 1px solid #ced4da;"></div>
+                    </div>
+
+                    <!-- Voice -->
+                    <div class="mb-3">
+                        <label for="editAgentVoice" class="form-label">Voice</label>
+                        <select class="form-select" id="editAgentVoice" name="voice" required>
+                            <option selected disabled value="">Choose...</option>
+                            {% for voice in voices %}
+                            <option value="{{ voice.id }}">{{ voice.voice_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a valid voice.</div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" type="submit">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid" >
-    <form method="get" class="form-control" style="display: flex; width: 30%; float: right;" action="{% url 'agent_create' %}">
-        <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search agents...">
-        <button class="btn btn-info" type="submit">Search</button>
-    </form>
+
     <br>
     <div class="row">
         {% for agent in page_obj %}
         <div class="col-md-4">
             <div class="card">
-                <div class="card-header pb-0 border-t-primary">
-                    <h4>{{ agent.agent_name }}</h4>
-                    <p class="mt-1 f-m-light">{{ agent.organisation_name }}</p>
+                <div class="card-header pb-0 border-t-primary d-flex justify-content-between align-items-start">
+                    <div>
+                        <h4>{{ agent.agent_name }}</h4>
+                        <p class="mt-1 f-m-light">{{ agent.organisation_name }}</p>
+                    </div>
+                    <div>
+                        <!-- Edit Agent Button (inside each agent card) -->
+                        <button class=" btn-info edit-agent-button" 
+                            data-agent-id="{{ agent.id }}"
+                            data-agent-name="{{ agent.agent_name }}"
+                            data-agent-organisation="{{ agent.organisation_name }}"
+                            data-agent-provider="{{ agent.agent_provider.provider_name }}"
+                            data-agent-config='{{ agent.agent_configuration }}'
+                            data-agent-voice="{{ agent.voice.id }}">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button  class=" btn-danger" onclick="deleteAgent({{ agent.id }},'{{ agent.agent_name }}')" >
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <p class="mb-0">{{ agent.voice }}</p>
@@ -128,10 +218,57 @@
 </div>
 <!-- Container-fluid Ends-->
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <!-- Ace Editor codeblock -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
+        // Function to show toast
+    function showToast(type, message,title="Add Agent") {
+                Swal.fire({
+                    title:title,
+                    text: message,
+                    icon: type,
+                    confirmButtonText: 'OK'
+                }).then(() => { location.reload(); });
+            }    
+    //delete agent function
+    function deleteAgent(agent_id,agent_name){
+        console.log(agent_id)
+        Swal.fire({
+                title: 'Are you sure?',
+                text: 'You won\'t be able to revert this!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                    // Proceed with the deletion via AJAX
+                    $.ajax({
+                        url: "{% url 'delete_agent' %}", // Django URL
+                        method: "POST",
+                        data: JSON.stringify({ "agent_id": agent_id }),
+                        contentType: "application/json",
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                        },
+                        success: function(response) {
+                            // Show success message using SweetAlert2
+ 
+                            showToast("success", response.message,"Delete Agent");
+                        },
+                        error: function(xhr, status, error) {
+                            // Show error message using SweetAlert2
+                            showToast("error", "Failed to delete contact! " + error,"Delete Agent");
+                        }
+                    });
+                }
+            });
+
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         const form = document.querySelector(".needs-validation");
         const submitButton = form.querySelector("button[type='submit']");
@@ -141,6 +278,80 @@
         const editor = ace.edit("providerConfigEditor");
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/json");
+
+        // edit modal
+        const editAgentButtons = document.querySelectorAll(".edit-agent-button");
+        const aceEditor = ace.edit("editProviderConfigEditor");
+        aceEditor.setTheme("ace/theme/monokai");
+        aceEditor.session.setMode("ace/mode/json");
+
+        editAgentButtons.forEach(button => {
+            button.addEventListener("click", function () {
+                const agentId = this.getAttribute("data-agent-id");
+                const agentName = this.getAttribute("data-agent-name");
+                const organisationName = this.getAttribute("data-agent-organisation");
+                const agentProvider = this.getAttribute("data-agent-provider");
+                let agentConfig = this.getAttribute("data-agent-config");
+                const agentVoice = this.getAttribute("data-agent-voice");
+
+                // Set modal form values
+                document.getElementById("editAgentId").value = agentId;
+                document.getElementById("editAgentName").value = agentName;
+                document.getElementById("editOrganisationName").value = organisationName;
+                document.getElementById("editAgentProvider").value = agentProvider;
+                document.getElementById("editAgentVoice").value = agentVoice;
+                console.log(agentConfig)
+                if (agentConfig) {
+                // Replace single quotes with double quotes to make it valid JSON
+                    agentConfig = agentConfig.replace(/'/g, '"');
+                }
+                aceEditor.setValue(JSON.stringify(JSON.parse(agentConfig), null, 2), 1);
+
+                // Show the modal
+                const editModal = new bootstrap.Modal(document.getElementById("editAgentModal"));
+                editModal.show();
+            });
+        });
+
+        // Handle form submission for editing agent
+        const editForm = document.querySelector(".edit-agent-form");
+            editForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                // Collect data for submission
+                const jsonData = {
+                    agent_id: document.getElementById("editAgentId").value,
+                    agent_name: document.getElementById("editAgentName").value,
+                    organisation_name: document.getElementById("editOrganisationName").value,
+                    agent_provider: document.getElementById("editAgentProvider").value,
+                    voice: document.getElementById("editAgentVoice").value,
+                    agent_configuration: aceEditor.getValue()
+                };
+
+                // Send AJAX request to update the agent
+                fetch("/agent/agent", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: JSON.stringify(jsonData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast("primary", "Agent updated successfully!");
+
+                    } else {
+                        console.log("Failed to update agent: " + data.error);
+                        showToast("error", "Failed to update agent "+ data.error);
+                    }
+                })
+                .catch(error => {
+                    console.log("Error:", error);
+                    showToast("error", "Failed to update agent "+ error);
+                });
+            });        
 
         // Initialize Ace Code Editor when provider is selected
         providerSelect.addEventListener('change', function () {
@@ -201,7 +412,7 @@
 
                 if (data.success) {
                     showToast("primary", "Agent added successfully!");
-                    alert('Agent added successfully!')
+                    // alert('Agent added successfully!')
                 } else {
                     showToast("danger", "Error adding agent: " + (data.error || "Unknown error"));
                 }
@@ -213,16 +424,7 @@
             });
         });
 
-        // Function to show toast
-        function showToast(type, message) {
-            const toastHTML = `
-                <div class="alert alert-${type} dark alert-dismissible fade show" role="alert">  
-                    <p>${message}</p> 
-                    <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            document.body.insertAdjacentHTML("beforeend", toastHTML);
-        }
+
     });
 </script>
 {% endblock %}

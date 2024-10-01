@@ -81,5 +81,49 @@ def agent_create(request):
 
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e),"status_code":500}, status=500)        
-        
-    
+
+    elif request.method == "PUT" :
+        try:
+            data = json.loads(request.body)
+            agent_id = data.get('agent_id')
+            agent_name = data.get('agent_name')
+            organisation_name = data.get('organisation_name')
+            agent_provider_name = data.get('agent_provider')
+            voice_id = data.get('voice')
+            agent_configuration = data.get('agent_configuration')
+
+            if not agent_id or not agent_name or not organisation_name or not agent_provider_name or not voice_id or not agent_configuration:
+                return JsonResponse({"success": False, "error": "All fields are required."}, status=400)
+
+            agent = get_object_or_404(Agent, id=agent_id)
+            agent.agent_name = agent_name
+            agent.organisation_name = organisation_name
+            agent.agent_provider = get_object_or_404(Provider, provider_name=agent_provider_name)
+            agent.voice = get_object_or_404(Voice, id=voice_id)
+
+            try:
+                agent.agent_configuration = json.loads(agent_configuration)
+            except json.JSONDecodeError:
+                return JsonResponse({"success": False, "error": "Invalid JSON in agent configuration."}, status=400)
+
+            agent.save()
+
+            return JsonResponse({"success": True, "message": "Agent updated successfully!"})
+
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+############ delete agent #############
+def agent_delete(request):
+    try:
+        request_body = json.loads(request.body)
+        agent_id = request_body['agent_id']
+
+        agent = get_object_or_404(Agent, id=agent_id)
+        agent.is_deleted = True
+        agent.save()
+        return JsonResponse({"success": True, "message": "Agent deleted successfully!"})
+    except Exception as e:
+        print(e)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
