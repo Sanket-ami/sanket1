@@ -647,3 +647,60 @@ def update_call_log(call_id, updated_fields):
     except Exception as err:
         print("CallLog with the given ID does not exist.")
         return None  # or handle as appropriate
+
+"""
+Display call logs of a perticular campaign
+"""
+def list_call_logs(request):
+    if request.method == "GET":
+        try:
+            campaign_list = Campaign.objects.filter(is_delete=False)
+            if not request.user.is_superuser:
+                campaign_list = campaign_list.filter(organisation_name=request.user.organisation_name)
+
+            campaign_list = list(campaign_list.values("id", "campaign_name"))
+
+            campaign_id = request.GET.get('campaign_id',0)
+            call_logs_data = []
+            dynamic_columns = []
+            total_pages = 0
+            page = 1
+            
+            if campaign_id:
+                call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-created_at')
+
+                # Pagination logic
+                page = int(request.GET.get('page', 1))
+                per_page = int(request.GET.get('per_page', 10))
+                per_page=1
+                paginator = Paginator(call_logs, per_page)
+                paginated_logs = paginator.get_page(page)
+                total_pages = paginator.num_pages
+                print("num pages" ,total_pages)
+                call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
+                
+                # Extract dynamic columns from the first log
+                if call_logs_data:
+                    dynamic_columns = list(call_logs_data[0].keys())
+
+            context = {
+                "breadcrumb": {"title": "View Call Logs", "parent": "Pages", "child": "Call Logs"},
+                "call_logs_data": call_logs_data,
+                "campaign_list": campaign_list,
+                "dynamic_columns": dynamic_columns,
+                "total_pages": total_pages,
+                "success": True,
+                "page": page,
+                "paginated_logs":paginated_logs,
+                "campaign_id":str(campaign_id)
+            }
+
+            return render(request, 'pages/campaign/call_logs.html', context)
+
+        except Exception as error:
+            print("error in list_call_logs: ", error)
+            return JsonResponse({"error": "No call logs found for this campaign"}, status=404)
+
+        
+    elif request.method == "POST":
+        return JsonResponse({"error": "POST method not supported for this endpoint"}, status=405)
