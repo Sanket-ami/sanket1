@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+{% block content %}
+
+
+    <!-- Button to Add User -->
+    <button class="btn btn-primary-gradien" style="margin: 1%;" type="button" id="addUserButton">Add user</button>
+
+    <!-- User Table (Visible by Default) -->
+    <div class="card" id="userTable">
+        <div class="card-header">
+            <h4>Striped Row with Inverse Table</h4>
+            <span>Use <code>.table-striped</code> to add zebra-striping to any table row within the table. This styling doesn't work in IE8 and below as the :nth-child CSS selector isn't supported.</span>
+        </div>
+        <div class="card-block row">
+            <div class="col-sm-12 col-lg-12 col-xl-12">
+                <div class="table-responsive custom-scrollbar">
+                    <table class="table table-inverse table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">UserName</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Role</th>
+                                <th scope="col">Organisation</th>
+                                <th scope="col">Date Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <th scope="row">{{ user.username }}</th>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.role.role }}</td>
+                                <td>{{ user.organisation }}</td>
+                                <td>{{ user.date_joined }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Form (Hidden Initially) -->
+    <div class="card-body custom-input addAgentModal d-none" id="addAgentModal">
+        <form class="row g-3 needs-validation" novalidate>
+            {% csrf_token %}
+            <div class="col-12">
+                <label class="form-label" for="user-name">UserName</label>
+                <input class="form-control" id="user-name" type="text" placeholder="user name" aria-label="user name" required="">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" for="first-name">First name</label>
+                <input class="form-control" id="first-name" type="text" placeholder="First name" aria-label="First name" required="">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" for="last-name">Last name</label>
+                <input class="form-control" id="last-name" type="text" placeholder="last name" aria-label="Last name" required="">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label" for="exampleFormControlInput1">Email address</label>
+                <input class="form-control" id="exampleFormControlInput1" type="email" required="">
+            </div>
+
+            <div class="col-12">
+                <label class="col-sm-12 col-form-label" for="inputPassword1">Password</label>
+                <input class="form-control" id="inputPassword1" type="password" required="">
+            </div>
+
+            <div class="col-12">
+                <label class="col-sm-12 col-form-label" for="inputPassword2">Confirm Password</label>
+                <input class="form-control" id="inputPassword2" type="password" required="">
+            </div>
+
+            <div class="col-12">
+                <div class="card-wrapper border rounded-3 checkbox-checked">
+                    <h6 class="sub-title">Select Organisation</h6>
+                    <div class="radio-form">
+                        {% for user in organisation_list %}
+                        <div class="form-check">
+                            <input class="form-check-input" id="flexRadioDefault2" type="radio" name="flexRadioDefault2" required="" value="{{ user.organisation_name }}">
+                            <label class="form-check-label" for="flexRadioDefault2">{{ user.organisation_name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="card-wrapper border rounded-3 checkbox-checked">
+                    <h6 class="sub-title">Select Role</h6>
+                    <div class="radio-form">
+                        {% for role in roles %}
+                        <div class="form-check">
+                            <input class="form-check-input" id="flexRadioDefault1" type="radio" name="flexRadioDefault1" required="" value="{{ role.id }}">
+                            <label class="form-check-label" for="flexRadioDefault1">{{ role.role }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" id="flexSwitchCheckDefault" type="checkbox" role="switch" required="">
+                    <label class="form-check-label" for="flexSwitchCheckDefault">Are you sure the above information is true</label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button class="btn btn-primary" type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector(".needs-validation");
+            const addUserButton = document.getElementById("addUserButton");
+            const modal = document.getElementById("addAgentModal");
+            const userTable = document.getElementById("userTable");
+
+            // Show form and hide table when the "Add user" button is clicked
+            addUserButton.addEventListener("click", function () {
+                modal.classList.remove("d-none");
+                userTable.classList.add("d-none");
+            });
+
+            // Handle form submission using AJAX
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                let formData = {
+                    'username': document.getElementById("user-name").value,
+                    'first_name': document.getElementById("first-name").value,
+                    'last_name': document.getElementById("last-name").value,
+                    'email': document.getElementById("exampleFormControlInput1").value,
+                    'password': document.getElementById("inputPassword1").value,
+                    'confirm_password': document.getElementById("inputPassword2").value,
+                    'role': document.querySelector("input[name='flexRadioDefault1']:checked").value,
+                    'organisation_name': document.querySelector("input[name='flexRadioDefault2']:checked").value
+                };
+                console.log(formData);
+
+                // AJAX request to submit form data
+                fetch("/user_list", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Form submission successful", data);
+                    showToast('success', 'Form submitted successfully!');
+                    // Hide form and show table after successful submission
+                    modal.classList.add("d-none");
+                    userTable.classList.remove("d-none");
+                })
+                .catch(error => {
+                    console.error("Form submission error", error);
+                    showToast('error', 'Form submission failed!');
+                });
+            });
+        });
+
+        function showToast(type, message) {
+            Swal.fire({
+                title: type === 'success' ? 'Success' : 'Error',
+                text: message,
+                icon: type,
+                confirmButtonText: 'OK'
+            });
+        }
+    </script>
+
+
+
+
+{% endblock %}

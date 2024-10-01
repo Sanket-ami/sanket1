@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;  /* Slightly below the modal z-index */
+        }
+
+    .swal-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        background: #333;
+        padding: 20px;
+        border-radius: 8px;
+        width: 400px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+    }
+
+    .swal-icon {
+        margin: 20px 0;
+    }
+
+    .swal-icon--warning {
+        width: 60px;
+        height: 60px;
+        background: #f8bb86;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .swal-title {
+        font-size: 24px;
+        margin: 10px 0;
+    }
+
+    .swal-text {
+        margin-bottom: 20px;
+    }
+
+    .swal-footer {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .swal-button {
+        padding: 10px 20px;
+        background: #444;
+        border: 1px solid #888;
+        color: white;
+        cursor: pointer;
+    }
+
+    .swal-button--danger {
+        background: #d33;
+    }
+
+    .swal-button--cancel {
+        background: #777;
+    }
+
+    .table-responsive {
+        margin-top: 20px;
+    }
+
+    .table th, .table td {
+        padding: 15px;
+        text-align: left;
+    }
+
+    .action li {
+        display: inline-block;
+        margin: 0 5px;
+    }
+</style>
+
+<div class="swal-modal" role="dialog" aria-modal="true" style="display: none;">
+    <div class="swal-icon swal-icon--warning">
+        <span class="swal-icon--warning__body">
+            <span class="swal-icon--warning__dot"></span>
+        </span>
+    </div>
+    <div class="swal-title">Are you sure?</div>
+    <div class="swal-text">Once deleted, you will not be able to recover this file!</div>
+    <div class="swal-footer">
+        <div class="swal-button-container">
+            <button class="swal-button swal-button--cancel">Cancel</button>
+        </div>
+        <div class="swal-button-container">
+            <button class="swal-button swal-button--confirm swal-button--danger">OK</button>
+        </div>
+    </div>
+</div>
+
+<div class="col-sm-12">
+    <div class="card">
+        <div class="card-header pb-0 card-no-border">
+            <h4>Provider Configurations</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive custom-scrollbar">
+                <div id="basic-1_wrapper" class="dataTables_wrapper no-footer">
+                    <div class="dataTables_length" id="basic-1_length">
+                        <label>Show 
+                            <select name="basic-1_length" aria-controls="basic-1" class="">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select> entries
+                        </label>
+                    </div>
+                    <div id="basic-1_filter" class="dataTables_filter">
+                        <label>Search:<input type="search" class="" placeholder="" aria-controls="basic-1"></label>
+                    </div>
+                    <table class="display dataTable no-footer" id="basic-1" role="grid" aria-describedby="basic-1_info">
+                        <thead>
+                            <tr role="row">
+                                <th>Name</th>
+                                <th>Configuration</th>
+                                <th>Type</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for provider in providers %}
+                            <tr role="row">
+                                <td>{{ provider.provider_name }}</td>
+                                <td>{{ provider.provider_config|safe }}</td>
+                                <td>{{ provider.provider_type }}</td>
+                                <td>
+                                    <ul class="action"> 
+                                        <li class="delete"> <a href="#" class="delete-provider" data-id="{{ provider.id }}"><i class="icon-trash"></i></a></li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">No providers available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="dataTables_info" id="basic-1_info" role="status" aria-live="polite">
+                        Showing {{ providers.start_index }} to {{ providers.end_index }} of {{ providers.paginator.count }} entries
+                    </div>
+                    <div class="dataTables_paginate paging_simple_numbers" id="basic-1_paginate">
+                        {% if providers.has_previous %}
+                        <a class="paginate_button previous" href="?page={{ providers.previous_page_number }}" aria-controls="basic-1">Previous</a>
+                        {% else %}
+                        <a class="paginate_button previous disabled" aria-controls="basic-1">Previous</a>
+                        {% endif %}
+                        
+                        <span>
+                            {% for page in providers.paginator.page_range %}
+                                {% if page == providers.number %}
+                                    <a class="paginate_button current" href="#">{{ page }}</a>
+                                {% else %}
+                                    <a class="paginate_button" href="?page={{ page }}">{{ page }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        
+                        {% if providers.has_next %}
+                        <a class="paginate_button next" href="?page={{ providers.next_page_number }}" aria-controls="basic-1">Next</a>
+                        {% else %}
+                        <a class="paginate_button next disabled" aria-controls="basic-1">Next</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.delete-provider').on('click', function(event) {
+            event.preventDefault();  // Prevent the default link behavior
+
+            const providerId = $(this).data('id');
+
+            // Show the custom modal
+            $('.swal-modal').fadeIn();
+
+            // Handle Cancel button
+            $('.swal-button--cancel').off('click').on('click', function() {
+                $('.swal-modal').fadeOut();  // Hide the modal
+            });
+
+            // Handle Confirm button
+            $('.swal-button--confirm').off('click').on('click', function() {
+                $.ajax({
+                    url: `/provider/delete/${providerId}/`,
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',  // Include CSRF token
+                    },
+                    success: function(result) {
+                        location.reload();  // Refresh the page
+                    },
+                    error: function(xhr) {
+                        alert('Failed to delete the provider: ' + xhr.responseText);
+                        $('.swal-modal').fadeOut();  // Hide the modal
+                    }
+                });
+            });
+        });
+    });
+</script>
+
+
+{% include 'pages/sample-page/components/sample-page.html' %}
+
+{% endblock %}
+
+{% block scriptcontent %}
+
+{% endblock %}
+
+
+
+
+
+
+
+
