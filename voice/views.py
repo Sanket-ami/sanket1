@@ -19,7 +19,7 @@ def voice_view(request):
                 voice_config = voice.voice_configuration
                 print(voice_config)
             except json.JSONDecodeError:
-                voice_config = {}  # 
+                voice_config = {}  
             voices_list.append({
                 'voice_name': voice.voice_name,
                 'voice_provider': voice.voice_provider,
