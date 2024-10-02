@@ -55,15 +55,17 @@ def list_of_user(request, user_id:int=None):
             return JsonResponse({'status': f'User deletion failed: {e}', 'status_code': 400}, status=400)
         
     elif request.method == "PUT":
-        if user_id != None:
-            data = json.loads(request.body)
-            user_data = User.objects.get(id=user_id)
-            user_data.email = data['email']
-            user_data.role = data['role']
-            user_data.save()
-            return JsonResponse({'status': 'User Updated successfully', 'status_code': 200}, status=200)
-        return JsonResponse({"status": "User not found", "status_code": 404}, status=404)
-    return JsonResponse({"status": "Method Not allowed"}, status=200)
+       
+        print("data=====>", request.body)
+        data = json.loads(request.body)
+        user_id = data['user_id']
+        user_data = User.objects.get(id=user_id)
+        user_data.email = data['email']
+        user_data.role = Role.objects.get(id=data['role'])
+        user_data.save()
+        return JsonResponse({'status': 'User Updated successfully', 'status_code': 200}, status=200)
+    #     return JsonResponse({"status": "User not found", "status_code": 404}, status=404)
+    # return JsonResponse({"status": "Method Not allowed"}, status=200)
 
 
 def get_user(request, user_id:int):
