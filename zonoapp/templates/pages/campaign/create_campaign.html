@@ -65,7 +65,12 @@
                         
                         <div class="col-sm-6">
                           <label class="form-label" for="processType">Process Type<span class="txt-danger">*</span></label>
-                          <input class="form-control" id="processType" type="text" placeholder="Enter process type" required="">
+                          <select class="form-control" id="processType" required>
+                            <option value="" disabled selected>Select process type</option>
+                            <option value="RCM">RCM</option>
+                            <option value="RETRIEVAL">RETRIEVAL</option>
+                            <option value="OTHER">OTHER</option>
+                          </select>
                           <div class="valid-feedback">Looks good!</div>
                         </div>
                         
@@ -274,6 +279,9 @@
         invalidVariables.push(variable); // Collect invalid variables
       }
     }
+    if (!agent_prompt){
+      return false;
+    }
 
     if (invalidVariables.length > 0) {
       document.getElementById("promptError").style.display = 'block';
@@ -380,7 +388,7 @@
             // Handle the successful response, maybe show a success message
             console.log("Campaign created successfully");
             // alert("Campaign created successfully!");
-            showToast("success", "Agent added successfully!");
+            showToast("success", "Campaign added successfully!");
         },
         error: function(xhr, status, error) {
             // Handle errors here

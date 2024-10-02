@@ -323,7 +323,8 @@ def monitor_call(mongo_id,call_status_id,campaign_id):
             transcript_obj = Transcript()
             transcript_obj.campaign_id =  campaign_id
             transcript_obj.call_logs = call_status_id
-
+            transcript_obj.summary = summary
+            transcript_obj.transcript = transcript
             
             try:
                 qa_analysis =analyze_call(
@@ -875,7 +876,55 @@ def edit_transcript(request):
     except Exception as error:
         print("Error editing call: ",error)
         return redirect('/')
-    
+
+
+"""
+    Function to end an ongoing Call
+"""    
+def end_call(request):
+    # print("Inside end call")
+    try:
+        # Extract the id from the POST request
+        request_body = json.loads(request.body)
+        call_id = request_body['call_id']
+        campaign_id = request_body['campaign_id'] 
+        # print("Received id: ", id)
+        
+        # Fetch the CallLog record with the given id
+        call_history_record = CallLogs.objects(campaign_id=int(campaign_id), call_id=int(call_id)).first()
+
+        if call_history_record:
+            call_id = call_history_record.call_id
+            # print("Found call history record with call_id:", call_id)
+            
+            # Make the external API request with the fetched call_id
+            api_url = f"{CALL_SERVER_BASE_URL}/end_call"
+            
+            payload = {"call_id": call_id}
+            headers = {
+                # 'Authorization': 'Bearer a9e11af5ec4c6491dbd82e8a6f3dfde3'
+                 'Content-Type': 'application/json'
+            }
+            
+            response = requests.post(api_url, headers=headers, json=payload)
+            response = response.json()
+            
+            print("External API response:", response)
+            
+            ## Update the status in the database
+            if ('success' in response and response['success'] ) or ("error" in response and response['error'] and response['error_message']=="Call is already finished or not started" ):
+                call_history_record.update(set__call_status="completed")
+
+            # Return the response from the external API
+            return JsonResponse({"error": False, "success":True, "message":"Successfully ended the call."}, status=200)
+        else:
+            print("No call history record found for id:", call_id)
+            return JsonResponse({"error": True, "success":False, "message":"No call history record found for call"}, status=404)
+
+    except Exception as err:
+        print("error in end_call: ", err)
+        return JsonResponse({"error": True, "success":False, "message":"Error Ending the call"}, status=500)
+        
 ############################################################################################################################################################ 
 ######################################################## Live transcript of the Call #######################################################################
 def live_call_list(request):
@@ -915,7 +964,7 @@ def live_call_list(request):
                         dynamic_columns = list(call_logs_data[0].keys())
 
                 context = {
-                    "breadcrumb": {"title": "View Call Logs", "parent": "Pages", "child": "Call Logs"},
+                    "breadcrumb": {"title": "View Live Calls", "parent": "Pages", "child": "Call Logs"},
                     "call_logs_data": call_logs_data,
                     "campaign_list": campaign_list,
                     "call_status":call_status,
@@ -941,11 +990,11 @@ def live_transcript(request):
         campaign_id = request.GET.get('campaign_id')
         call_id = request.GET.get('call_id')
         
-        transcript_server_url = "" # URL of live transcript
+        transcript_server_url = settings.TRANSCRIPT_SERVER_URL # URL of live transcript
 
         campaign_name = Campaign.objects.get(id=campaign_id).campaign_name
-        context = {"campaign_name":campaign_name,"call_id":call_id}
-        return render(request, 'pages/campaign/live_calls.html', context)
+        context = {"campaign_name":campaign_name,"call_id":call_id,"transcript_server_url":transcript_server_url}
+        return render(request, 'pages/campaign/live_transcript.html', context)
 
 
 ############################################################################################################################################################
