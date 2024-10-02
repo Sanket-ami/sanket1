@@ -14,8 +14,7 @@ urlpatterns = [
         path('/fetch_audio', views.fetch_audio, name='fetch_audio'),
         path('/edit_summary', views.edit_summary, name='edit_summary'),
         path('/edit_transcript', views.edit_transcript, name='edit_transcript'),
-        
-        
-        
+        path('/live_call_list', views.live_call_list, name='live_call_list'),
+        path('/live_transcript', views.live_transcript, name='live_transcript'),
         
 ]

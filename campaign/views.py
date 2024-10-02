@@ -323,7 +323,8 @@ def monitor_call(mongo_id,call_status_id,campaign_id):
             transcript_obj = Transcript()
             transcript_obj.campaign_id =  campaign_id
             transcript_obj.call_logs = call_status_id
-
+            transcript_obj.summary = summary
+            transcript_obj.transcript = transcript
             
             try:
                 qa_analysis =analyze_call(
@@ -873,9 +874,130 @@ def edit_transcript(request):
         # Build the URL with query parameters
         url = reverse('list_call_logs')  # Gets the URL path for the 'edit_summary' route
         query_params = f'?status_filter={status_filter}&campaign_id={campaign_id}'
-
+        print(f"actual - url ==> {url}{query_params}")
         return redirect(f'{url}{query_params}')                
     except Exception as error:
         print("Error editing call: ",error)
         return redirect('/')
- 
+
+
+"""
+    Function to end an ongoing Call
+"""    
+def end_call(request):
+    # print("Inside end call")
+    try:
+        # Extract the id from the POST request
+        request_body = json.loads(request.body)
+        call_id = request_body['call_id']
+        campaign_id = request_body['campaign_id'] 
+        # print("Received id: ", id)
+        
+        # Fetch the CallLog record with the given id
+        call_history_record = CallLogs.objects(campaign_id=int(campaign_id), call_id=int(call_id)).first()
+
+        if call_history_record:
+            call_id = call_history_record.call_id
+            # print("Found call history record with call_id:", call_id)
+            
+            # Make the external API request with the fetched call_id
+            api_url = f"{CALL_SERVER_BASE_URL}/end_call"
+            
+            payload = {"call_id": call_id}
+            headers = {
+                # 'Authorization': 'Bearer a9e11af5ec4c6491dbd82e8a6f3dfde3'
+                 'Content-Type': 'application/json'
+            }
+            
+            response = requests.post(api_url, headers=headers, json=payload)
+            response = response.json()
+            
+            print("External API response:", response)
+            
+            ## Update the status in the database
+            if ('success' in response and response['success'] ) or ("error" in response and response['error'] and response['error_message']=="Call is already finished or not started" ):
+                call_history_record.update(set__call_status="completed")
+
+            # Return the response from the external API
+            return JsonResponse({"error": False, "success":True, "message":"Successfully ended the call."}, status=200)
+        else:
+            print("No call history record found for id:", call_id)
+            return JsonResponse({"error": True, "success":False, "message":"No call history record found for call"}, status=404)
+
+    except Exception as err:
+        print("error in end_call: ", err)
+        return JsonResponse({"error": True, "success":False, "message":"Error Ending the call"}, status=500)
+        
+############################################################################################################################################################ 
+######################################################## Live transcript of the Call #######################################################################
+def live_call_list(request):
+    try:
+        if request.method == "GET":
+            try:
+                campaign_list = Campaign.objects.filter(is_delete=False)
+                if not request.user.is_superuser:
+                    campaign_list = campaign_list.filter(organisation_name=request.user.organisation_name)
+
+                campaign_list = list(campaign_list.values("id", "campaign_name"))
+
+                campaign_id = request.GET.get('campaign_id',0)
+                call_status = "ongoing"
+                call_logs_data = []
+                dynamic_columns = []
+                total_pages = 0
+                page = 1
+                paginated_logs =[]
+                if campaign_id:
+                    call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-created_at')
+                    if call_status:
+                        call_logs = call_logs.filter(call_status="ongoing")
+
+                    # Pagination logic
+                    page = int(request.GET.get('page', 1))
+                    per_page = int(request.GET.get('per_page', 10))
+                    per_page=1
+                    paginator = Paginator(call_logs, per_page)
+                    paginated_logs = paginator.get_page(page)
+                    total_pages = paginator.num_pages
+                    print("num pages" ,total_pages)
+                    call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
+                    
+                    # Extract dynamic columns from the first log
+                    if call_logs_data:
+                        dynamic_columns = list(call_logs_data[0].keys())
+
+                context = {
+                    "breadcrumb": {"title": "View Live Calls", "parent": "Pages", "child": "Call Logs"},
+                    "call_logs_data": call_logs_data,
+                    "campaign_list": campaign_list,
+                    "call_status":call_status,
+                    "dynamic_columns": dynamic_columns,
+                    "total_pages": total_pages,
+                    "success": True,
+                    "page": page,
+                    "paginated_logs":paginated_logs,
+                    "campaign_id":str(campaign_id)
+                }
+
+                return render(request, 'pages/campaign/live_calls.html', context)
+                
+            except Exception as error:
+                print("live_call_list get: ",error)
+                return JsonResponse({"error": "No call logs found for this campaign"}, status=404)
+    except Exception as error:
+        print("Error editing call: ",error)
+        return redirect('/')
+            
+def live_transcript(request):
+    if request.method=="GET":
+        campaign_id = request.GET.get('campaign_id')
+        call_id = request.GET.get('call_id')
+        
+        transcript_server_url = settings.TRANSCRIPT_SERVER_URL # URL of live transcript
+
+        campaign_name = Campaign.objects.get(id=campaign_id).campaign_name
+        context = {"campaign_name":campaign_name,"call_id":call_id,"transcript_server_url":transcript_server_url}
+        return render(request, 'pages/campaign/live_transcript.html', context)
+
+
+############################################################################################################################################################
