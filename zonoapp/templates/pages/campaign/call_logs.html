@@ -34,7 +34,7 @@
     </div>
 
     <!-- Bootstrap Table for Call Logs -->
-    <table class="table table-inverse table-striped dataTable" style="display: block; max-width: -moz-fit-content; max-width: fit-content; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
+    <table class="table table-inverse table-striped dataTable" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
         <thead>
             <tr>
                 {% if call_logs_data %}
@@ -120,20 +120,20 @@
 
             <div id="call_id_div">
                 <h4 class="mb-4">Call ID</h4>
-                <span id="call_call_id" class="form-control text-center"></span>
+                <span id="call_call_id" class="form-control text-left border-0"></span>
             </div>
 
             <div id="duration_div"><br>
                 <!-- <span class="h5 fw-bold text-dark">Call Duration</span><br> -->
                 <h4 class="mb-4">Call Duration</h4>
-                <span id="call_duration" class="form-control text-center"></span><br>
+                <span id="call_duration" class="form-control text-left border-0"></span><br>
             </div>
 
             <div id="number_div"><br>
                 <!-- <span class="h5 fw-bold text-dark">Contact Number</span><br> -->
                 <h4 class="mb-4">Contact Number</h4>
                 <form id="payer_contact_form" class="d-flex flex-column align-items-center">
-                    <input type="text" id="payer_contact" class="form-control text-center" placeholder="Enter contact information" required>
+                    <input type="text" id="payer_contact" class="form-control text-left border-0" placeholder="Enter contact information" required>
                     <input type="hidden" id="editNumberId" name="id" value="391"><br>
                     <!-- <button type="submit" class="btn btn-primary mt-2">Edit Number</button> -->
                 </form><br>
@@ -165,7 +165,9 @@
             <div id="summary_div"> <br>
                 <!-- <span class="h5 fw-bold text-dark">Call Summary</span><br> -->
                 <h4 class="mb-4">Call Summary</h4>
+                {% if request.user.is_superuser %}
                 <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editSummaryText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
+                {% endif %}
                 <span id="call_summary" class="f-w-400  ">Call Not started</span><br>
 
                 <textarea id="editSummary" style="display:none; " rows="10" cols="50"></textarea>
@@ -190,7 +192,9 @@
             <div id="transcript_div" style="overflow: auto;"> <br>
                 <!-- <span class="h5 fw-bold text-dark"></span><br> -->
                 <h4 class="mb-4">Call Transcript</h4>
+                {% if request.user.is_superuser %}
                 <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editTranscriptText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
+                {% endif %}
                 <span id="call_transcript" class="f-w-400" style="display: unset;"> </span><br>  
                 <textarea id="editTranscript" style="display:none; " rows="10" cols="50"> </textarea>
 
