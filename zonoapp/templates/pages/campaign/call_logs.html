@@ -20,6 +20,13 @@
                 </option>
                 {% endfor %}
             </select>
+            <select class="form-select" id="statusSelect" name="call_status">
+                <option value="">----</option>
+                <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>  ongoing </option>
+                <option value="completed" {% if call_status == "completed" %}selected{% endif %}>  completed </option>
+                <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>   not_started </option>
+
+            </select>            
             <input type="hidden" name="page" value="{{ page }}">
             <input type="hidden" name="per_page" value="10">&nbsp;
             <input type="submit" class="btn btn-primary" value="Filter">
@@ -63,7 +70,7 @@
         <ul class="pagination pagination-primary pagin-border-primary">
             {% if paginated_logs.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?campaign_id={{ request.GET.campaign_id }}&page={{ paginated_logs.previous_page_number }}&per_page=10" aria-label="Previous">
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ paginated_logs.previous_page_number }}&per_page=10&call_status={{ call_status }}" aria-label="Previous">
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             </li>
@@ -71,13 +78,13 @@
     
             {% for i in paginated_logs.paginator.page_range %}
             <li class="page-item {% if i == paginated_logs.number %}active{% endif %}">
-                <a class="page-link" href="?campaign_id={{ request.GET.campaign_id }}&page={{ i }}&per_page=10">{{ i }}</a>
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ i }}&per_page=10&call_status={{ call_status }}">{{ i }}</a>
             </li>
             {% endfor %}
     
             {% if paginated_logs.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?campaign_id={{ request.GET.campaign_id }}&page={{ paginated_logs.next_page_number }}&per_page=10" aria-label="Next">
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ paginated_logs.next_page_number }}&per_page=10&call_status={{ call_status }}" aria-label="Next">
                     <span aria-hidden="true">&raquo;</span>
                 </a>
             </li>
@@ -112,17 +119,19 @@
             </button>
 
             <div id="call_id_div">
-                <span class="h5 fw-bold text-dark">Call ID</span><br>
-                <span id="call_call_id" class="p-4 text-muted text-center"></span>
+                <h4 class="mb-4">Call ID</h4>
+                <span id="call_call_id" class="form-control text-center"></span>
             </div>
 
             <div id="duration_div"><br>
-                <span class="h5 fw-bold text-dark">Call Duration</span><br>
-                <span id="call_duration" class="p-4 text-muted text-center"></span><br>
+                <!-- <span class="h5 fw-bold text-dark">Call Duration</span><br> -->
+                <h4 class="mb-4">Call Duration</h4>
+                <span id="call_duration" class="form-control text-center"></span><br>
             </div>
 
             <div id="number_div"><br>
-                <span class="h5 fw-bold text-dark">Payer Contact</span><br>
+                <!-- <span class="h5 fw-bold text-dark">Contact Number</span><br> -->
+                <h4 class="mb-4">Contact Number</h4>
                 <form id="payer_contact_form" class="d-flex flex-column align-items-center">
                     <input type="text" id="payer_contact" class="form-control text-center" placeholder="Enter contact information" required>
                     <input type="hidden" id="editNumberId" name="id" value="391"><br>
@@ -131,7 +140,8 @@
             </div>
 
             <div id="audio_player_div">
-                <span class="h5 fw-bold text-dark">Call Recording</span><br>
+                <!-- <span class="h5 fw-bold text-dark">Call Recording</span><br> -->
+                <h4 class="mb-4">Call Recording</h4>
                 <div id="loader" class="d-none">
                     <br>
                     <span class="p-4 text-muted text-center">Loading... <img src="{% static 'assets/images/ajax-loader.gif' %}" alt="Loading" class="inline-block"></span>
@@ -147,21 +157,24 @@
             <div id="loader" class="d-none d-flex justify-content-center align-items-center">
                 <div class="spinner-border" role="status">
                     <span class="visually-hidden">Loading...</span>
+                    <h4 class="mb-4">Call Recording</h4>
                 </div>
                 <span class="ms-2">Loading...</span>
             </div>
 
             <div id="summary_div"> <br>
-                <span class="h5 fw-bold text-dark">Call Summary</span><br>
-                <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editSummaryText(e)" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button>
-                <span id="call_summary" class="p-4 text-muted text-center d-block">I called the medical records facility and spoke with an employee. The employee informed me that the records request for Paymaneh Baharmast was received and is currently under processing. They could not provide an exact date for when the records will be sent but confirmed that the payment has been made. The facility will not be able to deliver the records within the next 24 hours, but they assured that they will include signed certification when the records are ready. The records will be delivered to AMI Health.</span><br>
+                <!-- <span class="h5 fw-bold text-dark">Call Summary</span><br> -->
+                <h4 class="mb-4">Call Summary</h4>
+                <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editSummaryText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
+                <span id="call_summary" class="f-w-400  ">Call Not started</span><br>
 
-                <textarea id="editSummary" style="display:none; " rows="10" cols="50">I called the medical records facility and spoke with an employee. The employee informed me that the records request for Paymaneh Baharmast was received and is currently under processing. They could not provide an exact date for when the records will be sent but confirmed that the payment has been made. The facility will not be able to deliver the records within the next 24 hours, but they assured that they will include signed certification when the records are ready. The records will be delivered to AMI Health.</textarea>
+                <textarea id="editSummary" style="display:none; " rows="10" cols="50"></textarea>
 
-                <form id="edit_summary_form" method="post" action="/edit_summary">
+                <form id="edit_summary_form" method="post" action="{% url 'edit_summary' %}">
+                    {% csrf_token %}
                     <input type="hidden" id="editSummaryRecordId" value="391" name="id">
-                    <input type="hidden" value="09/13/2024" name="selected_date">
-                    <input type="hidden" value="retrieval" name="record_type">
+                    <input type="hidden" value="{{campaign_id}}" name="campaign_id">
+                    <input type="hidden" value="{{call_status}}" name="call_status">
                     <input type="hidden" value="" name="search">
                     <input type="hidden" value="" name="selected_agent"> 
                     <input type="hidden" value="asc" name="sort_order" id="sort_order">
@@ -175,31 +188,17 @@
             </div>
 
             <div id="transcript_div" style="overflow: auto;"> <br>
-                <span class="h5 fw-bold text-dark">Call Transcript</span><br>
-                <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editTranscriptText(e)" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
-                <span id="call_transcript" class="p-4 text-muted text-center" style="display: unset;"><span class="timestamp">[00:00.07]</span><br> <span class="bot" style="color:red">BOT:</span> 
-                <span class="timestamp">[00:04.82]</span><br> <span class="human" style="color:green">HUMAN:</span>  Recorded for quality assurance.
-                <span class="timestamp">[00:08.37]</span><br> <span class="human" style="color:green">HUMAN:</span>  Please listen closely as our menu options have changed.
-                <span class="timestamp">[00:08.95]</span><br> BOT_ACTION_START: !STARTING ACTION action_wait WITH PARAMETERS {}!
-                <span class="timestamp">[00:08.95]</span><br> BOT_ACTION_FINISH: !ACTION action_wait FINISHED WITH OUTPUT {"success": true}!
-                <span class="timestamp">[00:14.17]</span><br> <span class="human" style="color:green">HUMAN:</span>  If this is a hospital, physician office, or urgent patient matter, press nine.
-                <span class="timestamp">[00:14.63]</span><br> BOT_ACTION_START: !STARTING ACTION action_wait WITH PARAMETERS {}!
-                <span class="timestamp">[00:14.63]</span><br> BOT_ACTION_FINISH: !ACTION action_wait FINISHED WITH OUTPUT {"success": true}!
+                <!-- <span class="h5 fw-bold text-dark"></span><br> -->
+                <h4 class="mb-4">Call Transcript</h4>
+                <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editTranscriptText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
+                <span id="call_transcript" class="f-w-400" style="display: unset;"> </span><br>  
+                <textarea id="editTranscript" style="display:none; " rows="10" cols="50"> </textarea>
 
-                <span class="timestamp">[03:04.78]</span><br> <span class="bot" style="color:red">BOT:</span> Goodbye!</span> <br>
-                <textarea id="editTranscript" style="display:none; " rows="10" cols="50">&lt;span class="timestamp"&gt;[00:00.07]&lt;/span&gt;&lt;br&gt; &lt;span class="bot" style="color:red"&gt;BOT:&lt;/span&gt;
-
-                &lt;span class="timestamp"&gt;[02:37.73]&lt;/span&gt;&lt;br&gt; &lt;span class="bot" style="color:red"&gt;BOT:&lt;/span&gt; Could you please make sure to send us signed certification along with the records when they are ready?
-                &lt;span class="timestamp"&gt;[02:45.85]&lt;/span&gt;&lt;br&gt; &lt;span class="human" style="color:green"&gt;HUMAN:&lt;/span&gt;  Yeah. Sure.
-                &lt;span class="timestamp"&gt;[02:46.51]&lt;/span&gt;&lt;br&gt; &lt;span class="bot" style="color:red"&gt;BOT:&lt;/span&gt; Thank you so much for your help.
-                &lt;span class="timestamp"&gt;[02:49.10]&lt;/span&gt;&lt;br&gt; &lt;span class="bot" style="color:red"&gt;BOT:&lt;/span&gt; We appreciate your patience while waiting for your call to be answered.
-                &lt;span class="timestamp"&gt;[02:55.45]&lt;/span&gt;&lt;br&gt; &lt;span class="bot" style="color:red"&gt;BOT:&lt;/span&gt; Your call is important to us, and we look forward to assisting you shortly.
-                &lt;span class="timestamp"&gt;[03:01.10]&lt;/span&gt;&lt;br&gt; &lt;span class="bot" style="color:red"&gt;BOT:&lt;/span&gt; Goodbye!</textarea>
-
-                <form id="edit_transcript_form" method="post" action="/edit_transcript">
+                <form id="edit_transcript_form" method="post" action="{% url 'edit_transcript' %}">
+                    {% csrf_token %}
                     <input type="hidden" id="editTranscriptRecordId" value="391" name="id">
-                    <input type="hidden" value="09/13/2024" name="selected_date">
-                    <input type="hidden" value="retrieval" name="record_type">
+                    <input type="hidden" value="{{campaign_id}}" name="campaign_id">
+                    <input type="hidden" value="{{call_status}}" name="call_status">
                     <input type="hidden" value="" name="search">
                     <input type="hidden" value="" name="selected_agent"> 
                     <input type="hidden" value="asc" name="sort_order" id="sort_order">
@@ -208,7 +207,7 @@
                     <input type="hidden" value="Completed" name="status" id="status">
                     <input type="hidden" id="editedTranscript" name="edited_transcript">
 
-                    <button style="display: none;" id="edit_Transcript_submit" class="btn btn-primary mt-2" type="Save" onclick="submitEditTranscriptForm()">Submit</button>
+                    <button style="display: none;" id="edit_Transcript_submit" class="btn btn-primary mt-2" type="Save" onclick="submitEditTranscriptForm()">Submit Transcript</button>
                 </form>
             </div>
 
@@ -245,25 +244,140 @@
                     'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
                 },
                 success: function(response) {
-                    // Show success message using SweetAlert2
-                    Swal.fire({
-                        icon: 'success',
-                        text: response.message
-                    });
-                    showToast("success", response.message);
+ 
+                    console.log(response)
+                    // set the drawer values
+                    $("#call_call_id").html(call_id)
+                    $("#call_duration").html(log.call_duration)
+                    $("#call_summary").text(response.data.summary)
+                    $("#editSummary").html(response.data.summary)
+                    $("#call_transcript").html(response.data.transcript)
+                    $("#editTranscript").html(response.data.transcript)
+                    $("#editNumberId").val(response.data.call_id)
+                    $("#payer_contact").val(log.contact_number)
+                    $("#editTranscriptRecordId").val(response.data.transcript_obj_id)
+                    $("#editSummaryRecordId").val(response.data.transcript_obj_id)
+
+                    // fetch the recording using telephony
+                    fetchAndPlayAudio(call_id,response.data.telephony_name)
                 },
                 error: function(xhr, status, error) {
                     // Show error message using SweetAlert2
-                    Swal.fire({
-                        icon: 'error',
-                        text: 'Failed to delete contacts: ' + error
-                    });
-                    showToast("error", "Failed to delete contact! " + error);
+                    console.log("error")
+                    // Swal.fire({
+                    //     icon: 'error',
+                    //     text: 'Failed to delete contacts: ' + error
+                    // });
+                    // showToast("error", "Failed to delete contact! " + error);
                 }
             });
         
         
     }
+
+
+    // function to fetch and play recording
+    function fetchAndPlayAudio(callId, telephony_name) {
+        const audioPlayer = document.getElementById("call_recording_audio");
+        const noRecordingMessage = document.getElementById("no_recording");
+        const loader = document.getElementById("loader");
+
+        // Show the loader and hide the audio player and no recording message
+        loader.classList.remove("d-none");
+        audioPlayer.style.display = 'none';
+        noRecordingMessage.style.display = 'none';
+
+        fetch( "{% url 'fetch_audio' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'X-CSRFToken': '{{ csrf_token }}' 
+            },
+            body: JSON.stringify({ call_id: callId, telephony_name: telephony_name }) // Sending the call_id to the server
+        }).then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .then(blob => {
+            const audioUrl = URL.createObjectURL(blob);
+            audioPlayer.src = audioUrl;
+            audioPlayer.style.display = 'block';
+            loader.classList.add("d-none");
+        })
+        .catch(error => {
+            console.error('There has been a problem with your fetch operation:', error);
+            audioPlayer.style.display = 'none';
+            loader.classList.add("d-none");
+            noRecordingMessage.style.display = 'block';
+        });
+    }
+    
+    // submit edited transcript
+    function submitEditTranscriptForm() {
+        // Modify hidden input fields before submission
+        var transcriptText = $('#editTranscript').val(); // Update transcript
+        document.getElementById('editedTranscript').value = transcriptText;
+        
+        // Update other hidden fields if necessary
+        
+        // Submit the form programmatically
+        document.getElementById('edit_transcript_form').submit();
+    }
+    
+    // edit transcript
+    // format text area
+    function editTranscriptText( ){
+        console.log("clicked edit transcript")
+        var transcriptSpan = document.getElementById('call_transcript');
+        var textarea = document.getElementById('editTranscript');
+
+        // Get the transcript content as plain text
+        var transcriptText = transcriptSpan.innerHTML
+            .replace(/<br\s*\/?>/gi, '\n') // Replace <br> with newlines
+            .replace(/<[^>]+>/g, '');      // Remove all HTML tags
+
+        // Populate the textarea and make it visible
+        textarea.value = transcriptText;
+        textarea.style.display = 'block';  // Show the textarea
+
+        transcriptSpan.style.display = 'none'; // hide transcript
+
+        $("#edit_Transcript_submit").css("display", "block") // unhide submit button
+    }    
+
+
+    // submit edited summary
+    function submitEditSummaryForm() {
+            // Modify hidden input fields before submission
+            var summaryText = $('#editSummary').val(); // Update Summary
+            document.getElementById('editedSummary').value = summaryText;
+            console.log(summaryText)
+            console.log(document.getElementById('editedSummary').value)
+
+            // Update other hidden fields if necessary
+
+            // Submit the form programmatically
+            document.getElementById('edit_summary_form').submit();
+        }
+        
+
+    // format text area
+    function editSummaryText(e){
+            console.log("clicked edit summary")
+            var summarySpan = document.getElementById('call_summary');
+            var textarea = document.getElementById('editSummary');
+
+            textarea.style.display = 'block';  // Show the textarea
+
+            summarySpan.style.display = 'none'; // hide transcript
+
+            $("#edit_Summary_submit").css("display", "unset") // unhide submit button
+        }    
+
 
     $(document).ready(function(){
     
