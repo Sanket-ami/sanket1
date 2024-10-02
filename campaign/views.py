@@ -20,6 +20,10 @@ import requests
 import time
 from datetime import datetime
 import os
+from requests.auth import HTTPBasicAuth
+from django.http import FileResponse
+import io
+from django.urls import reverse
 
 ## render create campaign page
 @login_required(login_url="/login_home")
@@ -647,3 +651,228 @@ def update_call_log(call_id, updated_fields):
     except Exception as err:
         print("CallLog with the given ID does not exist.")
         return None  # or handle as appropriate
+
+"""
+Display call logs of a perticular campaign
+"""
+def list_call_logs(request):
+    if request.method == "GET":
+        try:
+            campaign_list = Campaign.objects.filter(is_delete=False)
+            if not request.user.is_superuser:
+                campaign_list = campaign_list.filter(organisation_name=request.user.organisation_name)
+
+            campaign_list = list(campaign_list.values("id", "campaign_name"))
+
+            campaign_id = request.GET.get('campaign_id',0)
+            call_status = request.GET.get('call_status',"ongoing")
+            call_logs_data = []
+            dynamic_columns = []
+            total_pages = 0
+            page = 1
+            paginated_logs =[]
+
+            if campaign_id:
+                call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-created_at')
+                if call_status:
+                    call_logs = call_logs.filter(call_status=call_status)
+
+                # Pagination logic
+                page = int(request.GET.get('page', 1))
+                per_page = int(request.GET.get('per_page', 10))
+                per_page=1
+                paginator = Paginator(call_logs, per_page)
+                paginated_logs = paginator.get_page(page)
+                total_pages = paginator.num_pages
+                print("num pages" ,total_pages)
+                call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
+                
+                # Extract dynamic columns from the first log
+                if call_logs_data:
+                    dynamic_columns = list(call_logs_data[0].keys())
+
+            context = {
+                "breadcrumb": {"title": "View Call Logs", "parent": "Pages", "child": "Call Logs"},
+                "call_logs_data": call_logs_data,
+                "campaign_list": campaign_list,
+                "call_status":call_status,
+                "dynamic_columns": dynamic_columns,
+                "total_pages": total_pages,
+                "success": True,
+                "page": page,
+                "paginated_logs":paginated_logs,
+                "campaign_id":str(campaign_id)
+            }
+
+            return render(request, 'pages/campaign/call_logs.html', context)
+
+        except Exception as error:
+            print("error in list_call_logs: ", error)
+            return JsonResponse({"error": "No call logs found for this campaign"}, status=404)
+
+        
+    elif request.method == "POST":
+        return JsonResponse({"error": "POST method not supported for this endpoint"}, status=405)
+
+
+###################################################################################
+########################## Call Details ##########################################
+
+def fetch_call_details(request):
+    try:
+        request_body = json.loads(request.body)
+        campaign_id, mongo_id, call_id = request_body['campaign_id'],request_body['mongo_id'], request_body['call_id']
+
+        response = {}
+        # fetch transcript and summary
+        transcript_data =Transcript.objects.get(call_logs=call_id,campaign_id= campaign_id) 
+        transcript_obj = {}
+        try:
+            transcript_obj["transcript"] = format_transcript(transcript_data.transcript)
+        except:
+            transcript_obj["transcript"] = ""
+
+        transcript_obj['summary'] = transcript_data.summary
+
+        # fetch telephony
+        campaign_object = Campaign.objects.get(id=campaign_id)
+        telephony_data = campaign_object.provider.provider_name
+
+        transcript_obj['telephony_name']  = telephony_data
+        transcript_obj["transcript_obj_id"] = transcript_data.id
+
+        return JsonResponse({"error": False, "success":True, "message":"call_details fetched successfully ","data":transcript_obj}, status=200)
+
+        
+    except Exception as err:
+        print("error in fetch call details: ",err)
+        return JsonResponse({"error": True, "success":False, "message":"Error fetching call details "}, status=500)
+
+## functio to format transctipt
+def format_transcript(transcript):
+    lines = transcript.split('\n')
+    formatted_lines = []
+    for line in lines:
+        # Wrap timestamp with span
+        timestamp_end = line.find(']')
+        if timestamp_end != -1:
+            timestamp = line[:timestamp_end+1]
+            rest_of_line = line[timestamp_end+1:]
+            line = f'<span class="timestamp">{timestamp}</span><br>{rest_of_line}'
+
+        # Wrap HUMAN with span
+        if 'HUMAN:' in line:
+            line = line.replace('HUMAN:', '<span class="human" style="color:green">HUMAN:</span>')
+        if 'BOT:' in line:            
+            line = line.replace('BOT:', '<span class="bot" style="color:red">BOT:</span>')
+
+        formatted_lines.append(line)
+    return '\n'.join(formatted_lines)
+
+
+def fetch_audio(request):
+    try:
+        data = json.loads(request.body)  # Get JSON data from the request
+        call_id = data['call_id']
+        telephony_name = data['telephony_name']
+        print("call_id: ", call_id,'telephony_name: ',telephony_name)
+        
+
+        # Twilio account credentials
+        account_sid = os.getenv('TWILIO_ACCOUNT_SID') 
+        auth_token =  os.getenv('TWILIO_AUTH_TOKEN')  # Replace with your Twilio Auth Token
+            
+        if not call_id:
+            return JsonResponse({"error": True, "success":False, "message":"No call_id provided"}, status=400)
+        
+        if telephony_name == "twilio" or telephony_name == "telnyx" :  # hardocded for testing
+            # Construct the URL for the Call API
+            base_url = 'https://api.twilio.com'
+            url= f'{base_url}/2010-04-01/Accounts/{account_sid}/Calls/{call_id}/Recordings.json'
+            
+ 
+            response = requests.get(url, auth=HTTPBasicAuth(account_sid, auth_token))
+
+            # Parse the response JSON to get the recording URL
+            recordings_data = response.json()
+            recordings_list = recordings_data.get('recordings', [])
+            
+            recording_url = None
+            if recordings_list:
+                recording_sid = recordings_list[0]['sid']
+                recording_url = f'{base_url}/2010-04-01/Accounts/{account_sid}/Recordings/{recording_sid}.mp3'
+                print(f'Recording URL: {recording_url}')
+
+                response = requests.get(recording_url)
+                if response.status_code == 200:
+                    # audio_stream = io.BytesIO(response.content)
+                    # return send_file(audio_stream, mimetype='audio/mpeg', as_attachment=False, download_name=f'{call_id}_audio.mp3')
+                    audio_stream = io.BytesIO(response.content)
+                    audio_stream.seek(0)  # Reset stream position to the start
+                    return FileResponse(audio_stream, as_attachment=False, content_type='audio/mpeg')
+
+                else:
+                    return "Failed to fetch the recording.", 500
+            else:
+                print('No recordings found for the call.')
+                return "Failed to fetch the recording.", 500
+
+        # if response.ok:
+        #     # Create an in-memory byte-stream for the audio file
+        #     audio_stream = BytesIO(response.content)
+        #     return send_file(audio_stream, mimetype='audio/mpeg', as_attachment=False, download_name=f'{call_id}_audio.mp3')
+        # else:
+        #     return jsonify({'success': False, 'message': 'Failed to fetch audio'}), response.status_code
+    
+    except Exception as e:
+        print(f"Error in fetch_audio: {e}")
+        # return jsonify({'success': False, 'message': str(e)}), 500        
+
+"""
+ Funtions to edit summary and transcript
+"""
+def edit_summary(request):
+    try:
+        # import pdb;pdb.set_trace()
+        request_body = request.POST.dict()
+        status_filter = request_body['status']
+        campaign_id = request_body['campaign_id']
+        edit_summary_id = request_body['id']
+        new_summary = request_body['edited_summary']
+        # update transcript
+        transcript_obj = Transcript.objects.get(id= edit_summary_id)     
+        transcript_obj.summary = new_summary
+        transcript_obj.save()
+
+        # Build the URL with query parameters
+        url = reverse('list_call_logs')  # Gets the URL path for the 'edit_summary' route
+        query_params = f'?status_filter={status_filter}&campaign_id={campaign_id}'
+        
+
+        return redirect(f'{url}{query_params}')
+    
+    except Exception as error:
+        print(f"Error editing call: {error}")
+        return redirect('/')
+    
+
+def edit_transcript(request):
+    try:
+        request_body = request.POST.dict()
+        status_filter,campaign_id = request_body['status'], request_body['campaign_id']
+        edit_transcript_id = request_body['id']
+        new_transcript = request_body['edited_transcript']
+        # update transcript
+        transcript_obj = Transcript.objects.get(id= edit_transcript_id)
+        transcript_obj.transcript = new_transcript
+        transcript_obj.save()
+
+        # Build the URL with query parameters
+        url = reverse('list_call_logs')  # Gets the URL path for the 'edit_summary' route
+        query_params = f'?status_filter={status_filter}&campaign_id={campaign_id}'
+
+        return redirect(f'{url}{query_params}')                
+    except Exception as error:
+        print("Error editing call: ",error)
+        return redirect('/')
+ 
