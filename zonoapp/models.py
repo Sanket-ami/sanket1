@@ -18,4 +18,4 @@ class Role(models.Model):
     class meta:
         db_table = "role"
     def __str__(self):
-        return self.role
+        return self.id

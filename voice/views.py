@@ -43,6 +43,7 @@ def voice_view(request):
                 voice_configuration=data['voice_config'],
                 voice_name=data.get('voice_name')
             )
+            
             return JsonResponse({'id': voice.id}, status=201)
 
         except (KeyError, json.JSONDecodeError) as e:

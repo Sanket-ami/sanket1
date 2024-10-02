@@ -12,13 +12,16 @@ def provider_view(request):
         paginator = Paginator(providers, 10) 
         page_number = request.GET.get('page')  
         providers = paginator.get_page(page_number)  
-        return render(request, 'pages/provider/provider_table.html', {'providers': providers})
+        return render(request, 'pages/provider/provider_form.html', {'providers': providers})
 
     elif request.method == 'POST':
+        data = json.loads(request.body)
+        print(data)
         try:
             Provider.objects.create(
-                provider_name=request.POST.get('provider_name'),
-                  provider_config=request.POST.get('provider_config'),
+                provider_name=data.get('provider_name'),  # provider_name
+                provider_type=data.get('provider_type'),
+                provider_config=data.get('provider_config')
             )
             return JsonResponse({'status': 'created', 'status_code':201}, status=201)
         except (KeyError, json.JSONDecodeError) as e:
