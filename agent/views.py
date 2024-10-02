@@ -24,6 +24,7 @@ def agent_create(request):
             
         # voices list
         voices = Voice.objects.filter(is_delete=False)
+        print(voices)
 
         print('org_names ',org_names)
         search_query = request.GET.get('search', '')
