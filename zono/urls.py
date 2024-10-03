@@ -23,5 +23,6 @@ urlpatterns = [
     path('provider/', include('provider.urls')),
     path('voice', include('voice.urls')),
     path('content',include('campaign.urls')),
-    path('agent/',include('agent.urls'))
+    path('agent/',include('agent.urls')),
+    path('qa_parameters', include('qa_parameters.urls')),
 ]
