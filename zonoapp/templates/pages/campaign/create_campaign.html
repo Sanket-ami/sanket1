@@ -84,29 +84,35 @@
                           </select>
                           <div class="invalid-feedback">Please select a valid provider.</div>
                         </div>
-
                         
-                        <div class="col-12">
-                          <div class="form-check form-switch">
-                            <input class="form-check-input" id="showTranscript" type="checkbox" checked>
-                            <label class="form-check-label " for="showTranscript">Show Transcript</label>
-                          </div>
-                        </div>
+                        <div class="col-sm-6">
+                          <label class="form-label" for="summarization_prompt">Summarization Prompt<span class="txt-danger">*</span></label>
+                          <textarea class="form-control" id="summarization_prompt" rows="10" cols="100" placeholder="Instruction to describe about how a call should be summarized. Call will not be summarized if left blank."></textarea>
+                        </div>                          
+                        <br>
                         
-                        <div class="col-12">
-                          <div class="form-check form-switch">
-                            <input class="form-check-input" id="showRecording" type="checkbox" checked>
-                            <label class="form-check-label" for="showRecording">Show Recording</label>
+                        <div class="row" style="margin-top: 1%;">
+                          <div class="col-sm-4">
+                              <div class="form-check form-switch">
+                                <input class="form-check-input" id="showTranscript" type="checkbox" checked>
+                                <label class="form-check-label " for="showTranscript">Show Transcript</label>
+                              </div>
+                            </div>
+                            
+                            <div class="col-sm-4">
+                              <div class="form-check form-switch">
+                                <input class="form-check-input" id="showRecording" type="checkbox" checked>
+                                <label class="form-check-label" for="showRecording">Show Recording</label>
+                              </div>
+                            </div>
+                          
+                            <div class="col-sm-4">
+                              <div class="form-check form-switch">
+                                <input class="form-check-input" id="showNumbers" type="checkbox" checked>
+                                <label class="form-check-label" for="showNumbers">Show Numbers</label>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      
-                        <div class="col-12">
-                          <div class="form-check form-switch">
-                            <input class="form-check-input" id="showNumbers" type="checkbox" checked>
-                            <label class="form-check-label" for="showNumbers">Show Numbers</label>
-                          </div>
-                        </div>
-                      
                         <div class="col-12 text-end">
                           <button id="step1btn" type="button" onclick="validateStep1(event)" class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
                         </div>
@@ -314,6 +320,7 @@
     const organisationName = $("#organisationName").val();
     const processType = $("#processType").val();
     const provider = $("#provider").val();
+    const summarizationPrompt = $("#summarization_prompt").val();
 
     // Check if the required fields are filled (basic validation)
     if (campaignName && organisationName && processType && provider) {
@@ -368,6 +375,7 @@
         campaign_name: $('#campaignName').val(),
         is_schedule: $('#isSchedule').is(':checked'),
         organisation_name: $('#organisationName').val(),
+        summarization_prompt: $('#summarizationPrompt').val(),
         show_transcript: $('#showTranscript').is(':checked'),
         process_type: $('#processType').val(),
         contact_list:contactList,
