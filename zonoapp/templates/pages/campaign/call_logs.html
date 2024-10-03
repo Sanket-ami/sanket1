@@ -20,12 +20,12 @@
                 </option>
                 {% endfor %}
             </select>
+            {% if request.user.role.role != "QA" %}
             <select class="form-select" id="statusSelect" name="call_status">
-                <option value="">----</option>
                 <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>  ongoing </option>
                 <option value="completed" {% if call_status == "completed" %}selected{% endif %}>  completed </option>
                 <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>   not_started </option>
-
+            {% endif %}
             </select>            
             <input type="hidden" name="page" value="{{ page }}">
             <input type="hidden" name="per_page" value="10">&nbsp;
@@ -166,9 +166,11 @@
                 <!-- <span class="h5 fw-bold text-dark">Call Summary</span><br> -->
                 <h4 class="mb-4">Call Summary</h4>
                 {% if request.user.is_superuser %}
-                <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editSummaryText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
+                {% if request.user.role.role != "QA" %}
+                    <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editSummaryText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
                 {% endif %}
-                <span id="call_summary" class="f-w-400  ">Call Not started</span><br>
+                {% endif %}
+                    <span id="call_summary" class="f-w-400  ">Call Not started</span><br>
 
                 <textarea id="editSummary" style="display:none; " rows="10" cols="50"></textarea>
 
@@ -191,8 +193,11 @@
 
             <div id="transcript_div" style="overflow: auto;"> <br>
                 <!-- <span class="h5 fw-bold text-dark"></span><br> -->
+
                 <h4 class="mb-4">Call Transcript</h4>
                 {% if request.user.is_superuser %}
+                {% if request.user.role.role != "QA" %}
+
                 <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editTranscriptText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
                 {% endif %}
                 <span id="call_transcript" class="f-w-400" style="display: unset;"> </span><br>  

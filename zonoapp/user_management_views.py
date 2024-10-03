@@ -25,6 +25,7 @@ def list_of_user(request, user_id:int=None):
         return JsonResponse({'status': 'created', 'status_code':201}, status=201)
         
     elif request.method == "POST":
+        print("In post method")
         data = json.loads(request.body)
         print("data ====>", data)
         data['role'] = Role.objects.get(id=data['role'])

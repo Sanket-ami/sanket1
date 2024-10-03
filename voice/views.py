@@ -16,10 +16,10 @@ def voice_view(request):
         voices = Voice.objects.all()
         for voice in voices:
             try:
-                voice_config = json.loads(voice.voice_configuration)
+                voice_config = voice.voice_configuration
                 print(voice_config)
             except json.JSONDecodeError:
-                voice_config = {}  # 
+                voice_config = {}  
             voices_list.append({
                 'voice_name': voice.voice_name,
                 'voice_provider': voice.voice_provider,

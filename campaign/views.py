@@ -666,7 +666,10 @@ def list_call_logs(request):
             campaign_list = list(campaign_list.values("id", "campaign_name"))
 
             campaign_id = request.GET.get('campaign_id',0)
-            call_status = request.GET.get('call_status',"ongoing")
+            if request.user.role.role == "QA":
+                call_status = request.GET.get('call_status',"completed")
+            else:
+                call_status = request.GET.get('call_status', "ongoing")
             call_logs_data = []
             dynamic_columns = []
             total_pages = 0
