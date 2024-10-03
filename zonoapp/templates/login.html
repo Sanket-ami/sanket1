@@ -16,7 +16,7 @@
                 <form class="theme-form" method="post">
                   {% csrf_token %}
                   <h3>Sign in to account</h3>
-                  <p>Enter your email & password to login</p>
+                  <!-- <p>Enter your email & password to login</p> -->
                   <div class="form-group">
                     <label class="col-form-label">Username</label>
                     {{form.username|add_class:'form-control'}}
@@ -25,7 +25,10 @@
                     <label class="col-form-label">Password</label>
                     <div class="form-input position-relative"> 
                       {{form.password|add_class:'form-control'}}
-                      <div class="show-hide"><span class="toggle-password">Show</span></div>
+                      <!-- <div class="show-hide"><span class="toggle-password">Show</span></div> -->
+                      <div class="show-hide">
+                        <span class="toggle-password" style="cursor: pointer;"></span>
+                      </div>
                     </div>
                   </div>
                   <div class="form-group mb-0">
@@ -37,11 +40,8 @@
                       <button class="btn btn-primary btn-block w-100" type="submit">Sign in</button>
                     </div>
                   </div>
-                  <h6 class="text-muted mt-4 or">Or Sign in with</h6>
-                  <div class="social mt-4">
-                    <div class="btn-showcase"><a class="btn btn-light" href="https://www.linkedin.com/login" target="_blank"><i class="txt-linkedin" data-feather="linkedin"></i> LinkedIn </a><a class="btn btn-light" href="https://twitter.com/login?lang=en" target="_blank"><i class="txt-twitter" data-feather="twitter"></i>twitter</a><a class="btn btn-light" href="https://www.facebook.com/" target="_blank"><i class="txt-fb" data-feather="facebook"></i>facebook</a></div>
-                  </div>
-                  <p class="mt-4 mb-0 text-center">Don't have account?<a class="ms-2" href="/signup_home">Create Account</a></p>
+                  
+                  <!-- <p class="mt-4 mb-0 text-center">Don't have account?<a class="ms-2" href="/signup_home">Create Account</a></p> -->
                 </form>
               </div>
             </div>
@@ -54,7 +54,17 @@
 
 {% block scriptcontent %}
 <script>
-document.getElementById('id_username').value = 'test'
-document.getElementById('id_password').value = '123456'
+document.getElementById('id_username').value = 'username'
+document.getElementById('id_password').value = '123'
+document.addEventListener("DOMContentLoaded", function() {
+        const togglePassword = document.querySelector('.toggle-password');
+        const passwordInput = document.querySelector('input[name="password"]');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? '' : '';
+        });
+    });
 </script>
 {% endblock %}  
