@@ -24,6 +24,7 @@ from requests.auth import HTTPBasicAuth
 from django.http import FileResponse
 import io
 from django.urls import reverse
+import csv
 
 ## render create campaign page
 @login_required(login_url="/login_home")
@@ -73,18 +74,70 @@ def create_campaign(request):
             show_transcript=data['show_transcript'],
             process_type=data['process_type'],
             provider=provider,
-            contact_list = new_contact_list,
+            # contact_list = new_contact_list,  # removed old logic of single list
             agent=agent,
+            summarization_prompt=data['summarization_prompt'],
             show_recording=data['show_recording'],
             show_numbers=data['show_numbers'],
             created_by=request.user,  # or request.user if you have authentication
             modified_by=request.user
         )
 
+        #######################################################
+        """ #### New Logic for adding contact list ######## """
+        campaign_id = campaign.id
+
+        # Save the campaign contact list and mark it as active
+        campaign_contact_list = ContactList.objects.create(
+            list_name="default",
+            campaign_id=campaign_id,
+            contact_list=new_contact_list,
+            is_active=True,  # Make it active by default
+            organisation_name=data['organisation_name'],
+            created_by="system",
+            modified_by="system",
+        )
+
+        # Update the campaign with the contact_list_id
+        campaign.contact_list_id = campaign_contact_list.id
+        campaign.save()
+        #######################################################
         return JsonResponse({"message": "Campaign created successfully!", "campaign_id": campaign.id,"success":True})
 
     return JsonResponse({"error": "Invalid request method","success":False, "error":True }, status=500)
     
+############ upload new contacts csv #######
+def upload_contact_list(request, campaign_id):
+    if request.method == "POST":
+        # Get the uploaded file
+        csv_file = request.FILES.get('csvFile')
+        if not csv_file.name.endswith('.csv'):
+            return JsonResponse({'status': 'error', 'message': 'Invalid file format. Please upload a CSV file.'})
+
+        # Get the contact list structure
+        contact_list = get_object_or_404(ContactList, campaign_id=campaign_id)
+        current_columns = contact_list.contact_list[0].keys() if contact_list.contact_list else []
+
+        # Parse and validate the CSV file
+        try:
+            csv_data = csv.DictReader(csv_file.read().decode('utf-8').splitlines())
+            uploaded_columns = csv_data.fieldnames
+            
+            # Check if columns match
+            if set(uploaded_columns) != set(current_columns):
+                return JsonResponse({'status': 'error', 'message': 'CSV columns do not match the existing contact list.'})
+
+            # Save the uploaded data to the contact list
+            contact_list.contact_list = [row for row in csv_data]
+            contact_list.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Contact list uploaded successfully.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)    
+
+
 ## render view campaign page
 @login_required(login_url="/login_home")    
 def campaign_list(request):
@@ -110,12 +163,47 @@ def delete_campaign():
 ## render view campaign page
 @login_required(login_url="/login_home") 
 def contact_list(request, campaign_id):
-    # Fetch the contact list based on the campaign_id
-    contact_list = Campaign.objects.get(id=campaign_id).contact_list
-    # Example: contact_list = get_contact_list_from_db(campaign_id)
+    if request.method=="GET":
+        # Fetch the contact list based on the campaign_id
+        campaign = Campaign.objects.get(id=campaign_id)
+        all_contact_list_names = ContactList.objects.filter(is_deleted = False, campaign=campaign).values_list('list_name','id')
 
-    context = {"breadcrumb":{"title":"Create Agent","parent":"Pages", "child":"Sample Page"},"contact_list": contact_list,"campaign_id":campaign_id}
-    return render(request, 'pages/campaign/contact_list.html', context)
+        contact_list = ContactList.objects.filter(is_deleted = False, campaign=campaign)
+        # select the specfic list from a campaign
+        selected_list = request.GET.get("selected_contact_list")
+        
+        if selected_list:
+            contact_list = contact_list.filter(id = selected_list)
+        else:
+            if contact_list: # filter only is main contact list is not empty
+                contact_list = contact_list.filter(id = all_contact_list_names[0]['id'] )
+        
+
+        context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Sample Page"},"contact_list": contact_list,"campaign_id":campaign_id,
+                "all_contact_list_names":all_contact_list_names}
+        return render(request, 'pages/campaign/contact_list.html', context)
+    
+    if request.method == "POST":
+        request_body = json.loads(request.body)
+        
+        # fetch the campaign_id and contact_list_id
+        contact_list_id = request_body.get("contact_list_id")
+        campaign_id = request_body.get("campaign_id")
+
+        if contact_list_id and campaign_id:
+            # Mark all contact lists as inactive for this campaign
+            ContactList.objects.filter(campaign_id=campaign_id).update(is_active=False)
+
+            # Set the selected contact list as active
+            contact_list = ContactList.objects.get(id=contact_list_id)
+            contact_list.is_active = True
+            contact_list.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Contact list marked as active.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid data.'}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
 
 
 # delete contact from campaign

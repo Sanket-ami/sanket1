@@ -17,4 +17,5 @@ urlpatterns = [
         path('/live_call_list', views.live_call_list, name='live_call_list'),
         path('/live_transcript', views.live_transcript, name='live_transcript'),
         path('/end_call', views.end_call, name='end_call'),
+        path('upload_contact_list/<int:campaign_id>/', views.upload_contact_list, name='upload_contact_list'),
 ]
