@@ -204,13 +204,12 @@
     // Event listener for AJAX form submission
     document.getElementById('qaForm').addEventListener('submit', function (event) {
         event.preventDefault(); // Prevent the default form submission
-
         // Serialize form data into JSON format
         const formData = new FormData(event.target);
         const jsonData = {};
 
         // Add static organisation name and parameter name to JSON
-        jsonData['organisation_name'] = formData.get('organisation_name');
+        jsonData['organisation_name'] = document.getElementById("organisation_name").value
         jsonData['parameter_name'] = formData.get('parameter_name');
 
         // Create an object for the key-value pairs
