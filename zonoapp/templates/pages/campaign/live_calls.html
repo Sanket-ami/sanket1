@@ -51,7 +51,7 @@
                         <button class="btn btn-primary " title="Live Transcript" onclick="viewTranscriptLive('{{ log.call_id }}')">
                             <i class="fa fa-file-audio-o"></i> Live
                         </button>
-                        <button class="btn btn-danger " title="End Call">
+                        <button class="btn btn-danger " title="End Call" onclick="endCall('{{ log.call_id }}')">
                             <i class="fa fa-power-off"></i> End Call
                         </button>
                     </td>
@@ -102,11 +102,22 @@
  
 <!-- latest jquery-->
 <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+<!-- Script block -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 
-    // offcanvas details
- 
+    // toast
+    function showToast(type, message) {
+        Swal.fire({
+                    title: 'Alert',
+                    text: message, // Dynamic message from Django
+                    icon: type,
+                    confirmButtonText: 'OK'
+                } 
+            ).then(() => { location.reload(); });
+        }
+
    
 
     // >>>>>>>>>> Trascript Start<<<<<<<<<<<<
@@ -123,6 +134,49 @@
         // Open the URL in a new tab
         window.open(url, '_blank');        
     }    
+
+
+    // >>>>>>>>>> End Call  Start<<<<<<<<<<<<
+    function endCall(callId) {
+        // alert(`Call having ID ${callId} is ended`);
+
+        // Confirm deletion using SweetAlert2
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete them!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+        fetch('{% url "end_call" %}', {
+            method: 'POST',
+            headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ call_id: callId })
+            }).then(response => {
+                        console.log(response)
+                        var response = response.json();
+                        console.log(response)
+                        if (response.success) {
+                            // alert("Call ended successfully.")
+                            // Show success message using SweetAlert2
+      
+                            showToast("success", response.message);
+                        } else {
+                            error_message = response.error_message;
+                            // alert(error_message)
+                            showToast("error", "Failed to end call! " + error);
+                        }
+                    })
+                    .catch(error => {
+                        // console.error('There was a problem with the end call operation:', error);
+                        showToast("error", "There was a problem with the end call operation:" + error);
+                    });
+        });
+            
+    }
 
     $(document).ready(function(){
 

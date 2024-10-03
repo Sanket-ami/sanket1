@@ -8,13 +8,14 @@ import datetime
 class Campaign(models.Model):
     campaign_name = models.CharField(max_length=255, blank=False)
     is_schedule = models.BooleanField(default=True)
+    summarization_prompt = models.TextField(null=True)
     organisation_name = models.CharField(max_length=255, blank=False)
     status=models.CharField(max_length=255, blank=False,default="not_started")
     show_transcript = models.BooleanField(default=False)
     process_type = models.CharField(max_length=255, blank=False)
     provider = models.ForeignKey(Provider, on_delete=models.SET_NULL, null=True)
     agent = models.ForeignKey(Agent, on_delete=models.SET_NULL, null=True)
-    contact_list = models.JSONField(default=[],)
+    contact_list = models.ForeignKey("ContactList", on_delete=models.SET_NULL, null=True, related_name="campaigns")
     show_recording = models.BooleanField(default=True)
     show_numbers = models.BooleanField(default=True)
     create_at = models.DateTimeField(auto_now_add=True)
@@ -29,7 +30,6 @@ class Campaign(models.Model):
     
  
 class Transcript(models.Model):
-    # Assuming the foreign key is pointing to a Campaign model
     campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, null=True)
     call_logs = models.CharField(max_length=255)  # call_log mongo id
     transcript = models.TextField()
@@ -59,3 +59,21 @@ class CallLogs(me.DynamicDocument):
         'ordering': ['-created_at']  # Optional
     }
  
+
+class ContactList(models.Model):
+    list_name = models.CharField(max_length=255)
+    campaign = models.ForeignKey("Campaign", on_delete=models.SET_NULL, null=True, related_name="contact_lists")
+    contact_list = models.JSONField(default=[])
+    is_active = models.BooleanField(default=False)
+    organisation_name = models.CharField(max_length=255,null=True)  # Assuming VARCHAR has a maximum length
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+    created_by = models.CharField(max_length=255)  # Assuming VARCHAR has a maximum length
+    modified_by = models.CharField(max_length=255)  # Assuming VARCHAR has a maximum length
+    is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'contact_list'  # Specify the table name if it's different
+ 
+    def __str__(self):
+        return self.campaign.campaign_name
