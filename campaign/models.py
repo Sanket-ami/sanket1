@@ -49,23 +49,6 @@ class Transcript(models.Model):
     def __str__(self):
         return self.call_logs  # or any other field you prefer to display
 
-class QAParameters(models.Model):
-    # Assuming the foreign key is pointing to a Campaign model
-    campaign = models.ForeignKey('Campaign', on_delete=models.SET_NULL, null=True)
-    qa_parameters = models.JSONField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
-    created_by = models.CharField(max_length=255)  # Assuming VARCHAR has a maximum length
-    modified_by = models.CharField(max_length=255)  # Assuming VARCHAR has a maximum length
-    is_deleted = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'qa_parameters'  # Specify the table name if it's different
- 
-
-    def __str__(self):
-        return self.call_logs  # or any other field you prefer to display
-
 
 class CallLogs(me.DynamicDocument):
     call_id = me.StringField(required=True)
