@@ -88,12 +88,15 @@ WSGI_APPLICATION = 'zono.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.' + os.getenv('DB_ENGINE', 'postgresql'),  # Append the correct backend prefix
-        'NAME': os.getenv('DB_NAME', 'callbotics2'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),     # Replace with your database name
+        'USER': os.getenv('DB_USER'),     # Replace with your database username
+        'PASSWORD': os.getenv('DB_PASSWORD'),   # Replace with your database password
+        'HOST': 'localhost',               # Set to 'localhost' or your database server address
+        'PORT': '5432',                    # Default PostgreSQL port
+
+        
     }
 }
 
