@@ -6,7 +6,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from zonoapp.models import User
 from voice.models import Voice
 from agent.models import Agent
-from .models import Campaign, Transcript,QAParameters,CallLogs
+from .models import Campaign, Transcript,CallLogs, ContactList
 from django.contrib.auth import login,logout,authenticate
 import json
 from provider.models import Provider
