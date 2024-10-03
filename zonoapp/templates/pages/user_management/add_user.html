@@ -78,6 +78,7 @@
                                 <td>{{ user.role.role }}</td>
                                 <td>{{ user.organisation_name }}</td>
                                 <td>{{ user.date_joined }}</td>
+                                {% if user.role.role != "QA" %}
                                 <td> 
                                     <button class="btn-info edit-agent-button" data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-email="{{ user.email }}" data-role="{{ user.role.role }}" data-organisation="{{ user.organisation_name }}" data-bs-toggle="modal" data-bs-target="#editAgentModal">
                                         <i class="fa fa-edit"></i>
@@ -88,7 +89,8 @@
                                 <button  class=" btn-danger" onclick=deleteAgent("{{ user.id }}") >
                                     <i class="fa fa-trash"></i>
                                 </button>
-                            </td>
+                                </td>
+                                {% endif %}
 
                             </tr>
                           
