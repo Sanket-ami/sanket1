@@ -2,13 +2,19 @@ from django.shortcuts import render
 from .models import QAParameters
 import json
 from django.http import JsonResponse
-
+from zonoapp.models import User
 # Create your views here.
 
 def qa_parameters(request):
     if request.method == 'GET':
         qa_parameter = QAParameters.objects.all()
-        return render(request, 'pages/qa_parameters/qa_parameters.html', {'qa_parameters': qa_parameter})
+        if request.user.is_superuser:
+            print("super")
+            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
+        else:
+            org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
+        print(org_names)
+        return render(request, 'pages/qa_parameters/qa_parameters.html', {'qa_parameters': qa_parameter, 'org_names': org_names})
     elif request.method == 'POST':
         data = json.loads(request.body)
         print(data)
