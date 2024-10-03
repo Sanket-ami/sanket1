@@ -52,11 +52,21 @@
     <div class="modal-body">
         <form class="needs-validation" method="post" id="qaForm" novalidate>
             {% csrf_token %}
-            <div class="mb-3">
+            <!-- <div class="mb-3">
                 <label for="organisation_name" class="form-label">Organisation Name</label>
                 <input type="text" class="form-control" id="organisation_name" name="organisation_name" required>
                 <div class="invalid-feedback">Please provide a valid organisation name.</div>
-            </div>
+            </div> -->
+            <div class="col-sm-6">
+                <label class="form-label" for="organisation_name">Organisation Name<span class="txt-danger">*</span></label>
+                <select class="form-select" id="organisation_name" required="">
+                  {<!-- dynamically populate provider options -->}
+                  {% for org in org_names %}
+                     <option value="{{ org }}">{{ org }}</option>
+                  {% endfor %}
+                </select>
+                <div class="valid-feedback">Looks good!</div>
+              </div>
 
             <!-- Parameter Name -->
             <div class="mb-3">
