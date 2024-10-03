@@ -77,9 +77,9 @@ WSGI_APPLICATION = 'zono.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'callbot',     # Replace with your database name
+        'NAME': 'callbotics2',     # Replace with your database name
         'USER': 'postgres',     # Replace with your database username
-        'PASSWORD': 'callbot123',  # Replace with your database password
+        'PASSWORD': 'postgres',  # Replace with your database password
         'HOST': 'localhost',               # Set to 'localhost' or your database server address
         'PORT': '5432',                    # Default PostgreSQL port
     }
