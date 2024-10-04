@@ -477,7 +477,7 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             try:
                 # Convert strings to datetime objects
                 start_time = datetime.fromisoformat(str(call_start_time))  # Remove 'Z' from end
-                end_time = datetime.fromisoformat(str(call_end))      # Remove 'Z' from end
+                # end_time = datetime.fromisoformat(str(call_end))      # Remove 'Z' from end
 
                 # Calculate the difference
                 time_difference = end_time - start_time
@@ -538,10 +538,11 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
         elif call_status_current == 'error':
              
             # Fetch all calls for the patient
- 
+            end_time = datetime.fromisoformat(str(call_end))
             #### update call log mongo
             updated_fields = {
                 "call_status": "not_started",
+                "end_time":end_time,
                 "call_duration": 0  # Example of updating multiple fields
             }
 
