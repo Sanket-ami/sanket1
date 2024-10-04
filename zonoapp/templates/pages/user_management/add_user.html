@@ -140,7 +140,7 @@
                 <div class="card-wrapper border rounded-3 checkbox-checked">
                     <h6 class="sub-title">Select Organisation</h6>
                     <div class="dropdown-form">
-                        <select class="form-select" name="organisation" required>
+                        <select class="form-select" name="organisation" id="organisationName" required>
                             <option value="" disabled selected>Select Organisation</option>
                             {% for user in organisation_list %}
                                 <option value="{{ user.organisation_name }}">{{ user.organisation_name }}</option>
@@ -154,7 +154,7 @@
                 <div class="card-wrapper border rounded-3 checkbox-checked">
                     <h6 class="sub-title">Select Role</h6>
                     <div class="dropdown-form">
-                        <select class="form-select" name="role" required>
+                        <select class="form-select" name="role" id ="roleName" required>
                             <option value="" disabled selected>Select Role</option>
                             {% for role in roles %}
                                 <option value="{{ role.id }}">{{ role.role }}</option>
@@ -173,10 +173,11 @@
             </div>
 
             <div class="col-12">
-                <button class="btn btn-primary" type="submit">Submit</button>
+                <button class="btn btn-primary" id="submitAdd" type="button">Submit</button>
             </div>
         </form>
     </div>
+
     <div class="card-body custom-input editAgentModal d-none" id="editAgentModal">
         <form class="row g-3 needs-validation" novalidate>
             {% csrf_token %}
@@ -322,7 +323,7 @@ function edit_user(user_id,agent_name){
 
     }
     const editForm = document.querySelector(".edit-agent-form");
-editForm.addEventListener("submit", function (event) {
+editForm.addEventListener("sdadsasad", function (event) {
     event.preventDefault();
 
     // Collect the form data
@@ -411,15 +412,7 @@ editForm.addEventListener("submit", function (event) {
             });
 
 
-            // Handle form submission using AJAX
-
-
-            
-
-
-
-
-            form.addEventListener("submit", function (event) {
+            $("#submitAdd").on("click", function(event) {
                 event.preventDefault();
 
                 let formData = {
@@ -429,11 +422,11 @@ editForm.addEventListener("submit", function (event) {
                     'email': document.getElementById("exampleFormControlInput1").value,
                     'password': document.getElementById("inputPassword1").value,
                     'confirm_password': document.getElementById("inputPassword2").value,
-                    'role': document.querySelector("input[name='flexRadioDefault1']:checked").value,
-                    'organisation_name': document.querySelector("input[name='flexRadioDefault2']:checked").value
+                    'role': document.getElementById("roleName").value,
+                    'organisation_name':  document.getElementById("organisationName").value
                 };
                 console.log(formData);
-
+                
                 // AJAX request to submit form data
                 fetch("/user_list", {
                     method: "POST",
