@@ -1,9 +1,12 @@
 from django.urls import path
 from .import views
 from .user_management_views import list_of_user, get_user
+from .views import fetch_gravatar
+
 
 
 urlpatterns = [
+    path('fetch-gravatar/', fetch_gravatar, name='fetch_gravatar'),
     path('user_list', list_of_user, name="list-user"),
     path('<int:user_id>', get_user, name="get-user"),
     path('', views.index, name='index'),
