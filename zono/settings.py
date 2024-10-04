@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'agent',
     'sass_processor',
     'widget_tweaks',
+    'qa_parameters'
 
 
 ]
@@ -90,9 +91,9 @@ DATABASES = {
     'default': {
 
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),     # Replace with your database name
-        'USER': os.getenv('DB_USER'),     # Replace with your database username
-        'PASSWORD': os.getenv('DB_PASSWORD'),   # Replace with your database password
+        'NAME': 'callbot1',     # Replace with your database name
+        'USER': 'postgres',     # Replace with your database username
+        'PASSWORD': 'callbot123',   # Replace with your database password
         'HOST': 'localhost',               # Set to 'localhost' or your database server address
         'PORT': '5432',                    # Default PostgreSQL port
 
