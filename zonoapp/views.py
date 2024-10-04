@@ -5,9 +5,57 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login,logout,authenticate
+import os
+import requests
+
+from hashlib import md5
+from urllib.parse import urlencode
+from django import template
+from django.utils.safestring import mark_safe
+from django.http import JsonResponse
+from django.conf import settings
+
+
+
+# Save gravatar image
+
+@login_required(login_url="/login_home")
+def fetch_gravatar(request):
+    print("Fetch gravatar")
+    if request.method == 'POST' and request.user.is_authenticated:
+        email = request.user.email
+        user = request.user.username 
+        # print("email : ",email)
+        # print("user : ",user)
+        hashed_email = md5(email.lower().encode('utf-8')).hexdigest()
+        print(hashed_email)
+        first_imagename = f"{user}.jpg"
+        # print(first_imagename)
+        first_check = os.path.join(settings.STATIC_ROOT, 'images', first_imagename)
+        if os.path.exists(first_check):
+            print("find")
+            print(first_check)
+            return JsonResponse({'image_url': f"{settings.STATIC_URL}images/{first_imagename}"})
+        params = urlencode({'s': str(40)})
+        # print(hashed_email)
+        gravatar_url = f"https://www.gravatar.com/avatar/{hashed_email}?{params}"
+        print(gravatar_url)
+        image_filename = f"{user}.jpg"
+        image_path = os.path.join(settings.STATIC_ROOT, 'images', image_filename)
+        print(image_path)
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        if not os.path.exists(image_path):
+            print("ok")
+            response = requests.get(gravatar_url)
+            if response.status_code == 200:
+                with open(image_path, 'wb') as f:
+                    f.write(response.content)
+        return JsonResponse({'image_url': f"{settings.STATIC_URL}images/{image_filename}"})
+    
+    return JsonResponse({'error': 'User not authenticated'}, status=403)
+
 
 # Create your views here.
-
 
 @login_required(login_url="/login_home")
 def index(request):
