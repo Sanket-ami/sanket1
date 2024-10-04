@@ -195,7 +195,6 @@
                 <!-- <span class="h5 fw-bold text-dark"></span><br> -->
 
                 <h4 class="mb-4">Call Transcript</h4>
-                {% if request.user.is_superuser %}
                 {% if request.user.role.role != "QA" %}
 
                 <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editTranscriptText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
