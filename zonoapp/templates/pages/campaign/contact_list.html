@@ -3,19 +3,19 @@
 
 {% block content %}
 <div class="container-md" id="filterList">
-    <form method="GET" action="" id="filterForm" class="d-flex flex-column">
+    <form method="GET" action="{% url 'contact_list' campaign_id %}" id="filterForm" class="d-flex flex-column">
         <label for="selectedContactList" class="form-label">Select Contact list</label>
         <div class="d-flex">
             <button type="submit" class="btn btn-primary me-2">Filter</button>
             <select class="form-select" aria-label=" " name="selected_contact_list" id="selectedContactList">
-                {% for camp in all_contact_list_names %}
-                <option value="{{camp.id}}">{{camp.list_name}}</option>
+                {% for contact in all_contact_list_names %}
+                <option value="{{ contact.1 }}" {% if contact.1|stringformat:"s" == selected_contact_list %}selected{% endif %}>{{ contact.0 }}</option>
                 {% endfor %}
             </select>
         </div>
     </form>
     <div class="mt-2">
-        {% if contact_list.is_active %}
+        {% if is_active %}
         <button type="button" class="btn btn-secondary float-end" disabled>Active</button>
         {% else %}
         <button type="button" id="markListActive" class="btn btn-info float-end">Make Active</button>
@@ -24,7 +24,6 @@
      <!-- New Upload Contact List Button -->
      <button type="button" id="uploadContactList" class="btn btn-primary float-end me-2" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload Contact List</button>
 </div>
-
 
 <!-- Bootstrap Modal for Uploading CSV -->
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
@@ -36,6 +35,10 @@
             </div>
             <div class="modal-body">
                 <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fileName" class="form-label">Enter List Name</label>
+                        <input type="text" name="list_name" id="fileName" class="form-control" placeholder="List Name" required>
+                    </div>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Upload CSV file</label>
                         <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv" required>
@@ -127,7 +130,7 @@
                 confirmButtonText: 'Yes, mark as active'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    let contactListId = "{{ contact_list.id }}";  // Get the current contact list id dynamically
+                    let contactListId = "{{ contact_list_id }}";  // Get the current contact list id dynamically
                     let campaignId = "{{ campaign_id }}";  // Get the current campaign id dynamically
 
                     // Make an AJAX POST request to mark the contact list as active
@@ -138,6 +141,9 @@
                             'campaign_id': campaignId,
                             'contact_list_id': contactListId
                         }),
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                        },
                         contentType: 'application/json',
                         success: function(response) {
                             Swal.fire('Success', response.message, 'success').then(() => {
@@ -160,6 +166,9 @@
             $.ajax({
                 url: "{% url 'upload_contact_list' campaign_id=campaign_id %}",
                 type: 'POST',
+                headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                        },                
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -213,7 +222,7 @@
 
         // When the delete button is clicked
 
-            $('#deleteSelected').on('click', function() {
+        $('#deleteSelected').on('click', function() {
                 if (selectedContacts.length === 0) {
                     Swal.fire({
                         icon: 'warning',
