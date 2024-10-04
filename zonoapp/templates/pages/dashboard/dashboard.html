@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Date Range Picker Form</h2>
+    <form id="dateForm" class="needs-validation" novalidate>
+        <!-- Start Date Field -->
+        <div class="form-group">
+            <label for="start_date">Start Date</label>
+            <input type="date" class="form-control" id="start_date" name="start_date" required>
+            <div class="invalid-feedback">Please select a start date.</div>
+        </div>
+
+        <!-- End Date Field -->
+        <div class="form-group">
+            <label for="end_date">End Date</label>
+            <input type="date" class="form-control" id="end_date" name="end_date" required>
+            <div class="invalid-feedback">Please select an end date.</div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+<div class="card" id="organisationParametersTable"></div>
+
+    <div class="card-header">
+        <h4>{{ result }}</h4>
+        <span>This table displays the organisation name along with its associated parameters and values.</span>
+    </div>
+    <div class="card-block row">
+        <div class="col-sm-12 col-lg-12 col-xl-12">
+            <div class="table-responsive custom-scrollbar">
+                <table class="table table-inverse table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Creaed At</th>
+                            <th scope="col">Call logs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loop through organisations and their parameters -->
+                        {% for result in results %}
+                        <tr>
+                            
+                            <td>{{ result }}</td>
+                            <td>{{ result }}</td>
+                            <!-- Loop through key-value pairs for each organisation -->
+                                <td>
+                                    <!-- Delete Button -->
+                                    <button class="btn-danger" >
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Include Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    // Function to validate form fields
+    function validateForm(startDate, endDate) {
+        if (!startDate || !endDate) {
+            alert('Please select both start and end dates.');
+            return false;
+        }
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('End date cannot be earlier than start date.');
+            return false;
+        }
+        return true;
+    }
+
+    // Function to prepare form data for AJAX submission
+    function prepareFormData() {
+        const startDate = $('#start_date').val();
+        const endDate = $('#end_date').val();
+        return {
+            'start_date': startDate,
+            'end_date': endDate
+        };
+    }
+
+    // Function to submit form using AJAX with data in the body
+    function submitFormAjax(formData) {
+        $.ajax({
+            url: '/dashboard', // Replace with your server endpoint
+            type: 'GET',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'start': formData.start_date, // Pass start and end as individual keys in the body
+                'end': formData.end_date
+            }), 
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for security if using Django
+            },
+            success: function(response) {
+                showToast('success', 'Form submitted successfully!');
+                console.log(response);
+            },
+            error: function(xhr, status, error) {
+                showToast('error', 'Error submitting form: ' + error);
+                console.error(xhr, status, error);
+            }
+        });
+    }
+
+    // Function to show toast notification
+    function showToast(type, message) {
+        Swal.fire({
+            title: type === 'success' ? 'Success' : 'Error',
+            text: message,
+            icon: type,
+            confirmButtonText: 'OK'
+        });
+    }
+
+    // Event listener for form submission
+    $('#dateForm').on('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        // Get the form data
+        const formData = prepareFormData();
+
+        // Validate the form data
+        if (validateForm(formData.start_date, formData.end_date)) {
+            // Submit form data via AJAX
+            submitFormAjax(formData);
+        }
+    });
+</script>
+
+<!-- SweetAlert2 for Toastr -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+{% include 'pages/sample-page/components/sample-page.html' %}
+
+{% endblock %}
+
+{% block scriptcontent %}
+
+{% endblock %}
+
+
+
+
+
+
+
+
