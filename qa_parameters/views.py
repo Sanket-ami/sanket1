@@ -7,7 +7,7 @@ from zonoapp.models import User
 
 def qa_parameters(request):
     if request.method == 'GET':
-        qa_parameter = QAParameters.objects.all()
+        qa_parameter = QAParameters.objects.all().filter(is_deleted=False)
         if request.user.is_superuser:
             print("super")
             org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
@@ -28,7 +28,8 @@ def qa_parameters(request):
     elif request.method == 'DELETE':
         data = json.loads(request.body)
         qa_parameter = QAParameters.objects.get(id=data['id'])
-        qa_parameter.delete()
+        qa_parameter.is_deleted = True
+        qa_parameter.save()
         try:
             return JsonResponse({'status': 'User deleted successfully', 'status_code': 200}, status=200)
         except QAParameters.DoesNotExist:
