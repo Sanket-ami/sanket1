@@ -1,5 +1,4 @@
 from django.db import models
-from campaign.models import Campaign
 
 # Create your models here.
 class QAParameters(models.Model):

@@ -1,6 +1,7 @@
 from django.db import models
 from provider.models import Provider
 from agent.models import Agent
+from qa_parameters.models import QAParameters
 import mongoengine as me
 import datetime
 # Create your models here.
@@ -9,6 +10,7 @@ class Campaign(models.Model):
     campaign_name = models.CharField(max_length=255, blank=False)
     is_schedule = models.BooleanField(default=True)
     summarization_prompt = models.TextField(null=True)
+    qa_parameters = models.ForeignKey(QAParameters, on_delete=models.SET_NULL, null=True)
     organisation_name = models.CharField(max_length=255, blank=False)
     status=models.CharField(max_length=255, blank=False,default="not_started")
     show_transcript = models.BooleanField(default=False)

@@ -84,7 +84,19 @@
                           </select>
                           <div class="invalid-feedback">Please select a valid provider.</div>
                         </div>
-                        
+
+                        <div class="col-sm-6">
+                          <label class="form-label" for="provider">QA Parameters<span class="txt-danger"> </span></label>
+                          <select class="form-select" id="qa_parameters_list" >
+                            <option value="">None</option>
+                            {<!-- dynamically populate provider options -->}
+                            {% for param in qa_parameters %}
+                               <option value="{{ param.id }}">{{ param.parameters_name }}</option>
+                            {% endfor %}
+                          </select>
+                          <div class="invalid-feedback">Please select a valid QA Parameter.</div>
+                        </div>
+
                         <div class="col-sm-6">
                           <label class="form-label" for="summarization_prompt">Summarization Prompt<span class="txt-danger">*</span></label>
                           <textarea class="form-control" id="summarization_prompt" rows="10" cols="100" placeholder="Instruction to describe about how a call should be summarized. Call will not be summarized if left blank."></textarea>
@@ -186,11 +198,11 @@
                                 <div class="invalid-feedback">Invalid form file selected</div>
                               </div>
                               <div class="col-12">
-                                <div class="form-check">
+                                <!-- <div class="form-check">
                                   <input class="form-check-input" id="invalidCheck-c" type="checkbox" value="" required="">
                                   <label class="form-check-label" for="invalidCheck-c">All the above information is correct</label>
                                   <div class="invalid-feedback">You must agree before submitting.</div>
-                                </div>
+                                </div> -->
                               </div>
                             </form>
                           </div>
@@ -375,7 +387,8 @@
         campaign_name: $('#campaignName').val(),
         is_schedule: $('#isSchedule').is(':checked'),
         organisation_name: $('#organisationName').val(),
-        summarization_prompt: $('#summarizationPrompt').val(),
+        summarization_prompt: $('#summarization_prompt').val(),
+        qa_parameters_list:$("#qa_parameters_list").val(),
         show_transcript: $('#showTranscript').is(':checked'),
         process_type: $('#processType').val(),
         contact_list:contactList,
@@ -385,7 +398,7 @@
         show_numbers: $('#showNumbers').is(':checked'),
         csrfmiddlewaretoken: '{{ csrf_token }}'  // Make sure you include CSRF token for Django
     };
-
+    console.log(data)
     $.ajax({
         url: "{% url 'create_campaign' %}",
         type: 'POST',
