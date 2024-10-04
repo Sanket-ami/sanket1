@@ -6,7 +6,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from zonoapp.models import User
 from voice.models import Voice
 from agent.models import Agent
-from .models import Campaign, Transcript,CallLogs, ContactList
+from .models import Campaign, Transcript,CallLogs, ContactList, ScheduleCampaign
 from django.contrib.auth import login,logout,authenticate
 import json
 from provider.models import Provider
@@ -182,6 +182,15 @@ def campaign_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Add custom key-value pairs to the campaigns in page_obj after pagination
+    for campaign in page_obj:
+        if campaign.is_schedule:
+            # find out schedule_date
+            schedule_obj = ScheduleCampaign.objects.filter(campaign=campaign,is_finished=False).first().schedule_date
+            campaign.scheduled_date = schedule_obj
+        else:
+            campaign.scheduled_date = ""
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
@@ -308,7 +317,7 @@ def start_campaign(request):
             prompt = campaign_obj.agent.agent_prompt
 
             # Iterate over the data
-            contact_list = campaign_obj.contact_list
+            contact_list = campaign_obj.contact_list.contact_list
             voice_config = campaign_obj.agent.voice.voice_configuration
  
             # qa parameters and summarization
@@ -334,6 +343,24 @@ def start_campaign(request):
 
 # call queue thread
 def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt):
+    # if the campaign is scheduled mark is_schedule as false as the campaign is already started
+    campaign_obj = Campaign.objects.get(id=campaign_id)
+    try:
+        if campaign_obj.is_schedule:
+            campaign_obj.is_schedule=False
+            campaign_obj.save()
+
+            # update the scheduled table
+            schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id,is_finished=False,is_ongoing=False).first()
+            schedule_obj.is_ongoing=True
+            schedule_obj.save()
+
+        else:
+            pass
+
+    except Exception as error:
+        print("error updating scheduled: ",error) 
+    print(contact_list  )
     for call_details in contact_list:
         try:
             raw_text = prompt
@@ -398,7 +425,21 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
         except Exception as err:
             print(f"error while calling: {call_details['contact_number']} error- {err}")
 
- 
+    # once all the calls are over update the campaign object to completed
+        campaign_obj.status="completed"
+        campaign_obj.save()
+    # once all the calls are over update the schedule campaign object to completed
+    try:
+        # update the scheduled table
+        schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_ongoing=True).first()
+        schedule_obj.is_ongoing=False
+        schedule_obj.is_finished=True
+        schedule_obj.save()
+
+    except Exception as err:
+        print("error while updating schedule campaign object: ",err)
+    return True
+
 
 # monitoring ongoing call
 def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_start_time):
@@ -432,6 +473,7 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             call_end = datetime.now()
 
             duration = 0
+            end_time = datetime.fromisoformat(str(call_end))
             try:
                 # Convert strings to datetime objects
                 start_time = datetime.fromisoformat(str(call_start_time))  # Remove 'Z' from end
@@ -450,17 +492,17 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
             ######### Perform the call summary if the prompt is given else skip ########
             if summarization_prompt:
-                entities = extract_entities_from_transcript(transcript)
                 status = "Completed"
                 try:
+                    entities = extract_entities_from_transcript(transcript,summarization_prompt)
                     # updating the summary and call status
                     entities = entities.replace("```json", "").replace("```", "").replace("\n", "")
                     if entities:
                         entities = json.loads(entities)
                         summary = entities["summary"]
                         status = entities["call_status"]
-                        if 'fail' in status.lower():
-                            status = "Failure"
+                        # if 'fail' in status.lower():
+                        #     status = "Failure"
                 except Exception as err:
                     print("Error generating summary: ", err)
             #################################################################
@@ -485,6 +527,7 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             #### update call log mongo
             updated_fields = {
                 "call_status": "completed",
+                "end_time":end_time,
                 "call_duration": duration  # Example of updating multiple fields
             }
 
@@ -544,8 +587,8 @@ def extract_entities_from_transcript(transcript,summarization_prompt):
     # Define the endpoint URL
     url = "https://api.openai.com/v1/chat/completions"
 
-    prompt =f"""
-            {summarization_prompt}
+    prompt = """
+            %s
 
             sample output summary (call concluded successfully):
                 {
@@ -553,17 +596,16 @@ def extract_entities_from_transcript(transcript,summarization_prompt):
                     "summary": "I called to insurance @<facility contact> spoke with rep <call receiver name> to check denied So as per rep checking claim is denied because services are not covered under the member's benefit plan. Rep informed that she need more 7-10 business days to inquiry for denied because claim denied incorrectly.call ref #<call refernce_numver> claim number #<claim_number>"
                 }
 
-            sample output summary (call was not successfull):
+            sample output summary (call was not successful):
                 {
                     "call_status":"Failed",
                     "summary": "I called to insurance @<facility contact> but I was not able to connect to a representative."
                 }
 
             Transcription:
-                    
+                
                 %s
-
-            """% (transcript)
+            """ % (summarization_prompt, transcript)
 
     # Define parameters
     data = {
@@ -786,6 +828,7 @@ def update_call_log(call_id, updated_fields):
 """
 Display call logs of a perticular campaign
 """
+@login_required(login_url="/login_home")
 def list_call_logs(request):
     if request.method == "GET":
         try:
@@ -796,7 +839,7 @@ def list_call_logs(request):
             campaign_list = list(campaign_list.values("id", "campaign_name"))
 
             campaign_id = request.GET.get('campaign_id',0)
-            if request.user.role.role == "QA":
+            if not request.user.is_superuser and request.user.role.role == "QA":
                 call_status = request.GET.get('call_status',"completed")
             else:
                 call_status = request.GET.get('call_status', "ongoing")
@@ -1131,3 +1174,35 @@ def live_transcript(request):
 
 
 ############################################################################################################################################################
+
+###################################################### Schedule Campaign Start #######################################################################
+def schedule_campaign(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            campaign_id = data.get('campaign_id')
+            schedule_note = data.get('schedule_note')
+            schedule_date = data.get('schedule_date')
+
+            # Assuming you have a campaign model to validate campaign_id
+
+            campaign_obj = Campaign.objects.get(id=campaign_id)
+            if not campaign_obj.is_schedule:
+                ScheduleCampaign.objects.create(
+                    campaign_id=campaign_id,
+                    schedule_note=schedule_note,
+                    schedule_date=schedule_date
+                )
+
+                # update the campaign is_scheduled to true
+                campaign_obj.is_schedule = True
+                campaign_obj.save()
+
+                return JsonResponse({'message': 'Campaign scheduled successfully'}, status=200)
+            else:
+                return JsonResponse({'message': 'Unable to schedule the Campaign as it is already sheduled'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+################################################################### END ################################################################################

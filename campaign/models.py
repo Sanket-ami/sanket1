@@ -79,3 +79,19 @@ class ContactList(models.Model):
  
     def __str__(self):
         return self.campaign.campaign_name
+    
+
+class ScheduleCampaign(models.Model):
+    schedule_note = models.TextField()
+    campaign = models.ForeignKey("Campaign", on_delete=models.SET_NULL, null=True, related_name="schedule_campaign")
+    schedule_date = models.DateTimeField()
+    is_ongoing = models.BooleanField(default=False)
+    is_finished = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+    created_by = models.CharField(max_length=255, default="SYSTEM")
+    modified_by = models.CharField(max_length=255, default="SYSTEM")
+    is_deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Schedule: {self.schedule_note} - Date: {self.schedule_date}"    

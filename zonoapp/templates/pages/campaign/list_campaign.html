@@ -32,7 +32,7 @@
                                 <p>{{ campaign.organisation_name }}</p>
                                 
                                 <!-- Edit and Delete Icons -->
-                                <div class="d-flex align-items-center">
+                                <!-- <div class="d-flex align-items-center">
                                     
                                     <a href="{% url 'edit_campaign' campaign.id %}" class="btn btn-link p-0" title="Edit">
                                         <i class="fa fa-edit text-warning"></i>
@@ -40,7 +40,7 @@
                                     <a href="{% url 'delete_campaign' campaign.id %}" class="btn btn-link p-0 ml-2" title="Delete">
                                         <i class="fa fa-trash text-danger"></i>
                                     </a>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
 
@@ -50,19 +50,32 @@
 
                         <!-- Schedule and Contact List Buttons -->
                         <div class="d-flex justify-content-end mt-4">
-                            <a href="" class="btn btn-sm btn-info mr-2">
+                            <a href="javascript:void(0);" class="btn btn-sm btn-info mr-2" data-toggle="modal" data-target="#scheduleModal" onclick="openScheduleModal({{ campaign.id }}, '{{ campaign.campaign_name }}')">
                                 <i class="fa fa-calendar"></i> Schedule
-                            </a>&nbsp;
+                            </a>
+                            &nbsp;
                             <a href="{% url 'contact_list' campaign.id %}" class="btn btn-sm btn-primary">
                                 <i class="fa fa-list"></i> Contact List
                             </a>
                         </div>
-                        <!-- Start campaign Buttons -->
-                        <div class="d-flex justify-content-start mt-4">
-                            <button class="btn btn-sm btn-primary mr-2"  onclick="startCampaign({{campaign.id}},'{{ campaign.campaign_name }}' )">
-                                <i class="fa fa-play"> </i> Start Campaign
-                            </button>&nbsp;
+                        {% if campaign.status == 'ongoing' %}
+                            <button class="btn btn-sm btn-warning mr-2" disabled>
+                                <i class="fa fa-spin fa-circle-o-notch"></i> Campaign is Ongoing
+                            </button>
+                        {% else %}                        
+                            <!-- Start campaign Buttons -->
+                            <div class="d-flex justify-content-start mt-4">
+                                <button class="btn btn-sm btn-primary mr-2"  onclick="startCampaign({{campaign.id}},'{{ campaign.campaign_name }}' )">
+                                    <i class="fa fa-play"> </i> Start Campaign
+                                </button>&nbsp;
+                            </div>
+                        {% endif %}
+                        {% if campaign.is_schedule %}
+                        <div class="d-flex justify-content-end mt-4">
+                             <h6> Campaign is scheduled to start on <strong>{{ campaign.scheduled_date }} </strong></h6>
+                            &nbsp;
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -106,10 +119,89 @@
     </div>
 </div>
 
+<!-- Schedule Campaign Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1" role="dialog" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scheduleModalLabel">Schedule Campaign</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <input type="hidden" id="campaign_id" name="campaign_id">
+                    <div class="form-group">
+                        <label for="schedule_note">Note</label>
+                        <textarea class="form-control" id="schedule_note" name="schedule_note" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="schedule_date">Schedule Date</label>
+                        <input type="datetime-local" class="form-control" id="schedule_date" name="schedule_date" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitSchedule()">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Script block -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    // schedule campaign code
+    function openScheduleModal(campaign_id, campaign_name) {
+        $('#campaign_id').val(campaign_id);
+        $('#scheduleModalLabel').text('Schedule Campaign for ' + campaign_name);
+        $('#scheduleModal').modal('show');
+    }
+
+    function submitSchedule() {
+        const campaign_id = $('#campaign_id').val();
+        const schedule_note = $('#schedule_note').val();
+        const schedule_date = $('#schedule_date').val();
+
+        if (!schedule_note || !schedule_date) {
+            Swal.fire({
+                icon: 'warning',
+                text: 'Please fill all the fields'
+            });
+            return;
+        }
+
+        $.ajax({
+            url: "{% url 'schedule_campaign' %}",  // Django URL for scheduling
+            method: "POST",
+            data: JSON.stringify({
+                campaign_id: campaign_id,
+                schedule_note: schedule_note,
+                schedule_date: schedule_date
+            }),
+            contentType: "application/json",
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    text: response.message
+                }).then(() => {
+                                location.reload();  // Reload the page to reflect changes
+                            }); // Hide modal after success
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    text: 'Failed to schedule campaign: ' + error
+                });
+            }
+        });
+    }    
     function startCampaign(campaign_id,campaign_name){
         // alert("started "+campaign_id)
         // Confirm deletion using SweetAlert2
