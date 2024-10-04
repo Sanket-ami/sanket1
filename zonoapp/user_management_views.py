@@ -15,6 +15,7 @@ def list_of_user(request, user_id:int=None):
         if request.user.is_superuser:
             user_list = User.objects.all()
             role_list = Role.objects.values('role','id').distinct('role')
+            print(role_list)
             organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
             return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list})
         if request.user.role == 'admin':
