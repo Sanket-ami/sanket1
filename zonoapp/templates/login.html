@@ -19,12 +19,12 @@
                   <!-- <p>Enter your email & password to login</p> -->
                   <div class="form-group">
                     <label class="col-form-label">Username</label>
-                    {{form.username|add_class:'form-control'}}
+                    {{form.username|add_class:'form-control'|attr:'placeholder:Enter your username'}}
                   </div>
                   <div class="form-group">
                     <label class="col-form-label">Password</label>
                     <div class="form-input position-relative"> 
-                      {{form.password|add_class:'form-control'}}
+                      {{form.password|add_class:'form-control'|attr:'placeholder:Enter your password'}}
                       <!-- <div class="show-hide"><span class="toggle-password">Show</span></div> -->
                       <div class="show-hide">
                         <span class="toggle-password" style="cursor: pointer;"></span>
@@ -54,8 +54,8 @@
 
 {% block scriptcontent %}
 <script>
-document.getElementById('id_username').value = 'username'
-document.getElementById('id_password').value = '123'
+document.getElementById('id_username').value = ''
+document.getElementById('id_password').value = ''
 document.addEventListener("DOMContentLoaded", function() {
         const togglePassword = document.querySelector('.toggle-password');
         const passwordInput = document.querySelector('input[name="password"]');
