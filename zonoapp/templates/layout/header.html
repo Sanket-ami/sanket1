@@ -245,8 +245,9 @@
           </div>
         </li>
         <li class="profile-nav onhover-dropdown pe-0 py-0">
-          <div class="d-flex align-items-center profile-media"><img class="b-r-25" src="{% static 'assets/images/dashboard/profile.png' %}" alt="">
+          <div class="d-flex align-items-center profile-media"><img id="gravatar-image" class="b-r-25" src="" alt="">
             <div class="flex-grow-1 user"><span>{{ request.user.username }}</span>
+
               <p class="mb-0 font-nunito"> {{ request.user.role.role}}
                 <svg>
                   <use href="{% static 'assets/svg/icon-sprite.svg' %}#header-arrow-down"></use>
@@ -275,4 +276,69 @@
     <script class="empty-template" type="text/x-handlebars-template"><div class="EmptyMessage">Your search turned up 0 results. This most likely means the backend is down, yikes!</div></script>
   </div>
 </div>
+
+<script>
+  document.addEventListener( 'DOMContentLoaded', () => {
+      // Step 1: Hash your email address using SHA-256.
+      //const email = '{{request.user.email}}' ;
+      //const email = 'anurag@aminfoweb.com';
+      //console.log(email);
+      
+      //const hashedEmail = CryptoJS.SHA256(email);
+      // Step 2: Construct the Gravatar URL. 
+      //const gravatarUrl = `https://www.gravatar.com/avatar/${hashedEmail}`;
+      // Step 3: Set the image source to the Gravatar URL.
+      //console.log("HEADERRR");
+      
+      //console.log(gravatarUrl);
+      
+      //document.getElementById( 'gravatar-image' ).src = gravatarUrl;
+      const fetchGravatar = () => {
+        fetch('/fetch-gravatar/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}', 
+            },
+            credentials: 'include' 
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .then(data => {
+            if (data.image_url) {
+                document.getElementById('gravatar-image').src = data.image_url;
+            } else {
+                console.error(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+        });
+    };
+
+    // Call fetchGravatar after user logs in
+    // Make sure to call this function after a successful login
+    fetchGravatar();
+      
+  } );
+</script>
+
+
+
+<script src = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js">
+
+  
+</script>
+
+
+
+<!-- <a href="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js">https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js</a> -->
+
+
+
 <!-- Page Header Ends -->
