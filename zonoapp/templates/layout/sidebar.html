@@ -43,7 +43,7 @@
             <svg class="fill-icon">
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-home"></use>
             </svg><span class=" ">Create Campaign</span></a>
-            
+          </li>
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'list_call_logs' %}">
               <svg class="stroke-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-home"></use>
@@ -69,6 +69,14 @@
               </h6>
             </div>
           </li>   
+
+          <li class="sidebar-main-title">
+            <div>
+              <h6 class="lan-21">
+                <a href="{% url 'list-user' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">User Management</a>
+              </h6>
+            </div>
+          </li>  
 
           <li class="sidebar-main-title">
             <div>
@@ -124,6 +132,12 @@
                 </h6>
             </div>
           </li>
+          
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+            <a class="sidebar-link sidebar-title" href="{% url 'voice_view' %}">Voice</a>
+          </li>
+
+          
           <!-- Provider -->
           <li class="sidebar-main-title">
             <div>
@@ -132,6 +146,22 @@
               </h6>
             </div>
           </li>
+
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+            <a class="sidebar-link sidebar-title" href="{% url 'provider_view' %}">Provider</a>
+          </li>
+
+          <li class="sidebar-main-title">
+            <div>
+              <h6 class="lan-23">
+                <a href="{% url 'qa_parameter' %}" class="lan-22 no-color-change" style="all: inherit; cursor: pointer;">QA Parameters</a>
+              </h6>
+            </div>
+          </li>
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+            <a class="sidebar-link sidebar-title" href="{% url 'qa_parameter' %}">QA Parameters</a>
+          </li>
+
 
           
         </ul>

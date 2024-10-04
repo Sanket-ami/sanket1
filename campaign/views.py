@@ -6,7 +6,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from zonoapp.models import User
 from voice.models import Voice
 from agent.models import Agent
-from .models import Campaign, Transcript,QAParameters,CallLogs
+from .models import Campaign, Transcript,CallLogs, ContactList, ScheduleCampaign
 from django.contrib.auth import login,logout,authenticate
 import json
 from provider.models import Provider
@@ -24,6 +24,8 @@ from requests.auth import HTTPBasicAuth
 from django.http import FileResponse
 import io
 from django.urls import reverse
+import csv
+from qa_parameters.models import QAParameters
 
 ## render create campaign page
 @login_required(login_url="/login_home")
@@ -40,13 +42,16 @@ def create_campaign(request):
 
         available_agents = Agent.objects.filter(is_deleted=False)
 
+        #### QA parameters list
+        qa_parameters = QAParameters.objects.filter(is_deleted=False,organisation_name__in = org_names)
+        
         if not request.user.is_superuser:
             available_agents = available_agents.filter(organisation_name__in=org_names)
         print('available_agents ',available_agents)
         # available_voice = Agent.objects.filter(is_deleted=False)
 
         context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Sample Page"},
-                   "telephony_providers_list":telephony_providers_list,"org_names":org_names,
+                   "telephony_providers_list":telephony_providers_list,"org_names":org_names,"qa_parameters":qa_parameters,
                    "available_agents":available_agents
                    }   
         
@@ -73,18 +78,100 @@ def create_campaign(request):
             show_transcript=data['show_transcript'],
             process_type=data['process_type'],
             provider=provider,
-            contact_list = new_contact_list,
+            # contact_list = new_contact_list,  # removed old logic of single list
             agent=agent,
+            summarization_prompt=data['summarization_prompt'],
+            qa_parameters_id= data["qa_parameters_list"],
             show_recording=data['show_recording'],
             show_numbers=data['show_numbers'],
-            created_by=request.user,  # or request.user if you have authentication
-            modified_by=request.user
+ 
         )
 
+        #######################################################
+        """ #### New Logic for adding contact list ######## """
+        campaign_id = campaign.id
+
+        # Save the campaign contact list and mark it as active
+        campaign_contact_list = ContactList.objects.create(
+            list_name="default",
+            campaign_id=campaign_id,
+            contact_list=new_contact_list,
+            is_active=True,  # Make it active by default
+            organisation_name=data['organisation_name'],
+            created_by="system",
+            modified_by="system",
+        )
+
+        # Update the campaign with the contact_list_id
+        campaign.contact_list_id = campaign_contact_list.id
+        campaign.save()
+        #######################################################
         return JsonResponse({"message": "Campaign created successfully!", "campaign_id": campaign.id,"success":True})
 
     return JsonResponse({"error": "Invalid request method","success":False, "error":True }, status=500)
     
+############ upload new contacts csv #######
+def upload_contact_list(request, campaign_id):
+    if request.method == "POST":
+
+        # Get the uploaded file
+        csv_file = request.FILES.get('csvFile')
+        list_name = request.POST.get('list_name')
+        if not csv_file.name.endswith('.csv'):
+            return JsonResponse({'status': 'error', 'message': 'Invalid file format. Please upload a CSV file.'})
+
+        # Get the contact list structure
+        contact_list =  ContactList.objects.filter(campaign_id=campaign_id,is_deleted=False,is_active=True).first()
+        if contact_list.contact_list:
+            keys_to_match =  list(contact_list.contact_list[0].keys())
+            try:
+                keys_to_match.remove("contact_id")
+            except:
+                pass # removing the auto generated_column
+        else:
+            keys_to_match = []
+        current_columns = keys_to_match   
+        print("current_columns ==> ",current_columns)
+
+        # Parse and validate the CSV file
+        try:
+            csv_data = csv.DictReader(csv_file.read().decode('utf-8').splitlines())
+            uploaded_columns = csv_data.fieldnames
+            
+            # Check if columns match
+            if set(uploaded_columns) != set(current_columns):
+                return JsonResponse({'status': 'error', 'message': 'CSV columns do not match the existing contact list.'})
+
+            # Save the uploaded data to new contact list
+
+
+
+            new_contact_list = [row for row in csv_data]
+            new_contact_list_refined = []
+            for contact in new_contact_list:
+                # add a unique identifiier to each contact
+                contact["contact_id"] = "contact_"+str(uuid.uuid4().hex)
+                new_contact_list_refined.append(contact)
+
+            contact_list = ContactList( 
+                list_name=list_name,
+                campaign_id=campaign_id,
+                is_active=False,  # Make it active by default
+                organisation_name=str(request.user.organisation_name),
+                created_by="system",
+                contact_list = new_contact_list_refined,
+                modified_by="system"
+            )
+
+            contact_list.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Contact list uploaded successfully.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)    
+
+
 ## render view campaign page
 @login_required(login_url="/login_home")    
 def campaign_list(request):
@@ -95,6 +182,15 @@ def campaign_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Add custom key-value pairs to the campaigns in page_obj after pagination
+    for campaign in page_obj:
+        if campaign.is_schedule:
+            # find out schedule_date
+            schedule_obj = ScheduleCampaign.objects.filter(campaign=campaign,is_finished=False).first().schedule_date
+            campaign.scheduled_date = schedule_obj
+        else:
+            campaign.scheduled_date = ""
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
@@ -110,12 +206,62 @@ def delete_campaign():
 ## render view campaign page
 @login_required(login_url="/login_home") 
 def contact_list(request, campaign_id):
-    # Fetch the contact list based on the campaign_id
-    contact_list = Campaign.objects.get(id=campaign_id).contact_list
-    # Example: contact_list = get_contact_list_from_db(campaign_id)
+    if request.method=="GET":
+        try:
+            # Fetch the contact list based on the campaign_id
+            campaign = Campaign.objects.get(id=campaign_id)
+            all_contact_list_names = ContactList.objects.filter(is_deleted = False, campaign=campaign).values_list('list_name','id')
 
-    context = {"breadcrumb":{"title":"Create Agent","parent":"Pages", "child":"Sample Page"},"contact_list": contact_list,"campaign_id":campaign_id}
-    return render(request, 'pages/campaign/contact_list.html', context)
+            # import pdb;pdb.set_trace()
+            contact_list = ContactList.objects.filter(is_deleted = False, campaign=campaign)
+            # select the specfic list from a campaign
+            selected_list = request.GET.get("selected_contact_list")
+
+            if selected_list:
+                contact_list = contact_list.filter(id = selected_list)
+                contact_list_id = contact_list[0].id
+                is_active = contact_list[0].is_active
+                contact_list = list(contact_list[0].contact_list)
+            else:
+                if contact_list and all_contact_list_names: # filter only is main contact list is not empty
+                    contact_list = contact_list.filter(id = all_contact_list_names[0][1] ) # id of the contact_list
+                    contact_list_id = contact_list[0].id
+                    is_active = contact_list[0].is_active
+                    contact_list = list(contact_list[0].contact_list)
+
+            print("final_conact_list_b4 uload + ",contact_list)
+            context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Sample Page"},"contact_list": contact_list,"campaign_id":campaign_id,
+                        "all_contact_list_names":all_contact_list_names, "selected_contact_list":selected_list,"contact_list_id":contact_list_id,
+                        "is_active":is_active
+                    }
+            
+            return render(request, 'pages/campaign/contact_list.html', context)
+        
+        except Exception as err:
+            print("error fetching contact list: ",err)
+            return render(request, 'pages/error-pages/error-500.html', {})
+        
+    if request.method == "POST":
+        request_body = json.loads(request.body)
+        print(request_body)
+        # fetch the campaign_id and contact_list_id
+        contact_list_id = request_body.get("contact_list_id")
+        campaign_id = request_body.get("campaign_id")
+
+        if contact_list_id and campaign_id:
+            # Mark all contact lists as inactive for this campaign
+            ContactList.objects.filter(campaign_id=campaign_id).update(is_active=False)
+
+            # Set the selected contact list as active
+            contact_list = ContactList.objects.get(id=contact_list_id)
+            contact_list.is_active = True
+            contact_list.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Contact list marked as active.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid data.'}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
 
 
 # delete contact from campaign
@@ -171,13 +317,16 @@ def start_campaign(request):
             prompt = campaign_obj.agent.agent_prompt
 
             # Iterate over the data
-            contact_list = campaign_obj.contact_list
+            contact_list = campaign_obj.contact_list.contact_list
             voice_config = campaign_obj.agent.voice.voice_configuration
-           
+ 
+            # qa parameters and summarization
+            qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
+
             # start a thread 
             wait_time_after_call,wait_time_after_5_calls = 1,1
             try:
-                thread = threading.Thread(target=start_call_queue, args=(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls))
+                thread = threading.Thread(target=start_call_queue, args=(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt))
                 thread.start()
             except Exception as err:
                 print("error in campaign start: ", err)
@@ -193,7 +342,25 @@ def start_campaign(request):
 
 
 # call queue thread
-def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls):
+def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt):
+    # if the campaign is scheduled mark is_schedule as false as the campaign is already started
+    campaign_obj = Campaign.objects.get(id=campaign_id)
+    try:
+        if campaign_obj.is_schedule:
+            campaign_obj.is_schedule=False
+            campaign_obj.save()
+
+            # update the scheduled table
+            schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id,is_finished=False,is_ongoing=False).first()
+            schedule_obj.is_ongoing=True
+            schedule_obj.save()
+
+        else:
+            pass
+
+    except Exception as error:
+        print("error updating scheduled: ",error) 
+    print(contact_list  )
     for call_details in contact_list:
         try:
             raw_text = prompt
@@ -241,7 +408,9 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
                 print("error in call create patient id --> ", to_phone,'\n',error)
                 call_status = 'not_started'
 
-            call_log["call_status"] =call_status
+            call_log["call_status"] = call_status
+            call_log["start_time"] = datetime.now()
+            call_log["end_time"] = None
 
             # Create an instance of CallLogs with the dynamic fields
             call_log_entry = CallLogs(**call_log)
@@ -251,15 +420,29 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             mongo_id = call_log_entry.id
 
             # monitoring the call status
-            monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id))
+            monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"]))
             monitor_thread.start()
         except Exception as err:
             print(f"error while calling: {call_details['contact_number']} error- {err}")
 
- 
+    # once all the calls are over update the campaign object to completed
+        campaign_obj.status="completed"
+        campaign_obj.save()
+    # once all the calls are over update the schedule campaign object to completed
+    try:
+        # update the scheduled table
+        schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_ongoing=True).first()
+        schedule_obj.is_ongoing=False
+        schedule_obj.is_finished=True
+        schedule_obj.save()
+
+    except Exception as err:
+        print("error while updating schedule campaign object: ",err)
+    return True
+
 
 # monitoring ongoing call
-def monitor_call(mongo_id,call_status_id,campaign_id):
+def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_start_time):
     call_status_current = ""
     not_started_count = 0
     
@@ -287,13 +470,14 @@ def monitor_call(mongo_id,call_status_id,campaign_id):
             # transcript = call_status_obj.transcript
             transcript = call_status_obj['transcript']
             # call_start = str(call_status_obj.start_time)[:19]
-            # call_end = str(call_status_obj.end_time)[:19]
+            call_end = datetime.now()
 
             duration = 0
+            end_time = datetime.fromisoformat(str(call_end))
             try:
                 # Convert strings to datetime objects
-                start_time = datetime.fromisoformat(call_start)  # Remove 'Z' from end
-                end_time = datetime.fromisoformat(call_end)      # Remove 'Z' from end
+                start_time = datetime.fromisoformat(str(call_start_time))  # Remove 'Z' from end
+                # end_time = datetime.fromisoformat(str(call_end))      # Remove 'Z' from end
 
                 # Calculate the difference
                 time_difference = end_time - start_time
@@ -304,20 +488,24 @@ def monitor_call(mongo_id,call_status_id,campaign_id):
                 pass
 
             # import pdb;pdb.set_trace()
-            entities = extract_entities_from_transcript(transcript)
             summary = ""
-            status = "Completed"
-            try:
-                # updating the summary and call status
-                entities = entities.replace("```json", "").replace("```", "").replace("\n", "")
-                if entities:
-                    entities = json.loads(entities)
-                    summary = entities["summary"]
-                    status = entities["call_status"]
-                    if 'fail' in status.lower():
-                        status = "Failure"
-            except Exception as err:
-                print("Error generating summary: ", err)
+
+            ######### Perform the call summary if the prompt is given else skip ########
+            if summarization_prompt:
+                status = "Completed"
+                try:
+                    entities = extract_entities_from_transcript(transcript,summarization_prompt)
+                    # updating the summary and call status
+                    entities = entities.replace("```json", "").replace("```", "").replace("\n", "")
+                    if entities:
+                        entities = json.loads(entities)
+                        summary = entities["summary"]
+                        status = entities["call_status"]
+                        # if 'fail' in status.lower():
+                        #     status = "Failure"
+                except Exception as err:
+                    print("Error generating summary: ", err)
+            #################################################################
 
             ## transcript save
             transcript_obj = Transcript()
@@ -326,23 +514,21 @@ def monitor_call(mongo_id,call_status_id,campaign_id):
             transcript_obj.summary = summary
             transcript_obj.transcript = transcript
             
+            ############### Perform the call QA if the qa_params is given else skip ########
             try:
-                qa_analysis =analyze_call(
-                    {
-                        "summary": summary,
-                        "transcript": transcript,
-                     }
-                )
- 
+                ## QA parameters
+                qa_analysis =analyze_call( { "summary": summary, "transcript": transcript,"qa_params":qa_params } )
                 transcript_obj.qa_analysis = qa_analysis
             except Exception as err:
                 print("print error ", err)    
+            
             transcript_obj.save()
 
             #### update call log mongo
             updated_fields = {
                 "call_status": "completed",
-                "call_duration": 0  # Example of updating multiple fields
+                "end_time":end_time,
+                "call_duration": duration  # Example of updating multiple fields
             }
 
             updated_call_log = update_call_log(mongo_id, updated_fields)
@@ -352,10 +538,11 @@ def monitor_call(mongo_id,call_status_id,campaign_id):
         elif call_status_current == 'error':
              
             # Fetch all calls for the patient
- 
+            end_time = datetime.fromisoformat(str(call_end))
             #### update call log mongo
             updated_fields = {
                 "call_status": "not_started",
+                "end_time":end_time,
                 "call_duration": 0  # Example of updating multiple fields
             }
 
@@ -393,7 +580,7 @@ def get_current_call_status(call_id):
 
 
 ## creating summary from call
-def extract_entities_from_transcript(transcript):
+def extract_entities_from_transcript(transcript,summarization_prompt):
 
     # Define your API key
     api_key = os.getenv("OPENAI_API_KEY")
@@ -401,22 +588,8 @@ def extract_entities_from_transcript(transcript):
     # Define the endpoint URL
     url = "https://api.openai.com/v1/chat/completions"
 
-    prompt ="""
-            Below is the transcript of conversation between a agent and an employee in the insurance facility, based on the conversation between them about the claim create a short summary about the call.
-            The summary will contain few sentences describing the agent's perspective on the call , and also mention the call refercne number and facility name as well as the call receivers name
-            Along with the summary also give the "call_status" i.e. whether the call was successful in retrieving claim status or not.
-            Note:
-                The summary must start with Service Date and Billed Amount.
-                while creating summary don't use agent's name instead use 'I' as the summary is based on agent's perspective.
-                Summary must contain call reference number at the end of conversation if its not present write NA.
-                The call reference number must be in integer form i.e, 123 not in words  form like one,two,three .
-                You are calling from wound technology not to wound technology so in the summary never mention the you Called wound technology.
-                In case the call dowes not get connected to a representative after navigating the ivr, specify in the summary that you were not able to connect to a facility representative, in the case the claim_status will be "failure".
-                In case you have called the wrong facility mention the same in summary report, in the case the claim_status will be "failure".
-                The call_status will be considered as successfull if the calim status for the patient was fetched successfully.
-
-                The output must be a json object with two keys "summary" and "call_status" , these two keys must be there with the same case.
-                
+    prompt = """
+            %s
 
             sample output summary (call concluded successfully):
                 {
@@ -424,17 +597,16 @@ def extract_entities_from_transcript(transcript):
                     "summary": "I called to insurance @<facility contact> spoke with rep <call receiver name> to check denied So as per rep checking claim is denied because services are not covered under the member's benefit plan. Rep informed that she need more 7-10 business days to inquiry for denied because claim denied incorrectly.call ref #<call refernce_numver> claim number #<claim_number>"
                 }
 
-            sample output summary (call was not successfull):
+            sample output summary (call was not successful):
                 {
                     "call_status":"Failed",
                     "summary": "I called to insurance @<facility contact> but I was not able to connect to a representative."
                 }
 
             Transcription:
-                    
+                
                 %s
-
-            """% (transcript)
+            """ % (summarization_prompt, transcript)
 
     # Define parameters
     data = {
@@ -477,7 +649,8 @@ def extract_entities_from_transcript(transcript):
 ############################## QA APIS ####################
 def analyze_call(request_body):
     try:
-        call_parameters = get_call_parameters()
+        # call_parameters = get_call_parameters()
+        call_parameters = request_body['qa_params']
         summary = request_body['summary']
         transcript = request_body['transcript']
 
@@ -656,6 +829,7 @@ def update_call_log(call_id, updated_fields):
 """
 Display call logs of a perticular campaign
 """
+@login_required(login_url="/login_home")
 def list_call_logs(request):
     if request.method == "GET":
         try:
@@ -666,7 +840,7 @@ def list_call_logs(request):
             campaign_list = list(campaign_list.values("id", "campaign_name"))
 
             campaign_id = request.GET.get('campaign_id',0)
-            if request.user.role.role == "QA":
+            if not request.user.is_superuser and request.user.role.role == "QA":
                 call_status = request.GET.get('call_status',"completed")
             else:
                 call_status = request.GET.get('call_status', "ongoing")
@@ -1001,3 +1175,35 @@ def live_transcript(request):
 
 
 ############################################################################################################################################################
+
+###################################################### Schedule Campaign Start #######################################################################
+def schedule_campaign(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            campaign_id = data.get('campaign_id')
+            schedule_note = data.get('schedule_note')
+            schedule_date = data.get('schedule_date')
+
+            # Assuming you have a campaign model to validate campaign_id
+
+            campaign_obj = Campaign.objects.get(id=campaign_id)
+            if not campaign_obj.is_schedule:
+                ScheduleCampaign.objects.create(
+                    campaign_id=campaign_id,
+                    schedule_note=schedule_note,
+                    schedule_date=schedule_date
+                )
+
+                # update the campaign is_scheduled to true
+                campaign_obj.is_schedule = True
+                campaign_obj.save()
+
+                return JsonResponse({'message': 'Campaign scheduled successfully'}, status=200)
+            else:
+                return JsonResponse({'message': 'Unable to schedule the Campaign as it is already sheduled'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+################################################################### END ################################################################################

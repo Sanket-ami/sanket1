@@ -28,9 +28,21 @@
                 <input class="form-control" id="provider_name" name="provider_name" type="text" aria-label="Provider Name" required>
             </div>
 
-            <div class="col-12"> 
+
+            <!-- <div class="col-12"> 
                 <label class="form-label" for="provider_type">Provider Type</label>
                 <input class="form-control" id="provider_type" name="provider_type" type="text" aria-label="Provider Type" required>
+            </div> -->
+            <div class="mb-3">
+                <label for="provider_type" class="form-label">Organisation Name</label>
+                <select class="form-select" id="provider_type" name="provider_type" required>
+                   
+                    <option value="llm">LLM</option>
+                    <option value="telephony">Telephony</option>
+                    <option value="syntesizer">TTS</option>
+                    <option value="transcriber">STT</option>
+                </select>
+                <div class="invalid-feedback">Please select a valid organisation name.</div>
             </div>
 
             <div class="col-12">
