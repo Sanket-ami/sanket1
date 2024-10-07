@@ -25,27 +25,18 @@ def fetch_gravatar(request):
     if request.method == 'POST' and request.user.is_authenticated:
         email = request.user.email
         user = request.user.username 
-        # print("email : ",email)
-        # print("user : ",user)
         hashed_email = md5(email.lower().encode('utf-8')).hexdigest()
-        print(hashed_email)
         first_imagename = f"{user}.jpg"
-        # print(first_imagename)
+        default = "https://aminfoweb1.s3.amazonaws.com/rsz_oig4t8bwcoafedyic_dfqvc.jpg"
         first_check = os.path.join(settings.STATIC_ROOT, 'images', first_imagename)
         if os.path.exists(first_check):
-            print("find")
-            print(first_check)
             return JsonResponse({'image_url': f"{settings.STATIC_URL}images/{first_imagename}"})
-        params = urlencode({'s': str(40)})
-        # print(hashed_email)
+        params = urlencode({'d': default,'s': str(40)})
         gravatar_url = f"https://www.gravatar.com/avatar/{hashed_email}?{params}"
-        print(gravatar_url)
         image_filename = f"{user}.jpg"
         image_path = os.path.join(settings.STATIC_ROOT, 'images', image_filename)
-        print(image_path)
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         if not os.path.exists(image_path):
-            print("ok")
             response = requests.get(gravatar_url)
             if response.status_code == 200:
                 with open(image_path, 'wb') as f:
