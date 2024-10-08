@@ -281,7 +281,7 @@ def delete_contact(request, campaign_id):
                 return JsonResponse({'message': 'No contact IDs provided.'}, status=400)
 
             # Fetch the contact_list (assumed to be a list of dictionaries)
-            contact_list = campaign.contact_list
+            contact_list = campaign.contact_list.contact_list
 
             # Remove contacts with matching IDs from the contact_list
             updated_contact_list = [
@@ -289,12 +289,17 @@ def delete_contact(request, campaign_id):
             ]
 
             # Update the campaign's contact_list and save it
-            campaign.contact_list = updated_contact_list
-            campaign.save()
+            # campaign.contact_list.contact_list = updated_contact_list
+            # campaign.save()
+
+            contact_list_obj = campaign.contact_list  
+            contact_list_obj.contact_list = updated_contact_list  # Assuming contact_list is a JSON field or similar
+            contact_list_obj.save()  # Save the updated list to the database
 
             return JsonResponse({'message': 'Contacts deleted successfully.',"success":True}, status=200)
 
         except Exception as e:
+            print(e)
             return JsonResponse({'message': str(e),"success":False, "error":True}, status=500)
 
     return JsonResponse({'message': 'Invalid request method.',"error":True}, status=400)
@@ -840,10 +845,11 @@ def list_call_logs(request):
             campaign_list = list(campaign_list.values("id", "campaign_name"))
 
             campaign_id = request.GET.get('campaign_id',0)
-            if not request.user.is_superuser and request.user.role.role == "QA":
+            if  request.user.is_superuser or request.user.role.role == "QA" or request.user.role.role == "Admin":
                 call_status = request.GET.get('call_status',"completed")
             else:
                 call_status = request.GET.get('call_status', "ongoing")
+            print("call_status", call_status)
             call_logs_data = []
             dynamic_columns = []
             total_pages = 0
