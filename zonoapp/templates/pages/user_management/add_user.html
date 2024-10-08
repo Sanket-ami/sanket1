@@ -124,7 +124,7 @@
             <div class="col-12">
                 <label class="form-label" for="exampleFormControlInput1">Email address</label>
                 <input class="form-control" id="exampleFormControlInput1" type="email" required="">
-            </div>org
+            </div>
 
             <div class="col-12">
                 <label class="col-sm-12 col-form-label" for="inputPassword1">Password</label>
@@ -426,7 +426,10 @@ editForm.addEventListener("sdadsasad", function (event) {
                     'organisation_name':  document.getElementById("organisationName").value
                 };
                 console.log(formData);
-                
+                if (formData.password !== formData.confirm_password) {
+                    showToast('error', 'Passwords do not match!');
+                    return; // Stop form submission if passwords don't match
+                }
                 // AJAX request to submit form data
                 fetch("/user_list", {
                     method: "POST",

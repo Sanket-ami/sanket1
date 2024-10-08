@@ -25,11 +25,14 @@
             </div>
           </li>
 
-          <li class="sidebar-main-title">
-            <div>
-              <h6 class="lan-0">Dashboard</h6>
-            </div>
-          </li>   
+        </li>  
+        <li class="sidebar-main-title">
+          <div>
+            <h6 class="lan-21">
+              <a href="{% url 'dashboard' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">Dashboard</a>
+            </h6>
+          </div>
+        </li>   
 
           <li class="sidebar-main-title">
             <div>
@@ -125,6 +128,7 @@
             </ul>
           </li>
           <!-- Voice -->
+           
           <li class="sidebar-main-title">
             <div>
                 <h6 class="lan-21">
@@ -132,6 +136,15 @@
                 </h6>
             </div>
           </li>
+          <li class="sidebar-list"> <i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-layout"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-layout"></use>
+            </svg><span class="lan-7">Page layout</span></a>
+        
+        </li>
           
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
             <a class="sidebar-link sidebar-title" href="{% url 'voice_view' %}">Voice</a>
