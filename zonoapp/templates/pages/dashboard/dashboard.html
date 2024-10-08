@@ -24,7 +24,7 @@
       <div class="col-xxl-8 proorder-xl-1 box-col-6">
         <div class="card">     
           <div class="card-header">
-            <h4>Call Failure Ratio</h4>
+            <h4>Average Handling Time</h4>
           </div>  
           <div class="card-body">
                 <button class="btn p-0" type="button" id="durationOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -33,13 +33,13 @@
                 <div aria-labelledby="durationOptions">
                   <ul class="nav nav-pills" role="tablist">
                     <li class="nav-item">
-                        <button type="button" class="nav-link active" role="tab" onclick="updateAverageHandlingTimeChart('daily', this)"><h6>Daily</h6></button>
+                        <button type="button" class="nav-link avg active" role="tab" onclick="updateAverageHandlingTimeChart('daily', this)"><h6>Daily</h6></button>
                     </li>
                     <li class="nav-item">
-                        <button type="button" class="nav-link" role="tab" onclick="updateAverageHandlingTimeChart('weekly', this)"><h6>Weekly</h6></button>
+                        <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('weekly', this)"><h6>Weekly</h6></button>
                     </li>
                     <li class="nav-item">
-                        <button type="button" class="nav-link" role="tab" onclick="updateAverageHandlingTimeChart('monthly', this)"><h6>Monthly</h6></button>
+                        <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('monthly', this)"><h6>Monthly</h6></button>
                     </li>
                   </ul>
                 <canvas id="callDurationChart" height="84"></canvas>
@@ -49,18 +49,40 @@
       </div>
 
       <div class="col-xxl-4 proorder-xl-1 box-col-6">
-          <div class="card" style="height: 93%;">
-              <div class="card-header">
-                  <h4>Call Failure Ratio</h4>
-              </div>
-              <div class="card-body" style="display: flex;
-              justify-content: center;
-              height: 420px;">
-                <canvas id="callFailureChart" ></canvas>
-            </div>
+        <div class="card">
+          
+          <div class="card-header" style="display: flex; justify-content: space-around;">
+              <h4 class="fw-bold">Calls Overview</h4>
+              <div aria-labelledby="durationOptions">
+                <ul class="nav nav-pills" role="tablist">
+                  <li class="nav-item">
+                      <button type="button" class="nav-link active update" role="tab" onclick="updateCallDistributionChart('daily', this)"><h6>Daily</h6></button>
+                  </li>
+                  <li class="nav-item">
+                      <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('weekly', this)"><h6>Weekly</h6></button>
+                  </li>
+                  <li class="nav-item">
+                      <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('monthly', this)"><h6>Monthly</h6></button>
+                  </li>
+                </ul>
+                  </div>
           </div>
+          <div class="card-body" style="display: flex;
+          justify-content: center;
+          height: 420px;">
+          <button class="btn p-0" type="button" id="durationOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="bx bx-dots-vertical-rounded bx-lg text-muted"></i>
+        </button>
+       
+
+            <div class="table-responsive custom-scrollbar">
+
+            </div>
+             <canvas id="callFailureChart" ></canvas>
+          </div>
+
+        </div>
       </div>
-    </div>
 
 
       <div class="row">
@@ -69,7 +91,7 @@
           
           <div class="card-header pb-0">
             <div class="header-top">
-              <h4 class="fw-bold">Calls Overview</h4>
+              <h4 class="fw-bold">Calls Durations</h4>
             </div>
           </div>
             
@@ -77,13 +99,13 @@
             <div class="table-responsive custom-scrollbar">
               <ul class="nav nav-pills" role="tablist">
                 <li class="nav-item">
-                    <button type="button" class="nav-link active" role="tab" onclick="updateCallDistributionChart('daily', this)"><h6>Daily</h6></button>
+                    <button type="button" class="nav-link active update" role="tab" onclick="updateCallDistributionChart('daily', this)"><h6>Daily</h6></button>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="nav-link" role="tab" onclick="updateCallDistributionChart('weekly', this)"><h6>Weekly</h6></button>
+                    <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('weekly', this)"><h6>Weekly</h6></button>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="nav-link" role="tab" onclick="updateCallDistributionChart('monthly', this)"><h6>Monthly</h6></button>
+                    <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('monthly', this)"><h6>Monthly</h6></button>
                 </li>
               </ul>
             </div>
@@ -97,25 +119,35 @@
 
       <div class="col-xxl-6 col-lg-6 proorder-xl-5 box-col-6">
         <div class="card">
+          
           <div class="card-header pb-0">
             <div class="header-top">
               <h4 class="fw-bold">Calls Overview</h4>
-             
             </div>
           </div>
+            
           <div class="card-body">
-            <div class="user-activity">
-              <div class="card-body">
-                <div id="comparison" class="mb-3"></div>
-                <canvas id="callsChart" height="90"></canvas>
+            <div class="table-responsive custom-scrollbar">
+              <ul class="nav nav-pills" role="tablist">
+                <li class="nav-item">
+                    <button type="button" class="nav-link active overview" role="tab" onclick="CallOverviewChart('daily', this)"><h6>Daily</h6></button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link update overview" role="tab" onclick="CallOverviewChart('weekly', this)"><h6>Weekly</h6></button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link update overview" role="tab" onclick="CallOverviewChart('monthly', this)"><h6>Monthly</h6></button>
+                </li>
+              </ul>
             </div>
-            </div>
+            <canvas id="callsChart" height="90"></canvas>
           </div>
+
         </div>
-
       </div>
-    </div>
 
+    <div class="row">
+      
       <div class="col-xxl-4 col-md-6 proorder-xl-7 box-col-12">
         <div class="card">
           <div class="card-header"> 
@@ -154,24 +186,28 @@
               <div id="salesStatsRadialChart"></div>
           </div>
           </div>
-          <!-- <div class="card-body">
-            <div class="table-responsive custom-scrollbar">
-              <div class="card" style="height: 80%; width: 100%;  border:none;  align-items: center; justify-content: center; position: relative; padding: 2px;">
-                <canvas id="salesStatsChart"></canvas>
-                <div class="overlay-text" style="position: absolute; text-align: center; font-size: 1.5em; font-weight: bold; color: white; background: linear-gradient(-44deg, #2E7D42, #0000); padding: 5%; border-radius: 50%; ">
-                    <span class="percentage" style="font-size: 2em;">70%</span><br>
-                    New: 2.4k
-                </div>
-                <div class="legend-text" style="position: absolute; bottom: 0%; font-size: 1.1em; width: 50%; text-align: center; color: #555;">
-                </div>
-              </div>
-              <p style="margin-left: 32%; font-size: 17px;">                  <button style="width: 18px; height: 18px; background-color: #2E7D42; border-radius: 50%; border-width: 0px; margin-top: 10px;"></button>
-                New: 2.4k | Returning: 3.2k</p>
-                    
-            </div>
-          </div> -->
         </div>
       </div>
+      <div class="col-xxl-8 col-lg-6 proorder-xl-5 box-col-6">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4 class="fw-bold">QA Analysis of recent calls</h4>
+             
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="user-activity">
+              <div class="card">
+                <canvas id="qaChart" height="400"></canvas>
+            </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
       <div class="col-xxl-6 proorder-xl-9 box-col-12"> 
         <div class="card">
           <div class="card-header">
@@ -312,8 +348,77 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-      var x = localStorage.getItem("primary");
-      var y = localStorage.getItem("secondry");
+     var x = localStorage.getItem("primary");
+     var y = localStorage.getItem("secondary");   
+     console.log(x, y)
+    const ctxqa = document.getElementById('qaChart').getContext('2d');
+    
+    const qaChart = new Chart(ctxqa, {
+        type: 'line',
+        data: {
+            labels: ['Call 1', 'Call 2', 'Call 3', 'Call 4', 'Call 5', 'Call 6', 'Call 7', 'Call 8', 'Call 9', 'Call 10'], // X-axis: Call Numbers
+            datasets: [
+                {
+                    label: 'Parameters Met',
+                    data: [3, 4, 2, 1, 4, 3, 2, 1, 3, 2], // Sample data for parameters met
+                    backgroundColor: x, // Fill color
+                    borderColor: x,
+                    borderWidth: 3,
+                    fill: false, // No fill, just a line with points
+                    pointStyle: 'circle',
+                    pointRadius: 5,
+                    grid: false,
+                    pointBorderColor: x,
+                    tension: 0 // Smoothens the line
+                    
+                },
+                {
+                    label: 'Parameters Not Met',
+                    data: [7, 6, 8, 9, 6, 7, 8, 9, 7, 8], // Sample data for parameters not met
+                    backgroundColor: y,
+                    borderColor: y,
+                    borderWidth: 2,
+                    pointStyle: false,
+                    fill: true, // This will fill the area under the line
+                    tension: 0// Smoothens the line
+                    
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true, // Ensures the chart starts from 0 on the y-axis
+                    title: {
+                        display: true,
+                        text: 'Number of Calls'
+                    },
+                    grid: {
+                        display: false // Removes grid lines on the x-axis
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Calls'
+                    },
+                    grid: {
+                        display: false // Removes grid lines on the x-axis
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    enabled: true,
+                }
+            }
+        }
+    });
+
+     
       const h6Element = document.querySelector('h6');
 
 // Get the computed style of the element
@@ -345,12 +450,7 @@
           }
       };
   
-      const updateAverageHandlingTimeChart = async (timeFrame) => {
-          const { dates, avg_handling_time } = await fetchData(timeFrame);
-          callDurationChart.data.labels = dates; // Use dates for x-axis labels
-          callDurationChart.data.datasets[0].data = avg_handling_time; // Use avg_handling_time for y-axis data
-          callDurationChart.update(); // Update the chart with new data
-      };
+
   
       // Initial chart setup for Average Handling Time
       const ctx = document.getElementById('callDurationChart').getContext('2d');
@@ -367,13 +467,18 @@
               }]
           },
           options: {
+            legend: {
+                labels: {
+                  frontColor: "red"
+                }
+            },
               responsive: true,
               scales: {
                   x: {
                       title: {
                           display: true,
                           text: 'Date',
-                          labelFontColor:color
+                          labelFontColor:"red"
 
                       }
                   },
@@ -382,7 +487,7 @@
                       title: {
                           display: true,
                           text: '<h6>Average Handling Time (seconds)</h6>',
-                          labelFontColor:color
+                          labelFontColor:"red"
                       }
                   }
               },
@@ -395,14 +500,33 @@
           }
       });
   
+
+      
       const updateCallDistributionChart = async (timeFrame, button) => {
           const { number_of_calls, number_of_calls_labels } = await fetchData(timeFrame);
-          setActiveTab(button);
+          setActiveTab(button, ".update");
           callDistributionChart.data.labels = number_of_calls_labels;
           callDistributionChart.data.datasets[0].data = number_of_calls;
           callDistributionChart.update();
       };
-  
+
+      const CallOverviewChart = async (timeFrame, button) => {
+        const {total_calls, failed_calls, call_overview} = await fetchData(timeFrame);
+        setActiveTab(button, ".overview");
+        callsChart.data.labels = call_overview
+        callsChart.data.datasets[0].data = total_calls;
+        callsChart.data.datasets[1].data = failed_calls;
+        callsChart.update()
+
+      }
+
+      const updateAverageHandlingTimeChart = async (timeFrame, button) => {
+          const { dates, avg_handling_time } = await fetchData(timeFrame);
+          setActiveTab(button, ".avg");
+          callDurationChart.data.labels = dates; // Use dates for x-axis labels
+          callDurationChart.data.datasets[0].data = avg_handling_time; // Use avg_handling_time for y-axis data
+          callDurationChart.update(); // Update the chart with new data
+      };
       // Initial chart setup for Call Distribution
       const ctxDistribution = document.getElementById('callDistributionChart').getContext('2d');
       const callDistributionChart = new Chart(ctxDistribution, {
@@ -483,87 +607,74 @@
               }
           }
       });
-      console.log("wejbcnwk");
+
+
+
       const weeklyTotalCalls = [120, 150, 170, 130, 160, 140, 160];
-      const weeklyFailedCalls = [100, 150, 180, 110, 180, 130, 140]; // Adjusted values to create intersections
+        const weeklyFailedCalls = [100, 150, 180, 110, 180, 130, 140]; // Adjusted values to create intersections
+
+        const ctxCalls = document.getElementById('callsChart').getContext('2d');
+        const callsChart = new Chart(ctxCalls, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Total Calls',
+                    data: [],
+                    borderColor: x,
+                    backgroundColor: x,
+                    fill: false,
+                    tension: 0,
+                }, {
+                    label: 'Failed Calls',
+                    data: [],
+                    borderColor: y,
+                    backgroundColor: y,
+                    fill: false,
+                    tension: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Days/Months' }},
+                    y: { beginAtZero: false, title: { display: true, text: 'Number of Calls' }}
+                },
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                }
+            }
+        });
+
+        const refreshCallsChart = (timeFrame) => {
+            let labels, totalData, failedData;
+
+            if (timeFrame === 'weekly') {
+                labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                totalData = weeklyTotalCalls;
+                failedData = weeklyFailedCalls;
+            } else {
+                // Placeholder for other time frames
+                labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+                totalData = [700, 900, 850, 950, 1050, 1150, 1200]; // Example data
+                failedData = [150, 120, 130, 140, 100, 90, 80]; // Example data
+            }
+
+            callsChart.update();
+        };
+
+        refreshCallsChart('weekly');
   
-      const ctxCalls = document.getElementById('callsChart').getContext('2d');
-      const callsChart = new Chart(ctxCalls, {
-          type: 'line',
-          data: {
-              labels: [],
-              datasets: [{
-                  label: 'Total Calls',
-                  data: [],
-                  borderColor: y,
-                  backgroundColor: y,
-                  fill: false,
-                  tension: 0,
-              }, {
-                  label: 'Failed Calls',
-                  data: [],
-                  borderColor: x,
-                  backgroundColor: x,
-                  fill: false,
-                  tension: 0
-              }]
-          },
-          options: {
-              responsive: true,
-              scales: {
-                  x: { title: { display: true, text: 'Days/Months' }},
-                  y: { beginAtZero: false, title: { display: true, text: 'Number of Calls' }}
-              },
-              plugins: {
-                  legend: { display: true, position: 'top' }
-              }
-          }
-      });
+      updateAverageHandlingTimeChart('daily', document.querySelector('.avg'));
+      updateCallDistributionChart('daily', document.querySelector('.update'));
+      CallOverviewChart('Daily', document.querySelector('.overview'))
   
-      const refreshCallsChart = (timeFrame) => {
-          let labels, totalData, failedData;
-  
-          if (timeFrame === 'weekly') {
-              labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-              totalData = weeklyTotalCalls;
-              failedData = weeklyFailedCalls;
-          } else {
-              // Placeholder for other time frames
-              labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-              totalData = [700, 900, 850, 950, 1050, 1150, 1200]; // Example data
-              failedData = [150, 120, 130, 140, 100, 90, 80]; // Example data
-          }
-  
-          callsChart.data.labels = labels;
-          callsChart.data.datasets[0].data = totalData;
-          callsChart.data.datasets[1].data = failedData;
-          callsChart.update();
-      };
-  
-      // Initial data load for both charts
-      updateAverageHandlingTimeChart('daily');
-      updateCallDistributionChart('daily', document.querySelector('.nav-link.active'));
-  
-      function setActiveTab(activeButton) {
-          const tabs = document.querySelectorAll('.nav-link');
+      function setActiveTab(activeButton, tab) {
+          const tabs = document.querySelectorAll(tab);
           tabs.forEach(tab => tab.classList.remove('active'));
           activeButton.classList.add('active');
+          console.log(tab)
       }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       document.addEventListener("DOMContentLoaded", function() {
         const salesStatsOption = {
             series: [60], // Change this to your desired value

@@ -537,7 +537,6 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             }
 
             updated_call_log = update_call_log(mongo_id, updated_fields)
-            print(updated_call_log)
             return True
 
         elif call_status_current == 'error':
@@ -552,7 +551,6 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             }
 
             updated_call_log = update_call_log(mongo_id, updated_fields)
-            print(updated_call_log)
 
  
   
@@ -574,10 +572,8 @@ def get_current_call_status(call_id):
 
         # print(response.text)
         response = response.json()
-        print(response)
         call_status = response["call_status"]
         call_uuid = response["call_id"]
-        print(f"call_status => {call_status}, call_uuid => {call_uuid}")
         return response
     except Exception as error:
         print("error in call get_current_call_status call id --> ", call_id)
@@ -924,12 +920,15 @@ def fetch_call_details(request):
 
         transcript_obj['telephony_name']  = telephony_data
         transcript_obj["transcript_obj_id"] = transcript_data.id
-
+        try:
+            transcript_obj['qa_analysis'] = create_html_component_with_div(json.loads(transcript_data.qa_analysis.replace("```json","").replace("```","")))
+        except Exception:
+            transcript_obj['qa_analysis'] = create_html_component_with_div(transcript_data.qa_analysis)
+            print("transcript_obj=================>", transcript_data.qa_analysis)
         return JsonResponse({"error": False, "success":True, "message":"call_details fetched successfully ","data":transcript_obj}, status=200)
 
         
     except Exception as err:
-        print("error in fetch call details: ",err)
         return JsonResponse({"error": True, "success":False, "message":"Error fetching call details "}, status=500)
 
 ## functio to format transctipt
@@ -953,6 +952,32 @@ def format_transcript(transcript):
         formatted_lines.append(line)
     return '\n'.join(formatted_lines)
 
+def create_html_component_with_div(json_list):
+    print("json_list=======", json_list)
+    # HTML structure
+    html_content = ""
+    id_count = 1
+    for item in json_list:
+        parameter = item.get('parameter', '')
+        result = item.get('result', '')
+        html_content += "<div>\n"
+        html_content += f"""  <span id="params{id_count}" name="params{id_count}">{parameter}</span>\n"""
+        html_content += """<br>
+        <select id="result{id_count}" name="{parameter}">
+            <option value="met" {met_selected}>Met</option>
+            <option value="not met" {not_met_selected}>Not Met</option>
+        </select>
+        """.format(
+            met_selected="selected" if result == "met" else "",
+            not_met_selected="selected" if result == "not met" else "",
+            id_count=id_count,
+            parameter=parameter
+        )
+        html_content += "</div><br>\n"
+        id_count += 1
+
+
+    return html_content
 
 def fetch_audio(request):
     try:
@@ -1027,10 +1052,12 @@ def edit_summary(request):
         transcript_obj = Transcript.objects.get(id= edit_summary_id)     
         transcript_obj.summary = new_summary
         transcript_obj.save()
+        page = request_body['page']
 
         # Build the URL with query parameters
         url = reverse('list_call_logs')  # Gets the URL path for the 'edit_summary' route
-        query_params = f'?status_filter={status_filter}&campaign_id={campaign_id}'
+        query_params = f'?call_status={status_filter.lower()}&campaign_id={campaign_id}&&page={page}&per_page=10'
+
         
 
         return redirect(f'{url}{query_params}')
@@ -1039,6 +1066,28 @@ def edit_summary(request):
         print(f"Error editing call: {error}")
         return redirect('/')
     
+
+def editQa(request):
+    try:
+        request_body = request.POST.dict()
+        exclude_keys = {'csrfmiddlewaretoken', 'id', 'campaign_id', 'search', 'selected_agent', 'sort_order', 'sort_column', 'page', 'call_status', 'status'}
+        formatted_list = [{'parameter': key, 'result': value} for key, value in request_body.items() if key not in exclude_keys]
+        status_filter = request_body['status']
+        campaign_id = request_body['campaign_id']
+        edit_summary_id = request_body['id']
+        transcript_obj = Transcript.objects.get(id= edit_summary_id)     
+        transcript_obj.qa_analysis = formatted_list
+        transcript_obj.save()
+        page = request_body['page']
+
+        url = reverse('list_call_logs')  
+        query_params = f'?call_status={status_filter.lower()}&campaign_id={campaign_id}&&page={page}&per_page=10'
+        
+
+        return redirect(f'{url}{query_params}')
+
+    except Exception as e:
+        print(e)
 
 def edit_transcript(request):
     try:
@@ -1053,7 +1102,11 @@ def edit_transcript(request):
 
         # Build the URL with query parameters
         url = reverse('list_call_logs')  # Gets the URL path for the 'edit_summary' route
-        query_params = f'?status_filter={status_filter}&campaign_id={campaign_id}'
+        page = request_body['page']
+        print(page)
+
+        query_params = f'?call_status={status_filter.lower()}&campaign_id={campaign_id}&&page={page}&per_page=10'
+
         print(f"actual - url ==> {url}{query_params}")
         return redirect(f'{url}{query_params}')                
     except Exception as error:

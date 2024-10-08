@@ -183,13 +183,39 @@
                     <input type="hidden" value="" name="selected_agent"> 
                     <input type="hidden" value="asc" name="sort_order" id="sort_order">
                     <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
-                    <input type="hidden" value="" name="page" id="page">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
                     <input type="hidden" value="Completed" name="status" id="status">
                     <input type="hidden" id="editedSummary" name="edited_summary">
 
                     <button style="display: none;" id="edit_Summary_submit" class="btn btn-primary mt-2" type="Save" onclick="submitEditSummaryForm()">Submit</button>
                 </form>
             </div>
+
+
+            <div id="qa_div"> <br>
+                <!-- <span class="h5 fw-bold text-dark">Call Summary</span><br> -->
+                <h4 class="mb-4">Call Qa</h4>
+      
+
+
+                <form id="edit_qa_form" method="post" action="{% url 'edit_qa' %}">
+                    <span id="call_qa" class="f-w-400" style="display: unset;"></span><br>
+                    {% csrf_token %}
+                    <input type="hidden" id="editQaRecordId" value="391" name="id">
+                    <input type="hidden" value="{{campaign_id}}" name="campaign_id">
+                    <input type="hidden" value="{{call_status}}" name="call_status">
+                    <input type="hidden" value="" name="search">
+                    <input type="hidden" value="" name="selected_agent"> 
+                    <input type="hidden" value="asc" name="sort_order" id="sort_order">
+                    <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
+                    <input type="hidden" value="Completed" name="status" id="status">
+                    {% if request.user.is_superuser or request.user.role == 'QA' %}
+                        <button id="edit_qa_submit" class="btn btn-primary mt-2" type="Save">Edit QA</button>
+                    {% endif %}
+                </form>
+            </div>
+
 
             <div id="transcript_div" style="overflow: auto;"> <br>
                 <!-- <span class="h5 fw-bold text-dark"></span><br> -->
@@ -211,7 +237,7 @@
                     <input type="hidden" value="" name="selected_agent"> 
                     <input type="hidden" value="asc" name="sort_order" id="sort_order">
                     <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
-                    <input type="hidden" value="" name="page" id="page">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
                     <input type="hidden" value="Completed" name="status" id="status">
                     <input type="hidden" id="editedTranscript" name="edited_transcript">
 
@@ -258,6 +284,7 @@
                     $("#call_call_id").html(call_id)
                     $("#call_duration").html(log.call_duration)
                     $("#call_summary").text(response.data.summary)
+                    $('#call_qa').html(response.data.qa_analysis)
                     $("#editSummary").html(response.data.summary)
                     $("#call_transcript").html(response.data.transcript)
                     $("#editTranscript").html(response.data.transcript)
@@ -265,6 +292,7 @@
                     $("#payer_contact").val(log.contact_number)
                     $("#editTranscriptRecordId").val(response.data.transcript_obj_id)
                     $("#editSummaryRecordId").val(response.data.transcript_obj_id)
+                    $('#editQaRecordId').val(response.data.transcript_obj_id)
 
                     // fetch the recording using telephony
                     fetchAndPlayAudio(call_id,response.data.telephony_name)
@@ -358,6 +386,9 @@
     }    
 
 
+
+
+
     // submit edited summary
     function submitEditSummaryForm() {
             // Modify hidden input fields before submission
@@ -385,6 +416,17 @@
 
             $("#edit_Summary_submit").css("display", "unset") // unhide submit button
         }    
+    function editQaText(e){
+            console.log("clicked edit summary")
+            var summarySpan = document.getElementById('call_Qa');
+            var textarea = document.getElementById('editQa');
+
+            textarea.style.display = 'block';  // Show the textarea
+
+            summarySpan.style.display = 'none'; // hide transcript
+
+            $("#edit_Qa_submit").css("display", "unset") // unhide submit button
+        } 
 
 
     $(document).ready(function(){
