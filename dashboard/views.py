@@ -105,8 +105,8 @@ def calls_per_hour(request):
                     avg_handling_time.append(total_dur / connected_call if connected_call > 0 else 0)
 
             interval = update_interval_count(number_of_calls, total_dur_list)
-            number_of_calls, number_of_calls_labels = list(interval.values()), list(interval.keys())
-            response_data = {
+            number_of_calls, number_of_calls_labels = list(interval.values()), list(interval.keys())   #total_calls, failed_calls, call_overview
+            response_data ={
                 'results': results,
                 'start_date': start_time,
                 'end_date': end_time,
@@ -116,7 +116,12 @@ def calls_per_hour(request):
                 'not_connected_call': total_call - connected_call,
                 'dates': dates,
                 'number_of_calls': number_of_calls,
-                'number_of_calls_labels': number_of_calls_labels
+                'total_calls': [1, 2, 3, 4,5, 6, 7],
+                'number_of_calls_labels': number_of_calls_labels,
+                'call_overview':['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                'failed_calls': [7, 2, 6, 4,5, 6, 7],
+                'failed_call': 10,
+                "compromised_call": 30
             }
 
             return JsonResponse(response_data)  

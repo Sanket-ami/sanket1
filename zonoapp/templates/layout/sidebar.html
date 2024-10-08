@@ -131,23 +131,26 @@
            
           <li class="sidebar-main-title">
             <div>
-                <h6 class="lan-21">
+                <a href="{% url 'voice_view' %}"  class="lan-21 no-color-change" style="all: inherit; cursor: pointer;"><h6>Voice</h6></a>
+
+                <!-- <h6 class="lan-21">
                     <a href="{% url 'voice_view' %}" class="lan-21 no-color-change" style="all: inherit; cursor: pointer;">Voice</a>
-                </h6>
+                </h6> -->
             </div>
           </li>
-          <li class="sidebar-list"> <i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+          <!-- <li class="sidebar-list"> <i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-layout"></use>
             </svg>
             <svg class="fill-icon">
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-layout"></use>
-            </svg><span class="lan-7">Page layout</span></a>
+            </svg><span class="lan-7">                <a href="{% url 'voice_view' %}"  class="lan-21 no-color-change" style="all: inherit; cursor: pointer;"><h6>Voice</h6></a>
+            </span></a>
         
-        </li>
+        </li> -->
           
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="{% url 'voice_view' %}">Voice</a>
+            <a class="sidebar-link sidebar-title" href="{% url 'voice_view' %}"><h6>Voice</h6></a>
           </li>
 
           
@@ -161,7 +164,7 @@
           </li>
 
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="{% url 'provider_view' %}">Provider</a>
+            <a class="sidebar-link sidebar-title" href="{% url 'provider_view' %}"><h6>Provider</h6></a>
           </li>
 
           <li class="sidebar-main-title">
@@ -172,7 +175,7 @@
             </div>
           </li>
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="{% url 'qa_parameter' %}">QA Parameters</a>
+            <a class="sidebar-link sidebar-title" href="{% url 'qa_parameter' %}"><h6>QA Parameters</h6></a>
           </li>
 
 
