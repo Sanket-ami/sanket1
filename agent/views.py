@@ -30,7 +30,7 @@ def agent_create(request):
         search_query = request.GET.get('search', '')
         agents = Agent.objects.filter( is_deleted=False).order_by('-modified_at')
         if search_query:
-            agents.filter(agent_name__icontains=search_query)
+            agents = agents.filter(agent_name__icontains=search_query)
 
         # Pagination: show 10 agents per page
         paginator = Paginator(agents, 10)
