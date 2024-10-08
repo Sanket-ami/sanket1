@@ -3,231 +3,751 @@
 {% load sass_tags %}
 
 {% block css %}
+<style>
+  h4{
+    color:white;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-<!-- Existing Card for Average Handling Time -->
-<div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
-    <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-                <h5 class="m-0 me-2">Average Handling Time</h5>
-            </div>
-            <div>
+
+
+
+{% load static %}
+
+<!-- Container-fluid starts-->
+
+<div class="container-fluid ecommerce-dashboard">
+    <div class="row">
+
+      <div class="col-xxl-8 proorder-xl-1 box-col-6">
+        <div class="card">     
+          <div class="card-header">
+            <h4>Call Failure Ratio</h4>
+          </div>  
+          <div class="card-body">
                 <button class="btn p-0" type="button" id="durationOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <i class="bx bx-dots-vertical-rounded bx-lg text-muted"></i>
                 </button>
                 <div aria-labelledby="durationOptions">
-                    <a class="dropdown-item" href="#" onclick="updateAverageHandlingTimeChart('daily')">Daily</a>
-                    <a class="dropdown-item" href="#" onclick="updateAverageHandlingTimeChart('weekly')">Weekly</a>
-                    <a class="dropdown-item" href="#" onclick="updateAverageHandlingTimeChart('monthly')">Monthly</a>
-                </div>
+                  <ul class="nav nav-pills" role="tablist">
+                    <li class="nav-item">
+                        <button type="button" class="nav-link active" role="tab" onclick="updateAverageHandlingTimeChart('daily', this)"><h6>Daily</h6></button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link" role="tab" onclick="updateAverageHandlingTimeChart('weekly', this)"><h6>Weekly</h6></button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link" role="tab" onclick="updateAverageHandlingTimeChart('monthly', this)"><h6>Monthly</h6></button>
+                    </li>
+                  </ul>
+                <canvas id="callDurationChart" height="84"></canvas>
             </div>
+          </div>
         </div>
-        <canvas id="callDurationChart" height="317"></canvas>
-    </div>
-</div>
+      </div>
 
-<!-- New Card with Navigation Tabs -->
-<div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
-    <div class="card">
-        <div class="card-header nav-align-top">
-            <ul class="nav nav-pills" role="tablist">
+      <div class="col-xxl-4 proorder-xl-1 box-col-6">
+          <div class="card" style="height: 93%;">
+              <div class="card-header">
+                  <h4>Call Failure Ratio</h4>
+              </div>
+              <div class="card-body" style="display: flex;
+              justify-content: center;
+              height: 420px;">
+                <canvas id="callFailureChart" ></canvas>
+            </div>
+          </div>
+      </div>
+    </div>
+
+
+      <div class="row">
+      <div class="col-xxl-6 col-lg-6 proorder-xl-5 box-col-6">
+        <div class="card">
+          
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4 class="fw-bold">Calls Overview</h4>
+            </div>
+          </div>
+            
+          <div class="card-body">
+            <div class="table-responsive custom-scrollbar">
+              <ul class="nav nav-pills" role="tablist">
                 <li class="nav-item">
-                    <button type="button" class="nav-link active" role="tab" onclick="updateCallDistributionChart('daily', this)">Daily</button>
+                    <button type="button" class="nav-link active" role="tab" onclick="updateCallDistributionChart('daily', this)"><h6>Daily</h6></button>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="nav-link" role="tab" onclick="updateCallDistributionChart('weekly', this)">Weekly</button>
+                    <button type="button" class="nav-link" role="tab" onclick="updateCallDistributionChart('weekly', this)"><h6>Weekly</h6></button>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="nav-link" role="tab" onclick="updateCallDistributionChart('monthly', this)">Monthly</button>
+                    <button type="button" class="nav-link" role="tab" onclick="updateCallDistributionChart('monthly', this)"><h6>Monthly</h6></button>
                 </li>
-            </ul>
+              </ul>
+            </div>
+            <canvas id="callDistributionChart" height="90"></canvas>
+          </div>
+
         </div>
-        <canvas id="callDistributionChart" height="317"></canvas>
-    </div>
-</div>
+      </div>
 
-<!-- New Card for Call Failure Ratio -->
-<div class="col-11 col-xl-8 order-2 order-md-3 order-xl-2 mb-6">
-    <div class="card">
-        <div class="card-header">
-            <h5>Call Failure Ratio</h5>
+
+
+      <div class="col-xxl-6 col-lg-6 proorder-xl-5 box-col-6">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4 class="fw-bold">Calls Overview</h4>
+             
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="user-activity">
+              <div class="card-body">
+                <div id="comparison" class="mb-3"></div>
+                <canvas id="callsChart" height="90"></canvas>
+            </div>
+            </div>
+          </div>
         </div>
-        <canvas id="callFailureChart" height="317"></canvas>
+
+      </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Fetch Data for Average Handling Time
-    const fetchData = async (timeFrame) => {
-        try {
-            const response = await fetch(`/dashboard/?event=${timeFrame}`);
-            if (!response.ok) throw new Error('Network response was not ok');
-            return await response.json(); // Return parsed data
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            return {
-                dates: [],
-                avg_handling_time: [],
-                number_of_calls: [],
-                number_of_calls_labels: []
-            }; // Return empty data in case of error
-        }
-    };
+      <div class="col-xxl-4 col-md-6 proorder-xl-7 box-col-12">
+        <div class="card">
+          <div class="card-header"> 
+            <div class="header-top">
+              <h4>Monthly Selling Product (Mar 2024) </h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown34" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg> 
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown34">
+                  <a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly</a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header custom-border-bottom">
+              <div class="header-top"> 
+                  <h4>Sales Stats</h4>
+                  <div class="dropdown icon-dropdown setting-menu">
+                      <button class="btn dropdown-toggle" id="userdropdown2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <svg>
+                              <use href="#setting"></use> <!-- Adjust the icon source if needed -->
+                          </svg>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown2">
+                          <a class="dropdown-item" href="#">Weekly</a>
+                          <a class="dropdown-item" href="#">Monthly</a>
+                          <a class="dropdown-item" href="#">Yearly</a>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div class="card-body pt-0"> 
+              <div id="salesStatsRadialChart"></div>
+          </div>
+          </div>
+          <!-- <div class="card-body">
+            <div class="table-responsive custom-scrollbar">
+              <div class="card" style="height: 80%; width: 100%;  border:none;  align-items: center; justify-content: center; position: relative; padding: 2px;">
+                <canvas id="salesStatsChart"></canvas>
+                <div class="overlay-text" style="position: absolute; text-align: center; font-size: 1.5em; font-weight: bold; color: white; background: linear-gradient(-44deg, #2E7D42, #0000); padding: 5%; border-radius: 50%; ">
+                    <span class="percentage" style="font-size: 2em;">70%</span><br>
+                    New: 2.4k
+                </div>
+                <div class="legend-text" style="position: absolute; bottom: 0%; font-size: 1.1em; width: 50%; text-align: center; color: #555;">
+                </div>
+              </div>
+              <p style="margin-left: 32%; font-size: 17px;">                  <button style="width: 18px; height: 18px; background-color: #2E7D42; border-radius: 50%; border-width: 0px; margin-top: 10px;"></button>
+                New: 2.4k | Returning: 3.2k</p>
+                    
+            </div>
+          </div> -->
+        </div>
+      </div>
+      <div class="col-xxl-6 proorder-xl-9 box-col-12"> 
+        <div class="card">
+          <div class="card-header">
+            <div class="header-top"> 
+              <h4>Sales Details</h4>
+              <div class="sales-details"> 
+                <div class="user-activity">
+                  <ul> 
+                    <li>
+                      <div class="applications-menu">
+                        <div class="rounded-btn-primary"></div>
+                        <h3>Running Orders</h3>
+                      </div>
+                    </li>
+                    <li> 
+                      <div class="applications-menu">
+                        <div class="rounded-btn-secondary"> </div>
+                        <h3>Complete Delivery</h3>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+                <div class="dropdown icon-dropdown setting-menu">
+                  <button class="btn dropdown-toggle" id="userdropdown15" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <svg>
+                      <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                    </svg>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown15"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body"> 
+            <h4 class="fw-bold">Calls Overview</h4>
+                <div id="comparison" class="mb-3"></div>
+              <canvas id="callsChart" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-6 proorder-xl-8 box-col-12">
+        <div class="card">
+          <div class="card-header">
+            <div class="header-top"> 
+              <h4>Latest Offer Product</h4>
+              <div class="dropdown icon-dropdown setting-menu">
+                <button class="btn dropdown-toggle" id="userdropdown25" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <svg> 
+                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
+                  </svg>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown25"><a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly</a><a class="dropdown-item" href="#">Yearly</a></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body product-page-main pt-0">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="product-slider owl-carousel owl-theme product-slides" id="sync3">
+                  <div class="item"> <img src="{% static 'assets/images/dashboard-2/product/10.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/11.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/12.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/13.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/10.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/11.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/12.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/13.png' %}" alt="product"></div>
+                </div>
+                <div class="owl-carousel owl-theme product-data" id="sync4">
+                  <div class="item"> <img src="{% static 'assets/images/dashboard-2/product/10.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/11.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/12.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/13.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/10.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/11.png' %}" alt="product"></div>
+                  <div class="item"><img src="{% static 'assets/images/dashboard-2/product/12.png' %}" alt="product"></div>
+                  <div class="item"> <img src="{% static 'assets/images/dashboard-2/product/13.png' %}" alt="product"></div>
+                </div>
+              </div>
+              <div class="col-lg-6"> 
+                <div class="product-details"><a href="/product_page">
+                    <h4>Apple iphone 13 Mini (512 GB) Green </h4></a>
+                  <div class="product-Price">
+                    <h2 class="txt-primary">$89,999 </h2>
+                    <div>
+                      <del>$1,19,999</del>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2 variants-title"> <span>Color :</span><span>Green</span></div>
+                  <div class="color-variants">
+                    <div class="form-check radio radio-primary">
+                      <input class="form-check-input" id="radio22" type="radio" name="radio1" value="option1" checked="">
+                      <label class="form-check-label" for="radio22"></label>
+                    </div>
+                    <div class="form-check radio radio-secondary">
+                      <input class="form-check-input" id="radio23" type="radio" name="radio1" value="option2">
+                      <label class="form-check-label" for="radio23"></label>
+                    </div>
+                    <div class="form-check radio radio-warning"> 
+                      <input class="form-check-input" id="radio24" type="radio" name="radio1" value="option3">
+                      <label class="form-check-label" for="radio24"></label>
+                    </div>
+                    <div class="form-check radio radio-info">
+                      <input class="form-check-input" id="radio25" type="radio" name="radio1" value="option4">
+                      <label class="form-check-label" for="radio25"></label>
+                    </div>
+                    <div class="form-check radio radio-danger">
+                      <input class="form-check-input" id="radio27" type="radio" name="radio1" value="option6">
+                      <label class="form-check-label" for="radio27"></label>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2 variants-title"><span>Size :</span><span>512GB </span></div>
+                  <div class="variants-button">
+                    <button class="btn btn-outline-primary btn-md" type="button" title="btn btn-pill btn-outline-primary btn-md">512GB</button>
+                    <button class="btn btn-outline-lights btn-md txt-dark" type="button" title="btn btn-pill btn-outline-light btn-md">256GB</button>
+                  </div>
+                  <div class="discount-box">
+                    <h6>Special Discount</h6>
+                  </div>
+                  <h3 class="text-truncate">Deal of the  Day From</h3>
+                  <div class="countdown" id="clock-arrival" data-hours="1" data-minutes="2" data-seconds="3">
+                    <ul>
+                      <li> <span class="days time"> </span><span class="title">Days</span></li>
+                      <li><span class="hours time"></span><span class="title">Hours</span></li>
+                      <li class="px-3"><span class="minutes time"></span><span class="title">Min</span></li>
+                      <li class="px-3"><span class="seconds time"></span><span class="title">Sec</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Container-fluid Ends -->
 
-    const updateAverageHandlingTimeChart = async (timeFrame) => {
-        const { dates, avg_handling_time } = await fetchData(timeFrame);
-        callDurationChart.data.labels = dates; // Use dates for x-axis labels
-        callDurationChart.data.datasets[0].data = avg_handling_time; // Use avg_handling_time for y-axis data
-        callDurationChart.update(); // Update the chart with new data
-    };
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+      var x = localStorage.getItem("primary");
+      var y = localStorage.getItem("secondry");
+      const h6Element = document.querySelector('h6');
 
-    // Initial chart setup for Average Handling Time
-    const ctx = document.getElementById('callDurationChart').getContext('2d');
-    const callDurationChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Average Handling Time (Minutes)',
-                data: [],
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Average Handling Time (seconds)'
-                    }
-                }
+// Get the computed style of the element
+      const style = window.getComputedStyle(h6Element);
+
+      // Get the color property
+      const color = style.color;
+    
+      // const nav = document.getElementById('nav-link');
+      // nav.style.color = x;
+      // cons
+
+      
+
+      // Fetch Data for Average Handling Time
+      const fetchData = async (timeFrame) => {
+          try {
+              const response = await fetch(`/dashboard/?event=${timeFrame}`);
+              if (!response.ok) throw new Error('Network response was not ok');
+              return await response.json(); // Return parsed data
+          } catch (error) {
+              console.error('Error fetching data:', error);
+              return {
+                  dates: [],
+                  avg_handling_time: [],
+                  number_of_calls: [],
+                  number_of_calls_labels: []
+              }; // Return empty data in case of error
+          }
+      };
+  
+      const updateAverageHandlingTimeChart = async (timeFrame) => {
+          const { dates, avg_handling_time } = await fetchData(timeFrame);
+          callDurationChart.data.labels = dates; // Use dates for x-axis labels
+          callDurationChart.data.datasets[0].data = avg_handling_time; // Use avg_handling_time for y-axis data
+          callDurationChart.update(); // Update the chart with new data
+      };
+  
+      // Initial chart setup for Average Handling Time
+      const ctx = document.getElementById('callDurationChart').getContext('2d');
+      const callDurationChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+              labels: [],
+              datasets: [{
+                  label: 'Average Handling Time (Minutes)',
+                  data: [],
+                  backgroundColor: x,
+                  borderColor: x,
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              responsive: true,
+              scales: {
+                  x: {
+                      title: {
+                          display: true,
+                          text: 'Date',
+                          labelFontColor:color
+
+                      }
+                  },
+                  y: {
+                      beginAtZero: true,
+                      title: {
+                          display: true,
+                          text: '<h6>Average Handling Time (seconds)</h6>',
+                          labelFontColor:color
+                      }
+                  }
+              },
+              plugins: {
+                  legend: {
+                      display: true,
+                      position: 'top'
+                  }
+              }
+          }
+      });
+  
+      const updateCallDistributionChart = async (timeFrame, button) => {
+          const { number_of_calls, number_of_calls_labels } = await fetchData(timeFrame);
+          setActiveTab(button);
+          callDistributionChart.data.labels = number_of_calls_labels;
+          callDistributionChart.data.datasets[0].data = number_of_calls;
+          callDistributionChart.update();
+      };
+  
+      // Initial chart setup for Call Distribution
+      const ctxDistribution = document.getElementById('callDistributionChart').getContext('2d');
+      const callDistributionChart = new Chart(ctxDistribution, {
+          type: 'bar',
+          data: {
+              labels: [],
+              datasets: [{
+                  label: 'Number of Calls',
+                  data: [],
+                  backgroundColor: x,
+                  borderColor: x,
+                  borderWidth: 3,
+                  fill: true,
+                  tension: 0.6
+              }]
+          },
+          options: {
+              responsive: true,
+              scales: {
+                  x: {
+                      title: {
+                          display: true,
+                          text: 'Duration (Minutes)'
+                          
+                      }
+                  },
+                  y: {
+                      beginAtZero: true,
+                      title: {
+                          display: true,
+                          text: 'Number of Calls',
+                          fontColor: "#eb832d"
+                      }
+                  }
+              },
+              plugins: {
+                  legend: {
+                      display: true,
+                      position: 'top'
+                  }
+              }
+          }
+      });
+  
+      // Data and Chart setup for Call Failure Ratio
+      const totalDialedCalls = 1000;
+      const compromisedCalls = 700; // Example data
+      const failedCalls = 300; // Example data
+  
+      const callFailureChart = new Chart(document.getElementById('callFailureChart').getContext('2d'), {
+          type: 'pie',
+          data: {
+              labels: ['Compromised Calls', 'Failed Calls'],
+              datasets: [{
+                  data: [compromisedCalls, failedCalls],
+                  backgroundColor: [x, y], // Different colors for segments
+                  borderColor: [x, y],
+                  borderWidth: 2
+              }]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: {
+                      display: true,
+                      position: 'top'
+                  },
+                  tooltip: {
+                      callbacks: {
+                          label: function(tooltipItem) {
+                              const label = tooltipItem.label || '';
+                              const value = tooltipItem.raw || 0;
+                              const percentage = ((value / totalDialedCalls) * 100).toFixed(2);
+                              return `${label}: ${value} (${percentage}%)`;
+                          }
+                      }
+                  }
+              }
+          }
+      });
+      console.log("wejbcnwk");
+      const weeklyTotalCalls = [120, 150, 170, 130, 160, 140, 160];
+      const weeklyFailedCalls = [100, 150, 180, 110, 180, 130, 140]; // Adjusted values to create intersections
+  
+      const ctxCalls = document.getElementById('callsChart').getContext('2d');
+      const callsChart = new Chart(ctxCalls, {
+          type: 'line',
+          data: {
+              labels: [],
+              datasets: [{
+                  label: 'Total Calls',
+                  data: [],
+                  borderColor: y,
+                  backgroundColor: y,
+                  fill: false,
+                  tension: 0,
+              }, {
+                  label: 'Failed Calls',
+                  data: [],
+                  borderColor: x,
+                  backgroundColor: x,
+                  fill: false,
+                  tension: 0
+              }]
+          },
+          options: {
+              responsive: true,
+              scales: {
+                  x: { title: { display: true, text: 'Days/Months' }},
+                  y: { beginAtZero: false, title: { display: true, text: 'Number of Calls' }}
+              },
+              plugins: {
+                  legend: { display: true, position: 'top' }
+              }
+          }
+      });
+  
+      const refreshCallsChart = (timeFrame) => {
+          let labels, totalData, failedData;
+  
+          if (timeFrame === 'weekly') {
+              labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+              totalData = weeklyTotalCalls;
+              failedData = weeklyFailedCalls;
+          } else {
+              // Placeholder for other time frames
+              labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+              totalData = [700, 900, 850, 950, 1050, 1150, 1200]; // Example data
+              failedData = [150, 120, 130, 140, 100, 90, 80]; // Example data
+          }
+  
+          callsChart.data.labels = labels;
+          callsChart.data.datasets[0].data = totalData;
+          callsChart.data.datasets[1].data = failedData;
+          callsChart.update();
+      };
+  
+      // Initial data load for both charts
+      updateAverageHandlingTimeChart('daily');
+      updateCallDistributionChart('daily', document.querySelector('.nav-link.active'));
+  
+      function setActiveTab(activeButton) {
+          const tabs = document.querySelectorAll('.nav-link');
+          tabs.forEach(tab => tab.classList.remove('active'));
+          activeButton.classList.add('active');
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const salesStatsOption = {
+            series: [60], // Change this to your desired value
+            chart: {
+                height: 370,
+                type: 'radialBar',
+                offsetY: 0,
             },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
-            }
-        }
-    });
-
-    const updateCallDistributionChart = async (timeFrame, button) => {
-        const { number_of_calls, number_of_calls_labels } = await fetchData(timeFrame);
-        setActiveTab(button);
-        callDistributionChart.data.labels = number_of_calls_labels;
-        callDistributionChart.data.datasets[0].data = number_of_calls;
-        callDistributionChart.update();
-    };
-
-    // Initial chart setup for Call Distribution
-    const ctxDistribution = document.getElementById('callDistributionChart').getContext('2d');
-    const callDistributionChart = new Chart(ctxDistribution, {
-        type: 'bar',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Number of Calls',
-                data: [],
-                backgroundColor: 'rgba(105,108,255,0.8)',
-                borderColor: 'rgba(105,108,255,1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.6
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Duration (Minutes)'
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Calls'
-                    }
-                }
+            stroke: {
+                dashArray: 25,
+                curve: 'smooth',
+                lineCap: 'round',
             },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
-            }
-        }
-    });
-
-    // Data and Chart setup for Call Failure Ratio
-    const totalDialedCalls = 1000;
-    const compromisedCalls = 700; // Example data
-    const failedCalls = 300; // Example data
-
-    const callFailureChart = new Chart(document.getElementById('callFailureChart').getContext('2d'), {
-        type: 'pie',
-        data: {
-            labels: ['Compromised Calls', 'Failed Calls'],
-            datasets: [{
-                data: [compromisedCalls, failedCalls],
-                backgroundColor: ['rgba(75,192,192,0.6)', 'rgba(255,99,132,0.6)'], // Different colors for segments
-                borderColor: ['rgba(75,192,192,1)', 'rgba(255,99,132,1)'],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
+            grid: {
+                padding: {
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            const label = tooltipItem.label || '';
-                            const value = tooltipItem.raw || 0;
-                            const percentage = ((value / totalDialedCalls) * 100).toFixed(2);
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        }
+            },
+            plotOptions: {
+                radialBar: {
+                    startAngle: -135,
+                    endAngle: 135,
+                    hollow: {
+                        size: '75%',
+                        // Adjust the image path as needed
+                        image: '../assets/images/apexchart/radial-image.png', // Ensure this image path is correct
+                        imageWidth: 140,
+                        imageHeight: 140,
+                        imageClipped: false,
+                    },
+                    track: {
+                        show: true,
+                        background: 'rgba(43, 94, 94, 0.1)',
+                        strokeWidth: '97%',
+                        opacity: 0.4,
+                    },
+                    dataLabels: {
+                        show: true,
+                        name: {
+                            show: true,
+                            fontSize: '16px',
+                            fontWeight: 600,
+                        },
+                        value: {
+                            show: true,
+                            colors: x,
+                            fontFamily: '"Nunito Sans", sans-serif',
+                            fontWeight: 600,
+                            fontSize: '20px',
+                            color: x,
+                            offsetY: 6,
+                            formatter: function (val) {
+                                return val + '%';
+                            },
+                        },
+                    },
+                },
+            },
+            labels: ['New: 2.9k', 'Returning: 3.2k'],
+            colors: [x, 'rgba(43, 94, 94, 0.1)'], // Change colors as needed
+            legend: {
+                show: true,
+                position: 'bottom',
+                colors: x,
+                fontSize: '14px',
+                fontFamily: '"Nunito Sans", sans-serif',
+                fontWeight: 600,
+                markers: {
+                    width: 18,
+                    height: 18,
+                    strokeWidth: 5,
+                    colors: '#fff',
+                    strokeColors: 'rgba(43, 95, 96, 0.03)',
+                    radius: 20,
+                },
+            },
+            responsive: [
+                {
+                    breakpoint: 1600,
+                    options: {
+                        chart: {
+                            height: 600,
+                        },
+                        plotOptions: {
+                            radialBar: {
+                                hollow: {
+                                    size: '70%',
+                                    imageWidth: 110,
+                                    imageHeight: 110,
+                                },
+                            },
+                        },
+                    },
+                },
+                {
+                    breakpoint: 676,
+                    options: {
+                        chart: {
+                            height: 350,
+                        },
+                        plotOptions: {
+                            radialBar: {
+                                hollow: {
+                                    size: '68%',
+                                },
+                            },
+                        },
+                    },
+                },
+                {
+                    breakpoint: 576,
+                    options: {
+                        chart: {
+                            height: 320,
+                        },
+                        plotOptions: {
+                            radialBar: {
+                                hollow: {
+                                    size: '70%',
+                                    imageWidth: 120,
+                                    imageHeight: 120,
+                                },
+                            },
+                        },
+                    },
+                },
+                {
+                    breakpoint: 531,
+                    options: {
+                        chart: {
+                            height: 300,
+                        },
+                        plotOptions: {
+                            radialBar: {
+                                hollow: {
+                                    size: '70%',
+                                    imageWidth: 100,
+                                    imageHeight: 100,
+                                },
+                            },
+                        },
+                    },
+                },
+                {
+                    breakpoint: 426,
+                    options: {
+                        chart: {
+                            height: 280,
+                        },
+                        plotOptions: {
+                            radialBar: {
+                                hollow: {
+                                    size: '70%',
+                                    imageWidth: 100,
+                                    imageHeight: 100,
+                                },
+                            },
+                        },
+                    },
+                },
+            ],
+        };
+
+        const salesStatsChartEl = new ApexCharts(document.querySelector('#salesStatsRadialChart'), salesStatsOption);
+        salesStatsChartEl.render();
     });
 
-    // Initial data load for both charts
-    updateAverageHandlingTimeChart('daily');
-    updateCallDistributionChart('daily', document.querySelector('.nav-link.active'));
-
-    function setActiveTab(activeButton) {
-        const tabs = document.querySelectorAll('.nav-link');
-        tabs.forEach(tab => tab.classList.remove('active'));
-        activeButton.classList.add('active');
-    }
-</script>
 
 
-<!-- SweetAlert2 for Toastr -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+        
+  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+
+
 
 {% include 'pages/sample-page/components/sample-page.html' %}
-
 {% endblock %}
 
 {% block scriptcontent %}

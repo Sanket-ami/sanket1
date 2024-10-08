@@ -124,3 +124,5 @@ def calls_per_hour(request):
         return render(request, 'pages/dashboard/dashboard.html')
 
     return render(request, 'pages/dashboard/dashboard.html', status=400)  # Optionally, render with an error status    implement this in function for daiky and weekly and monthly data
+
+
