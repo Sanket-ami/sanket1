@@ -462,6 +462,26 @@ editForm.addEventListener("sdadsasad", function (event) {
                 confirmButtonText: 'OK'
             }).then(() => { location.reload(); });
         }
+
+        document.querySelector('.btn-close').addEventListener('click', function() {
+    // Hide the modal
+    var myModal = new bootstrap.Modal(document.getElementById('editAgentModal'));
+    myModal.hide();
+    
+    // Remove the backdrop if it still exists
+    let modalBackdrop = document.querySelector('.modal-backdrop');
+    if (modalBackdrop) {
+        modalBackdrop.remove();
+    }
+    
+    // Remove the 'modal-open' class from the body
+    document.body.classList.remove('modal-open');
+    document.body.style = ""; // Reset body styles to default
+});
+
+
+
+
     </script>
 
 
