@@ -121,7 +121,10 @@ def calls_per_hour(request):
                 'call_overview':['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 'failed_calls': [7, 2, 6, 4,5, 6, 7],
                 'failed_call': 10,
-                "compromised_call": 30
+                "compromised_call": 30,
+                'totalDialedCalls': 1000,
+                'compromisedCalls':330,
+                'failedCalls': 670
             }
 
             return JsonResponse(response_data)  
