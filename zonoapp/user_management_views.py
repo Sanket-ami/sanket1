@@ -12,18 +12,19 @@ import json
 
 def list_of_user(request, user_id:int=None):
     if request.method == "GET":
+
         if request.user.is_superuser:
             user_list = User.objects.all()
             role_list = Role.objects.values('role','id').distinct('role')
-            print(role_list)
             organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
             return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list})
-        if request.user.role == 'admin':
-            user_list = User.objects.all().filter(oraganisation_name=request.user.organisation_name)
-            role_list = Role.objects.values('role').filter(oraganisation_name=request.user.organisation_name).distinct()
-            organisation_list = User.objects.values('organisation_name').filter(oraganisation_name=request.user.organisation_name).distinct()
-        user_list = User.objects.all().filter(User.role.organisation_name==request.role.organisation_name)
-        return JsonResponse({'status': 'created', 'status_code':201}, status=201)
+        
+        if request.user.role.role == 'Admin':
+            user_list = User.objects.all().filter(organisation_name=request.user.organisation_name)
+            role_list = Role.objects.values('role').distinct()
+            organisation_list = User.objects.values('organisation_name').filter(organisation_name=request.user.organisation_name).distinct()
+            user_list = User.objects.all().filter(organisation_name=request.user.organisation_name)
+            return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list})
         
     elif request.method == "POST":
         print("In post method")
