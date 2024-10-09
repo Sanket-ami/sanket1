@@ -1124,17 +1124,16 @@ def end_call(request):
         request_body = json.loads(request.body)
         call_id = request_body['call_id']
         campaign_id = request_body['campaign_id'] 
-        # print("Received id: ", id)
         
         # Fetch the CallLog record with the given id
-        call_history_record = CallLogs.objects(campaign_id=int(campaign_id), call_id=int(call_id)).first()
+        call_history_record = CallLogs.objects(campaign_id=int(campaign_id), call_id= call_id).first()
 
         if call_history_record:
             call_id = call_history_record.call_id
             # print("Found call history record with call_id:", call_id)
             
             # Make the external API request with the fetched call_id
-            api_url = f"{CALL_SERVER_BASE_URL}/end_call"
+            api_url = f"{settings.CALL_SERVER_BASE_URL}/end_call"
             
             payload = {"call_id": call_id}
             headers = {
@@ -1144,7 +1143,6 @@ def end_call(request):
             
             response = requests.post(api_url, headers=headers, json=payload)
             response = response.json()
-            
             print("External API response:", response)
             
             ## Update the status in the database
