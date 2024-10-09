@@ -68,6 +68,8 @@
                                 <th scope="col">Role</th>
                                 <th scope="col">Organisation</th>
                                 <th scope="col">Date Joined</th>
+                                <th scope="col">Action</th>
+                                
                             </tr>
                         </thead>
                         <tbody>
@@ -83,12 +85,9 @@
                                     <button class="btn-info edit-agent-button" data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-email="{{ user.email }}" data-role="{{ user.role.role }}" data-organisation="{{ user.organisation_name }}" data-bs-toggle="modal" data-bs-target="#editAgentModal">
                                         <i class="fa fa-edit"></i>
                                     </button>
-                                    
-                                </button></td>
-                                <td>
-                                <button  class=" btn-danger" onclick=deleteAgent("{{ user.id }}") >
-                                    <i class="fa fa-trash"></i>
-                                </button>
+                                    <button  class=" btn-danger" onclick=deleteAgent("{{ user.id }}") >
+                                        <i class="fa fa-trash"></i>
+                                    </button>
                                 </td>
                                 {% endif %}
 
