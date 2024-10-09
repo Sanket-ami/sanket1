@@ -52,17 +52,17 @@
         <div class="card">
           
           <div class="card-header" style="display: flex; justify-content: space-around;">
-              <h4 class="fw-bold">Calls Overview</h4>
+              <h4 class="fw-bold">Failed Calls</h4>
               <div aria-labelledby="durationOptions">
                 <ul class="nav nav-pills" role="tablist">
                   <li class="nav-item">
-                      <button type="button" class="nav-link active update" role="tab" onclick="updateCallDistributionChart('daily', this)"><h6>Daily</h6></button>
+                      <button type="button" class="nav-link active failed" role="tab" onclick="failedCallsCart('daily', this)"><h6>Daily</h6></button>
                   </li>
                   <li class="nav-item">
-                      <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('weekly', this)"><h6>Weekly</h6></button>
+                      <button type="button" class="nav-link failed" role="tab" onclick="failedCallsCart('weekly', this)"><h6>Weekly</h6></button>
                   </li>
                   <li class="nav-item">
-                      <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('monthly', this)"><h6>Monthly</h6></button>
+                      <button type="button" class="nav-link failed" role="tab" onclick="failedCallsCart('monthly', this)"><h6>Monthly</h6></button>
                   </li>
                 </ul>
                   </div>
@@ -518,7 +518,46 @@
         callsChart.data.datasets[1].data = failed_calls;
         callsChart.update()
 
-      }
+      } 
+
+       
+      const failedCallsCart = async (timeFrame, button) => {
+          const { totalDialedCalls, compromisedCalls, failedCalls} = await fetchData(timeFrame);
+          setActiveTab(button, ".failed");
+
+          const callFailureChart = new Chart(document.getElementById('callFailureChart').getContext('2d'), {
+              type: 'pie',
+              data: {
+                  labels: ['Compromised Calls', 'Failed Calls'],
+                  datasets: [{
+                      data: [compromisedCalls, failedCalls],
+                      backgroundColor: [x, y, 'green'], // Different colors for segments
+                      borderColor: [x, y, 'green'],
+                      borderWidth: 2
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  plugins: {
+                      legend: {
+                          display: true,
+                          position: 'top'
+                      },
+                      tooltip: {
+                          callbacks: {
+                              label: function(tooltipItem) {
+                                  const label = tooltipItem.label || '';
+                                  const value = tooltipItem.raw || 0;
+                                  const percentage = ((value / totalDialedCalls) * 100).toFixed(2);
+                                  return `${label}: ${value} (${percentage}%)`;
+                                  }
+                              }
+                          }
+                      }
+                  }
+              });
+
+          };
 
       const updateAverageHandlingTimeChart = async (timeFrame, button) => {
           const { dates, avg_handling_time } = await fetchData(timeFrame);
@@ -572,41 +611,7 @@
       });
   
       // Data and Chart setup for Call Failure Ratio
-      const totalDialedCalls = 1000;
-      const compromisedCalls = 700; // Example data
-      const failedCalls = 300; // Example data
-  
-      const callFailureChart = new Chart(document.getElementById('callFailureChart').getContext('2d'), {
-          type: 'pie',
-          data: {
-              labels: ['Compromised Calls', 'Failed Calls'],
-              datasets: [{
-                  data: [compromisedCalls, failedCalls],
-                  backgroundColor: [x, y], // Different colors for segments
-                  borderColor: [x, y],
-                  borderWidth: 2
-              }]
-          },
-          options: {
-              responsive: true,
-              plugins: {
-                  legend: {
-                      display: true,
-                      position: 'top'
-                  },
-                  tooltip: {
-                      callbacks: {
-                          label: function(tooltipItem) {
-                              const label = tooltipItem.label || '';
-                              const value = tooltipItem.raw || 0;
-                              const percentage = ((value / totalDialedCalls) * 100).toFixed(2);
-                              return `${label}: ${value} (${percentage}%)`;
-                          }
-                      }
-                  }
-              }
-          }
-      });
+   
 
 
 
@@ -665,9 +670,10 @@
 
         refreshCallsChart('weekly');
   
-      updateAverageHandlingTimeChart('daily', document.querySelector('.avg'));
-      updateCallDistributionChart('daily', document.querySelector('.update'));
+      updateAverageHandlingTimeChart('Daily', document.querySelector('.avg'));
+      updateCallDistributionChart('Daily', document.querySelector('.update'));
       CallOverviewChart('Daily', document.querySelector('.overview'))
+      failedCallsCart('Daily', document.querySelector('.failed'))
   
       function setActiveTab(activeButton, tab) {
           const tabs = document.querySelectorAll(tab);
