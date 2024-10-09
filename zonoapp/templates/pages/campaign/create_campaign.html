@@ -283,6 +283,18 @@
                 confirmButtonText: 'OK'
             });
     }
+
+    function showToastSuccess(type, message) {
+    Swal.fire({
+        title: 'Created Campaign',
+        text: message,
+        icon: 'success',
+        confirmButtonText: 'OK'
+    }).then(() => { 
+        window.location.href = "{% url 'manage_campaign' %}"; // Replace with your campaign management URL
+    });
+}
+
   // Function to validate the prompt
   function validatePrompt() {
     agent_prompt = editor.getValue();
@@ -409,7 +421,7 @@
             // Handle the successful response, maybe show a success message
             console.log("Campaign created successfully");
             // alert("Campaign created successfully!");
-            showToast("success", "Campaign added successfully!");
+            showToastSuccess("success", "Campaign added successfully!");
         },
         error: function(xhr, status, error) {
             // Handle errors here
