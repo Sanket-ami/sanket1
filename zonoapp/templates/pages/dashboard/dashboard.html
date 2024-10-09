@@ -7,6 +7,7 @@
   h4{
     color:white;
   }
+  
 </style>
 {% endblock %}
 
@@ -19,6 +20,19 @@
 <!-- Container-fluid starts-->
 
 <div class="container-fluid ecommerce-dashboard">
+  <div class="row">
+    <div class="card border rounded-3 checkbox-checked" style="padding:1%;">
+      <div class="dropdown-form" style="display: flex; flex-direction: column; justify-content: flex-end; ">
+        <h4 class="sub-title" style="width: 190px; padding-bottom: 0px; font-weight: bold; padding-left: 4px;">Select Organisation:</h4>
+        <select class="form-select" style="width: 200px;" name="organisation" id="organisationName" required onchange="onOrganisationChange()">
+         {% for org in organisation_list %}
+         <option value="{{ org.organisation_name }}" {{ org.organisation_name }} {% if org.organisation_name == organisation %} selected {% endif %}>{{ org.organisation_name }}</option>
+          {% endfor %}
+          <!-- Options will be dynamically populated by JavaScript -->
+        </select>
+      </div>
+    </div>
+  </div>
     <div class="row">
 
       <div class="col-xxl-8 proorder-xl-1 box-col-6">
@@ -42,7 +56,7 @@
                         <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('monthly', this)"><h6>Monthly</h6></button>
                     </li>
                   </ul>
-                <canvas id="callDurationChart" height="84"></canvas>
+                <canvas id="callDurationChart" height="100"></canvas>
             </div>
           </div>
         </div>
@@ -69,7 +83,7 @@
           </div>
           <div class="card-body" style="display: flex;
           justify-content: center;
-          height: 420px;">
+          height: 400px;">
           <button class="btn p-0" type="button" id="durationOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="bx bx-dots-vertical-rounded bx-lg text-muted"></i>
         </button>
@@ -345,6 +359,7 @@
     </div>
   </div>
   <!-- Container-fluid Ends -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -436,7 +451,8 @@
       // Fetch Data for Average Handling Time
       const fetchData = async (timeFrame) => {
           try {
-              const response = await fetch(`/dashboard/?event=${timeFrame}`);
+              const org = document.getElementById('organisationName').value;
+              const response = await fetch(`/dashboard/?event=${timeFrame}&org=${org}`);
               if (!response.ok) throw new Error('Network response was not ok');
               return await response.json(); // Return parsed data
           } catch (error) {
@@ -500,7 +516,7 @@
           }
       });
   
-
+     
       
       const updateCallDistributionChart = async (timeFrame, button) => {
           const { number_of_calls, number_of_calls_labels } = await fetchData(timeFrame);
@@ -519,46 +535,44 @@
         callsChart.update()
 
       } 
-
-       
-      const failedCallsCart = async (timeFrame, button) => {
-          const { totalDialedCalls, compromisedCalls, failedCalls} = await fetchData(timeFrame);
-          setActiveTab(button, ".failed");
-
-          const callFailureChart = new Chart(document.getElementById('callFailureChart').getContext('2d'), {
-              type: 'pie',
-              data: {
-                  labels: ['Compromised Calls', 'Failed Calls'],
-                  datasets: [{
-                      data: [compromisedCalls, failedCalls],
-                      backgroundColor: [x, y, 'green'], // Different colors for segments
-                      borderColor: [x, y, 'green'],
-                      borderWidth: 2
-                  }]
+      const callFailureChart = new Chart(document.getElementById('callFailureChart').getContext('2d'), {
+      type: 'pie',
+      data: {
+          labels: ['Compromised Calls', 'Failed Calls'],
+          datasets: [{
+              data: [0, 0], // Initialize with zero values
+              backgroundColor: [x, y], // Use defined color values
+              borderColor: [x, y],
+              borderWidth: 2
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  display: true,
+                  position: 'top'
               },
-              options: {
-                  responsive: true,
-                  plugins: {
-                      legend: {
-                          display: true,
-                          position: 'top'
-                      },
-                      tooltip: {
-                          callbacks: {
-                              label: function(tooltipItem) {
-                                  const label = tooltipItem.label || '';
-                                  const value = tooltipItem.raw || 0;
-                                  const percentage = ((value / totalDialedCalls) * 100).toFixed(2);
-                                  return `${label}: ${value} (${percentage}%)`;
-                                  }
-                              }
-                          }
+              tooltip: {
+                  callbacks: {
+                      label: function(tooltipItem) {
+                          return `${tooltipItem.label}: ${tooltipItem.raw}`; // Custom label format
                       }
                   }
-              });
+              }
+          }
+      }
+});
 
-          };
+const failedCallsCart = async (timeFrame, button) => {
+    const { totalDialedCalls, compromised_call, failed_call } = await fetchData(timeFrame);
+    setActiveTab(button, ".failed");
+    callFailureChart.data.datasets[0].data[0] = compromised_call;
+    callFailureChart.data.datasets[0].data[1] = failed_call;
+    callFailureChart.update();
+};
 
+      
       const updateAverageHandlingTimeChart = async (timeFrame, button) => {
           const { dates, avg_handling_time } = await fetchData(timeFrame);
           setActiveTab(button, ".avg");
@@ -852,10 +866,13 @@
     });
 
 
+  function onOrganisationChange() {
+        const selectElement = document.getElementById("organisationName");
+        const selectedValue = selectElement.value;    
+        console.log("Selected Organisation:", selectedValue);
 
-
-
-
+        window.location.href = `?organisation=${selectedValue}`;    
+    }
         
   </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
