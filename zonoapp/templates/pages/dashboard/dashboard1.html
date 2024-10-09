@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+
+
+
+{% load static %}
+
+
+<div class="container">
+    <div class="row">
+        <!-- Existing Card for Average Handling Time (First Row, First Column) -->
+        <div class="col-12 col-md-6 mb-6">
+            <div class="card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div class="card-title mb-0">
+                        <h5 class="m-0 me-2">Average Handling Time</h5>
+                    </div>
+                    <div>
+                        <button class="btn p-0" type="button" id="durationOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="bx bx-dots-vertical-rounded bx-lg text-muted"></i>
+                        </button>
+                        <div aria-labelledby="durationOptions">
+                            <a class="dropdown-item" href="#" onclick="updateAverageHandlingTimeChart('daily')">Daily</a>
+                            <a class="dropdown-item" href="#" onclick="updateAverageHandlingTimeChart('weekly')">Weekly</a>
+                            <a class="dropdown-item" href="#" onclick="updateAverageHandlingTimeChart('monthly')">Monthly</a>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="callDurationChart" height="317"></canvas>
+            </div>
+        </div>
+
+        <!-- New Card for Call Failure Ratio (First Row, Second Column) -->
+        <div class="col-12 col-md-6 mb-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Call Failure Ratio</h4>
+                </div>
+                <div id="comparison" class="mb-3"></div>
+                	<canvas id="callFailureChart" height="456" style="height: 433px; display: block; box-sizing: border-box; width: 633px;" width="506"></canvas>
+                </div>
+        </div>
+    </div>
+    <div class="row">
+        <!-- New Card with Navigation Tabs (Second Row, First Column) -->
+        <div class="col-12 col-md-6 mb-6">
+            <div class="card">
+                <div class="card-header nav-align-top">
+                    <ul class="nav nav-pills" role="tablist">
+                        <li class="nav-item">
+                            <button type="button" class="nav-link active" role="tab" onclick="updateCallDistributionChart('daily', this)">Daily</button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button" class="nav-link" role="tab" onclick="updateCallDistributionChart('weekly', this)">Weekly</button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button" class="nav-link" role="tab" onclick="updateCallDistributionChart('monthly', this)">Monthly</button>
+                        </li>
+                    </ul>
+                </div>
+                <canvas id="callDistributionChart" height="317"></canvas>
+            </div>
+        </div>
+
+        <!-- New Card for Calls Overview (Second Row, Second Column) -->
+        <div class="col-12 col-md-6 mb-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="fw-bold">Calls Overview</h4>
+                    <div id="comparison" class="mb-3"></div>
+                    <canvas id="callsChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Fetch Data for Average Handling Time
+    const fetchData = async (timeFrame) => {
+        try {
+            const response = await fetch(`/dashboard/?event=${timeFrame}`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json(); // Return parsed data
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            return {
+                dates: [],
+                avg_handling_time: [],
+                number_of_calls: [],
+                number_of_calls_labels: []
+            }; // Return empty data in case of error
+        }
+    };
+
+    const updateAverageHandlingTimeChart = async (timeFrame) => {
+        const { dates, avg_handling_time } = await fetchData(timeFrame);
+        callDurationChart.data.labels = dates; // Use dates for x-axis labels
+        callDurationChart.data.datasets[0].data = avg_handling_time; // Use avg_handling_time for y-axis data
+        callDurationChart.update(); // Update the chart with new data
+    };
+
+    // Initial chart setup for Average Handling Time
+    const ctx = document.getElementById('callDurationChart').getContext('2d');
+    const callDurationChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Average Handling Time (Minutes)',
+                data: [],
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Average Handling Time (seconds)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+
+    const updateCallDistributionChart = async (timeFrame, button) => {
+        const { number_of_calls, number_of_calls_labels } = await fetchData(timeFrame);
+        setActiveTab(button);
+        callDistributionChart.data.labels = number_of_calls_labels;
+        callDistributionChart.data.datasets[0].data = number_of_calls;
+        callDistributionChart.update();
+    };
+
+    // Initial chart setup for Call Distribution
+    const ctxDistribution = document.getElementById('callDistributionChart').getContext('2d');
+    const callDistributionChart = new Chart(ctxDistribution, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Number of Calls',
+                data: [],
+                backgroundColor: 'rgba(105,108,255,0.8)',
+                borderColor: 'rgba(105,108,255,1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Duration (Minutes)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Calls'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+
+    // Data and Chart setup for Call Failure Ratio
+    const totalDialedCalls = 1000;
+    const compromisedCalls = 700; // Example data
+    const failedCalls = 300; // Example data
+
+    const callFailureChart = new Chart(document.getElementById('callFailureChart').getContext('2d'), {
+        type: 'pie',
+        data: {
+            labels: ['Compromised Calls', 'Failed Calls'],
+            datasets: [{
+                data: [compromisedCalls, failedCalls],
+                backgroundColor: ['rgba(75,192,192,0.6)', 'rgba(255,99,132,0.6)'], // Different colors for segments
+                borderColor: ['rgba(75,192,192,1)', 'rgba(255,99,132,1)'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            const label = tooltipItem.label || '';
+                            const value = tooltipItem.raw || 0;
+                            const percentage = ((value / totalDialedCalls) * 100).toFixed(2);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const weeklyTotalCalls = [120, 150, 170, 130, 160, 140, 160];
+    const weeklyFailedCalls = [100, 150, 180, 110, 180, 130, 140]; // Adjusted values to create intersections
+
+    const ctxCalls = document.getElementById('callsChart').getContext('2d');
+    const callsChart = new Chart(ctxCalls, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Total Calls',
+                data: [],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: false,
+                tension: 0,
+            }, {
+                label: 'Failed Calls',
+                data: [],
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                fill: false,
+                tension: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { title: { display: true, text: 'Days/Months' }},
+                y: { beginAtZero: false, title: { display: true, text: 'Number of Calls' }}
+            },
+            plugins: {
+                legend: { display: true, position: 'top' }
+            }
+        }
+    });
+
+    const refreshCallsChart = (timeFrame) => {
+        let labels, totalData, failedData;
+
+        if (timeFrame === 'weekly') {
+            labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            totalData = weeklyTotalCalls;
+            failedData = weeklyFailedCalls;
+        } else {
+            // Placeholder for other time frames
+            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+            totalData = [700, 900, 850, 950, 1050, 1150, 1200]; // Example data
+            failedData = [150, 120, 130, 140, 100, 90, 80]; // Example data
+        }
+
+        callsChart.data.labels = labels;
+        callsChart.data.datasets[0].data = totalData;
+        callsChart.data.datasets[1].data = failedData;
+        callsChart.update();
+    };
+
+    // Initial data load for both charts
+    updateAverageHandlingTimeChart('daily');
+    updateCallDistributionChart('daily', document.querySelector('.nav-link.active'));
+
+    function setActiveTab(activeButton) {
+        const tabs = document.querySelectorAll('.nav-link');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        activeButton.classList.add('active');
+    }
+</script>
+
+
+{% include 'pages/sample-page/components/sample-page.html' %}
+{% endblock %}
+
+{% block scriptcontent %}
+{% endblock %}
