@@ -59,33 +59,63 @@
             <svg class="fill-icon">
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-home"></use>
             </svg><span class=" ">Campaign Managent</span></a>
-            
-  
-          </li>  
-          <li class="sidebar-main-title">
-            <div>
-              <h6 class="lan-21">
-                <a href="{% url 'agent_create' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">Agent</a>
-              </h6>
-            </div>
-          </li>   
+          </li> 
+          
+          
+
 
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-21">
-                <a href="{% url 'list-user' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">User Management</a>
+                Agent
               </h6>
             </div>
           </li>  
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'agent_create' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-user"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-user"></use>
+            </svg><span class=" ">Agent List</span></a>
+          </li>
+          
+
+
+          
+          <li class="sidebar-main-title">
+            <div>
+              <h6 class="lan-21">
+                User Management
+              </h6>
+            </div>
+          </li>  
+          
+
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'list-user' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-user"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-user"></use>
+            </svg><span class=" "> User List</span></a>
+          </li>
 
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-21">
-                <a href="{% url 'live_call_list' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">live Monitoring</a>
+                live Monitoring
               </h6>
             </div>
           </li>   
-                      
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'live_call_list' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-contact"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-contact"></use>
+            </svg><span class=" "> View Live Calls</span></a>
+          </li>         
 
         </li>  
 
