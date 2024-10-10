@@ -2,5 +2,5 @@ from django.shortcuts import render
 
 
 
-def report_download():
+def report_download(request):
     pass

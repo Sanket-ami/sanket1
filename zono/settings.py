@@ -47,7 +47,9 @@ INSTALLED_APPS = [
     'agent',
     'sass_processor',
     'widget_tweaks',
-    'qa_parameters'
+    'qa_parameters',
+    'reporting'
+
 
 
 ]

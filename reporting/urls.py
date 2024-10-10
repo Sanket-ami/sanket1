@@ -1,5 +1,5 @@
 from django.urls import path,include
-from .views import report
+from . import views
 urlpatterns = [
-    path('report_download', views.report, name='report_download'),
+    path('report_download', views.report_download, name='report_download'),
 ]
