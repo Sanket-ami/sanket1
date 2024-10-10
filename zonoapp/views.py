@@ -14,6 +14,76 @@ from django import template
 from django.utils.safestring import mark_safe
 from django.http import JsonResponse
 from django.conf import settings
+from django.core.paginator import Paginator
+from .models import Notification
+
+
+
+# Contact cell 
+
+@login_required(login_url="/login_home")
+def contact_sale(request):
+    context = { "breadcrumb":{"title":"Contact sale","parent":"Email", "child":"Letter Box"}}
+    return render(request,"pages/contact_sale/contactsale.html",context)
+
+
+
+# Count of Notification 
+
+def count_notification(request):
+    if request.user.is_authenticated:
+        notifications = Notification.objects.filter(is_read=False)
+        notifications_count = len(notifications)
+        print("Notification  ",len(notifications))
+        return JsonResponse({'notifications':notifications_count})
+    return JsonResponse({'error': 'User not authenticated'}, status=401)
+
+
+# Notification all 
+
+
+def all_notifications_view(request):
+    if request.user.is_authenticated:
+        notifications = Notification.objects.filter().order_by('-created_at')
+        notification_list = [
+            {
+                'message': notification.message,
+                'created_at': notification.created_at.isoformat(),
+            }
+            for notification in notifications
+        ]
+        # print(notification_list)
+        notifications.update(is_read=True)
+        paginator = Paginator(notification_list, 2) 
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        # print(page_obj)
+        return render(request, 'pages/user_management/users_notification.html', {'notifications': page_obj})
+    return redirect('login') 
+
+
+# Notification view 
+
+
+def notifications_view(request):
+    if request.user.is_authenticated:
+
+        notifications = Notification.objects.filter(organisation_name = request.user.organisation_name).order_by('-created_at')[:5]
+        notification_list = [
+            {
+                'message': notification.message,
+                'created_at': notification.created_at.isoformat(),
+            }
+            for notification in notifications
+        ]
+        # print(request.user.organisation_name)
+        # print(notification_list)
+        return JsonResponse({'notifications': notification_list})
+
+    return JsonResponse({'error': 'User not authenticated'}, status=401)
+
+
+
 
 
 

@@ -1,11 +1,21 @@
 from django.urls import path
 from .import views
 from .user_management_views import list_of_user, get_user
-from .views import fetch_gravatar
+from .views import all_notifications_view, contact_sale, count_notification, fetch_gravatar, notifications_view
+from django.conf import settings
+from django.conf.urls.static import static
+
+
 
 
 
 urlpatterns = [
+
+
+    path('contact_sale/',contact_sale,name="contact_sale"),
+    path('count_notifications/',count_notification,name='count_notification') ,
+    path('all_notifications/', all_notifications_view, name='all_notifications'),
+    path('fetch-notification/',notifications_view , name='fetch_notification'),
     path('fetch-gravatar/', fetch_gravatar, name='fetch_gravatar'),
     path('user_list', list_of_user, name="list-user"),
     path('<int:user_id>', get_user, name="get-user"),
@@ -334,3 +344,4 @@ urlpatterns = [
     path('login_home', views.login_home, name="login_home"),
     path('logout_view', views.logout_view, name="logout_view"),
 ]
+
