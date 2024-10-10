@@ -17,7 +17,6 @@ def voice_view(request):
         for voice in voices:
             try:
                 voice_config = voice.voice_configuration
-                print(voice_config)
             except json.JSONDecodeError:
                 voice_config = {}  
             voices_list.append({
@@ -30,7 +29,7 @@ def voice_view(request):
         paginator = Paginator(voices, 10)
         page_number = request.GET.get('page')
         voices_list = paginator.get_page(page_number)
-        return render(request, 'pages/voice/voice.html', {'page_obj': voices_list, 'voices': voices_list, 'org_names': org_names, 'providers_list': voice_provider})
+        return render(request, 'pages/voice/voice.html', {'page_obj': voices_list, 'voices': voices_list, 'org_names': org_names, 'providers_list': voice_provider,"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Voice"}})
 
     elif request.method == 'POST':
         try:
@@ -43,7 +42,9 @@ def voice_view(request):
                 voice_configuration=data['voice_config'],
                 voice_name=data.get('voice_name')
             )
-            
+            #download the sample files
+            if voice_provider == 'ElevenLabs':
+                get_voice(voice.voice_id)
             return JsonResponse({'id': voice.id}, status=201)
 
         except (KeyError, json.JSONDecodeError) as e:
@@ -66,3 +67,37 @@ def voice_view(request):
             pass
 
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+import requests
+import os
+
+def get_voice(voice_id):
+    try:
+        url = f"https://api.elevenlabs.io/v1/voices/{voice_id}"
+        headers = {"xi-api-key": "sk_037c3e6c88a4306c8916be76f2b44783bc8d77d282d68388"}
+        response = requests.get(url,headers=headers)
+        response.raise_for_status()  
+        voice_data = response.json()
+        
+        preview_url = voice_data.get("preview_url")
+        save_dir = "zonoapp/static/assets/audio"
+
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        if preview_url:
+            audio_response = requests.get(preview_url)
+            audio_response.raise_for_status()  # Raise an error for bad responses
+
+            file_name = os.path.join(save_dir, f"{voice_id}.mp3")
+
+            with open(file_name, 'wb') as audio_file:
+                audio_file.write(audio_response.content)
+            print(f"Audio file saved to {file_name}")
+        else:
+            print("No preview URL found.")
+    
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while making the request: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")

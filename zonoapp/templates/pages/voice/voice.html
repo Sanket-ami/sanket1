@@ -93,10 +93,12 @@
                             <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
                             <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
                             <div class="d-flex justify-content-between">
-                                <audio id="audio-player" controls="" style="display: none;">
-                                    <source src="{% static 'assets/audio/jessica.mp3' %}" type="audio/mpeg">
+                                <!-- Audio player with dynamic audio file path -->
+                                <audio id="audio-player-{{ forloop.counter }}" controls="" style="display: none;">
+                                    <source src="{% static 'assets/audio/' %}{{ voice.voice_id }}.mp3" type="audio/mpeg">
                                 </audio>
-                                <button id="play-pause-button" class="btn btn-success" onclick="toggleAudio()">▶ Play</button>
+                                <!-- Play button that targets the specific audio player -->
+                                <button id="play-pause-button-{{ forloop.counter }}" class="btn btn-success" onclick="toggleAudio({{ forloop.counter }})">▶ Play</button>
                             </div>
                         </div>
                     </div>
@@ -130,105 +132,118 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-var audio = document.getElementById('audio-player');
-    var playPauseButton = document.getElementById('play-pause-button');
+function toggleAudio(counter) {
+    // Get the currently playing audio player
+    const currentlyPlaying = document.querySelector('audio.playing');
 
-    function toggleAudio() {
-        if (audio.paused) {
-            audio.play();
-            playPauseButton.textContent = '❚❚ Pause'; // Change button text to "Pause"
-            playPauseButton.classList.remove('btn-success'); // Change button style
-            playPauseButton.classList.add('btn-danger'); // Change button style
+    // Get the selected audio player
+    var audio = document.getElementById('audio-player-' + counter);
+    var playPauseButton = document.getElementById('play-pause-button-' + counter);
+
+    // Check if another audio is currently playing
+    if (currentlyPlaying && currentlyPlaying !== audio) {
+        // Pause the currently playing audio
+        currentlyPlaying.pause();
+        currentlyPlaying.classList.remove('playing'); // Remove 'playing' class
+        // Update the play button of the paused audio
+        const previousButton = document.getElementById('play-pause-button-' + currentlyPlaying.id.split('-')[2]);
+        previousButton.textContent = '▶ Play'; // Reset button text to "Play"
+        previousButton.classList.remove('btn-danger'); // Reset button style
+        previousButton.classList.add('btn-success'); // Reset button style
+    }
+
+    // Toggle the selected audio
+    if (audio.paused) {
+        audio.play();
+        audio.classList.add('playing'); // Mark this audio as playing
+        playPauseButton.textContent = '❚❚ Pause'; // Change button text to "Pause"
+        playPauseButton.classList.remove('btn-success'); // Change button style
+        playPauseButton.classList.add('btn-danger'); // Change button style
+    } else {
+        audio.pause();
+        audio.classList.remove('playing'); // Remove 'playing' class
+        playPauseButton.textContent = '▶ Play'; // Change button text back to "Play"
+        playPauseButton.classList.remove('btn-danger'); // Change button style
+        playPauseButton.classList.add('btn-success'); // Change button style
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector(".needs-validation");
+    const submitButton = form.querySelector("button[type='submit']");
+    const providerSelect = document.getElementById("voice_provider");
+    const aceEditorContainer = document.getElementById("jsonEditorContainer");
+
+    // Initialize Ace Code Editor
+    const editor = ace.edit("voice_config");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/json");
+
+    // Populate JSON editor based on selected provider
+    providerSelect.addEventListener('change', function () {
+        const selectedOption = providerSelect.options[providerSelect.selectedIndex];
+        let configData = selectedOption.getAttribute('data-config');
+
+        if (configData) {
+            configData = configData.replace(/'/g, '"');
+            try {
+                aceEditorContainer.style.display = 'block';
+                editor.setValue(JSON.stringify(JSON.parse(configData), null, 2), 1);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+            }
         } else {
-            audio.pause();
-            playPauseButton.textContent = '▶ Play'; // Change button text back to "Play"
-            playPauseButton.classList.remove('btn-danger'); // Change button style
-            playPauseButton.classList.add('btn-success'); // Change button style
+            aceEditorContainer.style.display = 'none';
         }
-    }
-    
-    document.addEventListener("DOMContentLoaded", function () {
-        const form = document.querySelector(".needs-validation");
-        const submitButton = form.querySelector("button[type='submit']");
-        const providerSelect = document.getElementById("voice_provider");
-        const aceEditorContainer = document.getElementById("jsonEditorContainer");
-
-        // Initialize Ace Code Editor
-        const editor = ace.edit("voice_config");
-        editor.setTheme("ace/theme/monokai");
-        editor.session.setMode("ace/mode/json");
-
-        // Populate JSON editor based on selected provider
-        providerSelect.addEventListener('change', function () {
-            const selectedOption = providerSelect.options[providerSelect.selectedIndex];
-            let configData = selectedOption.getAttribute('data-config');
-
-            if (configData) {
-                configData = configData.replace(/'/g, '"');
-                try {
-                    aceEditorContainer.style.display = 'block';
-                    editor.setValue(JSON.stringify(JSON.parse(configData), null, 2), 1);
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                }
-            } else {
-                aceEditorContainer.style.display = 'none';
-            }
-        });
-
-        // Handle form submission using AJAX
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
-            if (!form.checkValidity()) {
-                form.classList.add("was-validated");
-                return;
-            }
-
-            let formData = {
-                'voice_name': document.getElementById("voice_name").value,
-                'voice_id': document.getElementById("voice_id").value,
-                'organisation_name': document.getElementById("organisationName").value,
-                'voice_provider': document.getElementById("voice_provider").value,
-                'voice_config': editor.getValue()
-            };
-            
-            submitButton.disabled = true;
-
-            // AJAX request
-            fetch("/voice", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                submitButton.disabled = false;
-                console.log("Form submission successful", data);
-                showToast('success', 'Form submitted successfully!');
-            })
-            .catch(error => {
-                console.error("Form submission error", error);
-                showToast('error', 'Form submission failed!');
-            });
-           
-        });
-
-        
     });
-    function showToast(type, message) {
-        Swal.fire({
-            title: type === 'success' ? 'Success' : 'Error',
-            text: message,
-            icon: type,
-            confirmButtonText: 'OK'
-        }).then(() => { location.reload(); });
-    }
-</script>
-{% endblock %}
 
-{% block scriptcontent %}
-<!-- Additional JavaScript for the page can be added here if necessary -->
+    // Handle form submission using AJAX
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
+
+        let formData = {
+            'voice_name': document.getElementById("voice_name").value,
+            'voice_id': document.getElementById("voice_id").value,
+            'organisation_name': document.getElementById("organisationName").value,
+            'voice_provider': document.getElementById("voice_provider").value,
+            'voice_config': editor.getValue()
+        };
+        
+        submitButton.disabled = true;
+
+        // AJAX request
+        fetch("/voice", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            submitButton.disabled = false;
+            console.log("Form submission successful", data);
+            showToast('success', 'Form submitted successfully!');
+        })
+        .catch(error => {
+            console.error("Form submission error", error);
+            showToast('error', 'Form submission failed!');
+        });
+    });
+});
+
+function showToast(type, message) {
+    Swal.fire({
+        title: type.charAt(0).toUpperCase() + type.slice(1),
+        text: message,
+        icon: type,
+        confirmButtonText: 'Ok'
+    });
+}
+</script>
 {% endblock %}
