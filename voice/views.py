@@ -29,7 +29,7 @@ def voice_view(request):
         paginator = Paginator(voices, 10)
         page_number = request.GET.get('page')
         voices_list = paginator.get_page(page_number)
-        return render(request, 'pages/voice/voice.html', {'page_obj': voices_list, 'voices': voices_list, 'org_names': org_names, 'providers_list': voice_provider,"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Voice"}})
+        return render(request, 'pages/voice/voice.html', {'page_obj': voices_list, 'voices': voices_list, 'org_names': org_names, 'providers_list': voice_provider,"breadcrumb":{"title":"Voice","parent":"Pages", "child":"Voice"}})
 
     elif request.method == 'POST':
         try:
