@@ -36,67 +36,26 @@
             <input type="text" placeholder="Search here...">
           </div>
         </li>
-        <li class="onhover-dropdown"> 
+        <li class="onhover-dropdown position-relative"> 
           <div class="notification-box">
             <svg> 
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#Bell"></use>
             </svg>
+            <div id="notification-count"  class="position-absolute top-0 start-105 translate-middle badge rounded-pill bg-danger"></div>
           </div>
           <div class="onhover-show-div notification-dropdown"> 
             <h6 class="f-18 mb-0 dropdown-title">Notifications</h6>
             <div class="notification-card">
-              <ul>
-                <li>
-                  <div class="user-notification">
-                    <div><img src="{% static 'assets/images/avtar/2.jpg' %}" alt="avatar"></div>
-                    <div class="user-description"><a href="/letter_box">
-                        <h4>You have new finical page design.</h4></a><span>Today 11:45pm</span></div>
-                  </div>
-                  <div class="notification-btn">
-                    <button class="btn btn-pill btn-primary" type="button" title="btn btn-pill btn-primary">Accpet</button>
-                    <button class="btn btn-pill btn-secondary" type="button" title="btn btn-pill btn-primary">Decline</button>
-                  </div>
-                  <div class="show-btn"><a href="/index"> <span>Show</span></a></div>
-                </li>
-                <li>
-                  <div class="user-notification">
-                    <div><img src="{% static 'assets/images/avtar/17.jpg' %}" alt="avatar"></div>
-                    <div class="user-description"><a href="/letter_box">
-                        <h4>Congrats! you all task for today.</h4></a><span>Today 01:05pm</span></div>
-                  </div>
-                  <div class="notification-btn">
-                    <button class="btn btn-pill btn-primary" type="button" title="btn btn-pill btn-primary">Accpet</button>
-                    <button class="btn btn-pill btn-secondary" type="button" title="btn btn-pill btn-primary">Decline</button>
-                  </div>
-                  <div class="show-btn"><a href="/index"> <span>Show</span></a></div>
-                </li>
-                <li> 
-                  <div class="user-notification">
-                    <div> <img src="{% static 'assets/images/avtar/18.jpg' %}" alt="avatar"></div>
-                    <div class="user-description"><a href="/letter_box">
-                        <h4>You have new in landing page design.</h4></a><span>Today 06:55pm</span></div>
-                  </div>
-                  <div class="notification-btn">
-                    <button class="btn btn-pill btn-primary" type="button" title="btn btn-pill btn-primary">Accpet</button>
-                    <button class="btn btn-pill btn-secondary" type="button" title="btn btn-pill btn-primary">Decline</button>
-                  </div>
-                  <div class="show-btn"><a href="/index"> <span>Show</span></a></div>
-                </li>
-                <li>
-                  <div class="user-notification">
-                    <div><img src="{% static 'assets/images/avtar/19.jpg' %}" alt="avatar"></div>
-                    <div class="user-description"><a href="/letter_box">
-                        <h4>Congrats! you all task for today.</h4></a><span>Today 06:55pm</span></div>
-                  </div>
-                  <div class="notification-btn">
-                    <button class="btn btn-pill btn-primary" type="button" title="btn btn-pill btn-primary">Accpet</button>
-                    <button class="btn btn-pill btn-secondary" type="button" title="btn btn-pill btn-primary">Decline</button>
-                  </div>
-                  <div class="show-btn"> <a href="/index"> <span>Show</span></a></div>
-                </li>
-                <li> <a class="f-w-700" href="/letter_box">Check all </a></li>
+              <ul id="notification-list">
+                <!-- Notifications will be appended here via AJAX -->
+
               </ul>
+              <ul id="check-all-container" >
+                <li> <a class="f-w-700" href="{% url 'all_notifications' %}?page=1">Check all </a></li>
+              </ul>
+              
             </div>
+            
           </div>
         </li>
         
@@ -148,20 +107,50 @@
 
 <script>
   document.addEventListener( 'DOMContentLoaded', () => {
-      // Step 1: Hash your email address using SHA-256.
-      //const email = '{{request.user.email}}' ;
-      //const email = 'anurag@aminfoweb.com';
-      //console.log(email);
-      
-      //const hashedEmail = CryptoJS.SHA256(email);
-      // Step 2: Construct the Gravatar URL. 
-      //const gravatarUrl = `https://www.gravatar.com/avatar/${hashedEmail}`;
-      // Step 3: Set the image source to the Gravatar URL.
-      //console.log("HEADERRR");
-      
-      //console.log(gravatarUrl);
-      
-      //document.getElementById( 'gravatar-image' ).src = gravatarUrl;
+      $('#check-all-container a').on('click', function() {
+        $('#notification-count').text('0'); // Reset the notification count to zero
+      });
+
+      $('.notification-box').hover(function() {
+        $.ajax({
+            url: '/fetch-notification/',  // URL for the notifications view
+            method: 'GET',
+            success: function(data) {
+                // Clear existing notifications
+                $('#notification-list').empty();
+
+                // Append new notifications
+                if (data.notifications.length > 0) {
+                    
+                    $.each(data.notifications, function(index, notification) {
+                        $('#notification-list').append(`
+                            <li>
+                                <div class="user-notification">
+                                    
+                                    <div class="user-description">
+                                        <a href="/letter_box">
+                                            <h4>${notification.message}</h4>
+                                        </a>
+                                        <span>${new Date(notification.created_at).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                
+                            </li>
+                        `);
+                    });
+                } else {
+                    $('#notification-list').append('<li>No new notifications.</li>');
+                }
+            },
+            error: function() {
+                console.error('Error fetching notifications');
+            }
+        });
+    });
+
+
+
+
       const fetchGravatar = () => {
         fetch('/fetch-gravatar/', {
             method: 'POST',
@@ -189,20 +178,65 @@
             console.error('There was a problem with the fetch operation:', error);
         });
     };
+    //fetch notification count 
+    const FetchCountNotification = () =>{
+      console.log("Hi");
+      
+      $.ajax({
+            url: '/count_notifications/',  // URL for the notifications view
+            method: 'GET',
+            success: function(data) {
+                // Clear existing notifications
+                $('#notification-list').empty();
 
+                // Append new notifications
+                console.log("Data  : ",data.notifications);
+                // if (data.notifications.length > 0) { 
+                  
+                  
+                $('#notification-count').text(data.notifications);
+                // } else {
+                //     $('#notification-list').append('<li>No new notifications.</li>');
+                // }
+            },
+            error: function() {
+                console.error('Error fetching notifications');
+            }
+        });
+      // fetch('/count_notifications/', {
+      //       method: 'POST',
+      //       headers: {
+      //           'Content-Type': 'application/json',
+      //           'X-CSRFToken': '{{ csrf_token }}', 
+      //       },
+      //       credentials: 'include' 
+      //   })
+      //   .then(response => {
+      //       if (response.ok) {
+      //           return response.json();
+      //       } else {
+      //           throw new Error('Network response was not ok');
+      //       }
+      //   })
+      //   .then(data => {
+      //     console.log("data ",data.notifications.length);
+          
+      //     $('#notification-count').text(data.notifications.length);
+      //   })
+      //   .catch(error => {
+      //       console.log('There was a problem with the fetch operation:', error);
+      //   });
+    }
     // Call fetchGravatar after user logs in
     // Make sure to call this function after a successful login
     fetchGravatar();
-      
+    FetchCountNotification(); 
   } );
 </script>
 
 
 
-<script src = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js">
 
-  
-</script>
 
 
 
