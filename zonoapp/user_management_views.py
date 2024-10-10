@@ -19,14 +19,14 @@ def list_of_user(request, user_id:int=None):
             role_list = Role.objects.values('role','id').distinct('role')
             organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
             
-            return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list,"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"User Management"}})
+            return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list,"breadcrumb":{"title":"User Management","parent":"Pages", "child":"User Management"}})
         
         if request.user.role.role == 'Admin':
             user_list = User.objects.all().filter(organisation_name=request.user.organisation_name)
             role_list = Role.objects.values('role').distinct()
             organisation_list = User.objects.values('organisation_name').filter(organisation_name=request.user.organisation_name).distinct()
             user_list = User.objects.all().filter(organisation_name=request.user.organisation_name)
-            return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list,"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"User Management"}})
+            return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list,"breadcrumb":{"title":"User Management","parent":"Pages", "child":"User Management"}})
         
     elif request.method == "POST":
         print("In post method")
