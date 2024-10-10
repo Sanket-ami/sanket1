@@ -30,7 +30,7 @@ def calls_per_hour(request):
     
     if request.GET.get('organisation'):
         organisation = request.GET.get('organisation')
-        return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"sadas sds"}, 'organisation_list': organisation_list, 'organisation': organisation})     
+        return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"Calls"}, 'organisation_list': organisation_list, 'organisation': organisation})     
 
 
     if request.method == 'GET':
@@ -95,5 +95,5 @@ def calls_per_hour(request):
             }
 
             return JsonResponse(response_data)  
-        return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"Sample xsxs"}, 'organisation_list': organisation_list})
-    return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"sadas sds"}, 'organisation_list': organisation_list})     
+        return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"Dashboard"}, 'organisation_list': organisation_list})
+    return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"Dashboard"}, 'organisation_list': organisation_list})     

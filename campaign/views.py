@@ -50,7 +50,7 @@ def create_campaign(request):
         print('available_agents ',available_agents)
         # available_voice = Agent.objects.filter(is_deleted=False)
 
-        context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Sample Page"},
+        context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Create Campaign"},
                    "telephony_providers_list":telephony_providers_list,"org_names":org_names,"qa_parameters":qa_parameters,
                    "available_agents":available_agents
                    }   
@@ -231,7 +231,7 @@ def contact_list(request, campaign_id):
                     contact_list = list(contact_list[0].contact_list)
 
             print("final_conact_list_b4 uload + ",contact_list)
-            context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Sample Page"},"contact_list": contact_list,"campaign_id":campaign_id,
+            context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Contact List"},"contact_list": contact_list,"campaign_id":campaign_id,
                         "all_contact_list_names":all_contact_list_names, "selected_contact_list":selected_list,"contact_list_id":contact_list_id,
                         "is_active":is_active
                     }
@@ -1199,7 +1199,7 @@ def live_call_list(request):
                         dynamic_columns = list(call_logs_data[0].keys())
 
                 context = {
-                    "breadcrumb": {"title": "View Live Calls", "parent": "Pages", "child": "Call Logs"},
+                    "breadcrumb": {"title": "View Live Calls", "parent": "Pages", "child": "Live Monitoring"},
                     "call_logs_data": call_logs_data,
                     "campaign_list": campaign_list,
                     "call_status":call_status,

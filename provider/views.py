@@ -12,7 +12,7 @@ def provider_view(request):
         paginator = Paginator(providers, 10) 
         page_number = request.GET.get('page')  
         providers = paginator.get_page(page_number)  
-        return render(request, 'pages/provider/provider_form.html', {'providers': providers})
+        return render(request, 'pages/provider/provider_form.html', {'providers': providers,"breadcrumb":{"title":"Provider","parent":"Pages", "child":"Provider"}})
 
     elif request.method == 'POST':
         data = json.loads(request.body)
