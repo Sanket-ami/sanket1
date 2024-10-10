@@ -14,7 +14,7 @@ def qa_parameters(request):
         else:
             org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
         print(org_names)
-        return render(request, 'pages/qa_parameters/qa_parameters.html', {'qa_parameters': qa_parameter, 'org_names': org_names})
+        return render(request, 'pages/qa_parameters/qa_parameters.html', {'qa_parameters': qa_parameter, 'org_names': org_names,"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"QA Parameter"}})
     elif request.method == 'POST':
         data = json.loads(request.body)
         print(data)
