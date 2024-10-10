@@ -51,7 +51,7 @@
                         <button class="btn btn-primary " title="Live Transcript" onclick="viewTranscriptLive('{{ log.call_id }}')">
                             <i class="fa fa-file-audio-o"></i> Live
                         </button>
-                        <button class="btn btn-danger " title="End Call" onclick="endCall('{{ log.call_id }}')">
+                        <button class="btn btn-danger " title="End Call" onclick="endCall('{{ log.call_id }}','{{ campaign_id }}' )">
                             <i class="fa fa-power-off"></i> End Call
                         </button>
                     </td>
@@ -137,27 +137,30 @@
 
 
     // >>>>>>>>>> End Call  Start<<<<<<<<<<<<
-    function endCall(callId) {
+    function endCall(callId, campaignId) {
         // alert(`Call having ID ${callId} is ended`);
 
         // Confirm deletion using SweetAlert2
         Swal.fire({
             title: 'Are you sure?',
-            text: 'You won\'t be able to revert this!',
+            text: 'Do you really want to end this call ?',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Yes, delete them!',
+            confirmButtonText: 'Yes, End the call!',
             cancelButtonText: 'Cancel'
         }).then((result) => {
-        fetch('{% url "end_call" %}', {
+        $.ajax({
+            url:"{% url 'end_call' %}",
             method: 'POST',
+            data: JSON.stringify({ "call_id": callId, "campaign_id": campaignId  }),
+            contentType:"application/json",
             headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
                     },
-                    body: JSON.stringify({ call_id: callId })
-            }).then(response => {
+                    success: function(response) {
                         console.log(response)
-                        var response = response.json();
+                        //var response = response.json();
                         console.log(response)
                         if (response.success) {
                             // alert("Call ended successfully.")
@@ -165,15 +168,17 @@
       
                             showToast("success", response.message);
                         } else {
-                            error_message = response.error_message;
+                            error_message = response.message;
                             // alert(error_message)
-                            showToast("error", "Failed to end call! " + error);
+                            showToast("error", "Failed to end call! " + error_message);
                         }
-                    })
-                    .catch(error => {
-                        // console.error('There was a problem with the end call operation:', error);
-                        showToast("error", "There was a problem with the end call operation:" + error);
-                    });
+                    },
+                    error: function(xhr, status, error) {
+                    // Show error message using SweetAlert2
+                    console.log("error")
+                    }
+                    
+            })
         });
             
     }

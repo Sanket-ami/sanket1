@@ -1,7 +1,8 @@
 from django.http import JsonResponse
 from django.shortcuts import render
 from datetime import datetime, timedelta, time
-from campaign.models import CallLogs
+from campaign.models import CallLogs, Campaign
+from zonoapp.models import User
 
 def update_interval_count(intervals, durations):
     for duration in durations:
@@ -21,16 +22,30 @@ def update_interval_count(intervals, durations):
             intervals['> 50'] += 1
     return intervals
 
-
 def calls_per_hour(request):
+    if request.user.is_superuser:
+        organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
+    else:
+        organisation_list = [{'organisation_name': request.user.organisation_name}]
+    
+    if request.GET.get('organisation'):
+        print(request.GET.get('organisation'))
+        organisation = request.GET.get('organisation')
+        return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"sadas sds"}, 'organisation_list': organisation_list, 'organisation': organisation})     
+
+
     if request.method == 'GET':
         event = request.GET.get('event')
-
         if event:
+            org = request.GET.get('org')
+            campaign_ids = Campaign.objects.filter(organisation_name=org).values_list('id', flat=True)
+            #data = CallLogs.objects.filter(created_at__lt=start_time, created_at__gte=end_time, campaign_id__in=campaign_ids)
+
             today = datetime.today()
             total_dur_list = []
             connected_call_list = []
             total_call_list = []
+            failedCalls = 0
             avg_handling_time = []
             dates = []
             number_of_calls = {'< 5': 0, '5-10': 0, '10-20': 0, '20-30': 0, '30-40': 0, '40-50': 0, '> 50':0}
@@ -38,9 +53,8 @@ def calls_per_hour(request):
                for date in range(1):  # Assuming 'monthly' as the default event type
                     start_time = datetime.combine(today.date() - timedelta(days=date), time.min)
                     end_time = datetime.combine(today.date()-timedelta(days=date+1), time.min)
-                    print(start_time, end_time)
 
-                    data = CallLogs.objects.filter(created_at__lt=start_time, created_at__gte=end_time)
+                    data = CallLogs.objects.filter(created_at__lt=start_time, created_at__gte=end_time, campaign_id__in=campaign_ids)
                     total_dur = 0
                     connected_call = 0
                     total_call = data.count() 
@@ -51,18 +65,20 @@ def calls_per_hour(request):
                             continue
                         
                         if hasattr(call, 'call_duration'):
+                            if call.call_duration < 10:
+                                failedCalls += 1
+                                pass
                             total_dur += call.call_duration
                             connected_call += 1
-                            total_dur_list.appenf(call.call_duration)
+                            total_dur_list.append(call.call_duration)
                     dates.append(end_time.strftime("%d"))
-                    avg_handling_time.append(total_dur / connected_call if connected_call > 0 else 0)
+                    avg_handling_time.append((total_dur / 60) / connected_call if connected_call > 0 else 0)
             elif event == 'weekly':
                 for date in range(7):  # Assuming 'monthly' as the default event type
                     start_time = datetime.combine(today.date() - timedelta(days=date), time.min)
                     end_time = datetime.combine(today.date()-timedelta(days=date+1), time.min)
-                    print(start_time, end_time)
 
-                    data = CallLogs.objects.filter(created_at__lt=start_time, created_at__gte=end_time)
+                    data = CallLogs.objects.filter(created_at__lt=start_time, created_at__gte=end_time, campaign_id__in=campaign_ids)
                     total_dur = 0
                     connected_call = 0
                     total_call = data.count() 
@@ -73,20 +89,21 @@ def calls_per_hour(request):
                             continue
                         
                         if hasattr(call, 'call_duration'):
+                            if call.call_duration < 10:
+                                failedCalls += 1
+                                pass
                             total_dur += call.call_duration
                             connected_call += 1
                             total_dur_list.append(call.call_duration)
 
                     dates.append(end_time.strftime("%d"))
-                    avg_handling_time.append(total_dur / connected_call if connected_call > 0 else 0)
+                    avg_handling_time.append(int(total_dur / 60) / connected_call if connected_call > 0 else 0)
 
             else:
                 for date in range(30):  # Assuming 'monthly' as the default event type
                     start_time = datetime.combine(today.date() - timedelta(days=date), time.min)
                     end_time = datetime.combine(today.date()-timedelta(days=date+1), time.min)
-                    print(start_time, end_time)
-
-                    data = CallLogs.objects.filter(created_at__lt=start_time, created_at__gte=end_time)
+                    data = CallLogs.objects.filter(created_at__lt=start_time, created_at__gte=end_time, campaign_id__in=campaign_ids)
                     total_dur = 0
                     connected_call = 0
                     total_call = data.count() 
@@ -97,15 +114,22 @@ def calls_per_hour(request):
                             continue
                         
                         if hasattr(call, 'call_duration'):
+                            if call.call_duration < 10:
+                                failedCalls += 1
+                                pass
                             total_dur += call.call_duration
                             connected_call += 1
                             total_dur_list.append(call.call_duration)
 
                     dates.append(end_time.strftime("%d"))
-                    avg_handling_time.append(total_dur / connected_call if connected_call > 0 else 0)
+                    avg_handling_time.append((total_dur / 60) / connected_call if connected_call > 0 else 0)
 
             interval = update_interval_count(number_of_calls, total_dur_list)
             number_of_calls, number_of_calls_labels = list(interval.values()), list(interval.keys())   #total_calls, failed_calls, call_overview
+            if request.user.is_superuser:
+                organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
+            else:
+                organisation_list = [{'organisation_name': request.user.organisation_name}]
             response_data ={
                 'results': results,
                 'start_date': start_time,
@@ -121,13 +145,12 @@ def calls_per_hour(request):
                 'call_overview':['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 'failed_calls': [7, 2, 6, 4,5, 6, 7],
                 'failed_call': 10,
-                "compromised_call": 30
+                "compromised_call": 30,
+                'totalDialedCalls': len(data),
+                'compromisedCalls':len(data) - failedCalls,
+                'failedCalls': failedCalls, 
             }
 
             return JsonResponse(response_data)  
-
-        return render(request, 'pages/dashboard/dashboard.html')
-
-    return render(request, 'pages/dashboard/dashboard.html', status=400)  # Optionally, render with an error status    implement this in function for daiky and weekly and monthly data
-
-
+        return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"Sample xsxs"}, 'organisation_list': organisation_list})
+    return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"sadas sds"}, 'organisation_list': organisation_list})     
