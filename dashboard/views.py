@@ -23,14 +23,12 @@ def update_interval_count(intervals, durations):
     return intervals
 
 def calls_per_hour(request):
-    print(datetime.now())
     if request.user.is_superuser:
         organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
     else:
         organisation_list = [{'organisation_name': request.user.organisation_name}]
     
     if request.GET.get('organisation'):
-        print(request.GET.get('organisation'))
         organisation = request.GET.get('organisation')
         return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"sadas sds"}, 'organisation_list': organisation_list, 'organisation': organisation})     
 
@@ -53,16 +51,13 @@ def calls_per_hour(request):
             for date in range(date_range):  # Assuming 'monthly' as the default event type
                 start_time = datetime.combine(today.date() - timedelta(days=date), time.min)
                 end_time = datetime.combine(today.date()-timedelta(days=date+1), time.min)
-                print(start_time, end_time)
                 data = CallLogs.objects.filter(created_at__lte=start_time, created_at__gte=end_time, campaign_id__in=campaign_ids)
-                print("data  =======>", len(data))
                 total_dur = 0
                 total_call = data.count() 
                 results = []
                 for call in data:
                     results.append({'created_at': call.created_at})
                     if call.call_status not in ['ongoing', 'completed']:
-                        print(call)
                         continue
                     if hasattr(call, 'call_duration'):
                         connected_call += 1
