@@ -93,7 +93,10 @@
                             <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
                             <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
                             <div class="d-flex justify-content-between">
-                                <button class="btn btn-success">▶</button>
+                                <audio id="audio-player" controls="" style="display: none;">
+                                    <source src="{% static 'assets/audio/jessica.mp3' %}" type="audio/mpeg">
+                                </audio>
+                                <button id="play-pause-button" class="btn btn-success" onclick="toggleAudio()">▶ Play</button>
                             </div>
                         </div>
                     </div>
@@ -127,6 +130,23 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+var audio = document.getElementById('audio-player');
+    var playPauseButton = document.getElementById('play-pause-button');
+
+    function toggleAudio() {
+        if (audio.paused) {
+            audio.play();
+            playPauseButton.textContent = '❚❚ Pause'; // Change button text to "Pause"
+            playPauseButton.classList.remove('btn-success'); // Change button style
+            playPauseButton.classList.add('btn-danger'); // Change button style
+        } else {
+            audio.pause();
+            playPauseButton.textContent = '▶ Play'; // Change button text back to "Play"
+            playPauseButton.classList.remove('btn-danger'); // Change button style
+            playPauseButton.classList.add('btn-success'); // Change button style
+        }
+    }
+    
     document.addEventListener("DOMContentLoaded", function () {
         const form = document.querySelector(".needs-validation");
         const submitButton = form.querySelector("button[type='submit']");
