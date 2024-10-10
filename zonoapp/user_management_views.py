@@ -54,9 +54,12 @@ def list_of_user(request, user_id:int=None):
             user_id = data.get('user_id')  # Expecting 'user_id' in the request body
             print(data)
             user = get_object_or_404(User, id=user_id)
-            user.delete()
+            organisation_name = user.organisation_name
+            username = user.username
+            print("user data : ",user.email , organisation_name)
+            user.update(is_deleted = True)
             # Notify for delete user 
-            Notification.objects.create(user=user, message=f' user {user.username} has been deleted.')
+            Notification.objects.create(user=user ,message=f' user {username} has been deleted.',organisation_name=organisation_name)
             return JsonResponse({'status': 'User deleted successfully', 'status_code': 200}, status=200)
         except User.DoesNotExist:
             return JsonResponse({'status': 'User not found', 'status_code': 404}, status=404)
@@ -68,7 +71,6 @@ def list_of_user(request, user_id:int=None):
         print("data=====>", request.body)
         data = json.loads(request.body)
         print(data)
-
         user_id = data['user_id']
         user_data = get_object_or_404(User, id=user_id)  # Using get_object_or_404 for better error handling
 
