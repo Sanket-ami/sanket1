@@ -192,6 +192,7 @@ def campaign_list(request):
             campaign.scheduled_date = ""
 
     context = {
+        "breadcrumb":{"title":"Campaign Management","parent":"Pages", "child":"Campaign Management"},
         'page_obj': page_obj,
         'search_query': search_query,
     }
