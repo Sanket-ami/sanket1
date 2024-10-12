@@ -861,7 +861,6 @@ def list_call_logs(request):
                 # Pagination logic
                 page = int(request.GET.get('page', 1))
                 per_page = int(request.GET.get('per_page', 10))
-                per_page=1
                 paginator = Paginator(call_logs, per_page)
                 paginated_logs = paginator.get_page(page)
                 total_pages = paginator.num_pages
@@ -1187,7 +1186,7 @@ def live_call_list(request):
                     # Pagination logic
                     page = int(request.GET.get('page', 1))
                     per_page = int(request.GET.get('per_page', 10))
-                    per_page=1
+                
                     paginator = Paginator(call_logs, per_page)
                     paginated_logs = paginator.get_page(page)
                     total_pages = paginator.num_pages
