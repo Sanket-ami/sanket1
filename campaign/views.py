@@ -313,26 +313,21 @@ def start_campaign(request):
         try:  
             request_body = json.loads(request.body)
             campaign_id = request_body['campaign_id']
-
-            # read the values of the camaign
             campaign_obj = Campaign.objects.get(id=campaign_id)
             if not campaign_obj.contact_list:
                 return JsonResponse({'message': 'No contacts present for this campaign',"success":False,"error":True}, status=200)
-            
-            # fetch the prompt
+
             prompt = campaign_obj.agent.agent_prompt
 
             # Iterate over the data
             contact_list = campaign_obj.contact_list.contact_list
             voice_config = campaign_obj.agent.voice.voice_configuration
- 
-            # qa parameters and summarization
             qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
 
             # start a thread 
             wait_time_after_call,wait_time_after_5_calls = 1,1
             try:
-                thread = threading.Thread(target=start_call_queue, args=(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt))
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name))
                 thread.start()
             except Exception as err:
                 print("error in campaign start: ", err)
