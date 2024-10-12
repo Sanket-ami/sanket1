@@ -26,7 +26,7 @@ def voice_view(request):
             })
         org_names = User.objects.all()
         voice_provider = Provider.objects.all()
-        paginator = Paginator(voices, 10)
+        paginator = Paginator(voices, 9)
         page_number = request.GET.get('page')
         voices_list = paginator.get_page(page_number)
         return render(request, 'pages/voice/voice.html', {'page_obj': voices_list, 'voices': voices_list, 'org_names': org_names, 'providers_list': voice_provider,"breadcrumb":{"title":"Voice","parent":"Pages", "child":"Voice"}})
@@ -40,11 +40,18 @@ def voice_view(request):
                 voice_provider=voice_provider,  # Use voice_provider_id to link by ID
                 oragnisation_name=data['organisation_name'],
                 voice_configuration=data['voice_config'],
-                voice_name=data.get('voice_name')
+                voice_name=data.get('voice_name') 
             )
+            print(voice_provider)
             #download the sample files
-            if voice_provider == 'ElevenLabs':
+            # import pdb; pdb.set_trace()
+            if voice_provider.provider_name == 'ElevenLabs':
                 get_voice(voice.voice_id)
+            elif voice_provider.provider_name == "Cartesia":
+                print(voice.voice_id)
+                get_voice_cartesia(voice, "/home/sanket.chavan/Documents/revamp/callbotics_revamp/voice/cartesia_voice_list.json")
+                print(voice.voice_id)
+
             return JsonResponse({'id': voice.id}, status=201)
 
         except (KeyError, json.JSONDecodeError) as e:
@@ -99,5 +106,65 @@ def get_voice(voice_id):
     
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while making the request: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+import json
+import os
+import requests
+def get_voice_cartesia(voice, json_file):
+    try:
+        # Load the JSON data from the file
+        with open(json_file, 'r') as file:
+            voices_data = json.load(file)
+        print("JSON data loaded successfully.")
+        
+        # Search for the voice entry with the matching voice_id
+        matching_voice = None
+        for voice_data in voices_data:
+            if voice.voice_id == voice_data.get("id"):
+                matching_voice = voice_data
+                break
+        
+        if matching_voice:
+            # Extract the sample URL and save location
+            sample_url = matching_voice.get("sample")
+            print(f"Sample URL found: {sample_url}")
+            
+            save_dir = "zonoapp/static/assets/audio"
+            os.makedirs(save_dir, exist_ok=True)  # Create the directory if it doesn't exist
+            
+            if sample_url:
+                # Fetch the audio file from the URL
+                print(f"Attempting to download the file from {sample_url}")
+                response = requests.get(sample_url, stream=True)
+                
+                # Debug: Check response status
+                print(f"Response status code: {response.status_code}")
+                
+                if response.status_code == 200:
+                    # Use voice_name from the Voice model instance
+                    voice_name = voice.voice_name.replace(" ", "_")  # Clean the name
+                    file_name = os.path.join(save_dir, f"{voice_name}.wav")  # Store using voice_name
+                    print(f"Saving audio to: {file_name}")
+                    
+                    # Write the audio content to a file
+                    with open(file_name, 'wb') as audio_file:
+                        for chunk in response.iter_content(chunk_size=1024):
+                            if chunk:
+                                audio_file.write(chunk)
+                    
+                    print(f"Audio file saved successfully to {file_name}")
+                else:
+                    print(f"Failed to download audio. Status code: {response.status_code}")
+            else:
+                print("No sample URL found for the matching voice.")
+        else:
+            print(f"No matching voice found for ID: {voice.voice_id}")
+    
+    except FileNotFoundError:
+        print(f"JSON file {json_file} not found. Please check the file path.")
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while fetching the audio file: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
