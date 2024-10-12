@@ -31,83 +31,90 @@ from qa_parameters.models import QAParameters
 @login_required(login_url="/login_home")
 def create_campaign(request):
     if request.method == "GET":
+        try:
+            telephony_providers_list =  Provider.objects.filter(provider_type="telephony")
+            if request.user.is_superuser:
+                org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
+            else:
+                org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
+            print('org_names ',org_names)
 
-        telephony_providers_list =  Provider.objects.filter(provider_type="telephony")
-        if request.user.is_superuser:
-            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
-        else:
-            org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
+            available_agents = Agent.objects.filter(is_deleted=False)
+            
+            #### QA parameters list
+            qa_parameters = QAParameters.objects.filter(is_deleted=False,organisation_name__in = org_names)
+            
+            if not request.user.is_superuser:
+                available_agents = available_agents.filter(organisation_name__in=org_names)
+            print('available_agents ',available_agents)
+            # available_voice = Agent.objects.filter(is_deleted=False)
 
-        print('org_names ',org_names)
+            context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Create Campaign"},
+                    "telephony_providers_list":telephony_providers_list,"org_names":org_names,"qa_parameters":qa_parameters,
+                    "available_agents":available_agents
+                    }   
+            
+            return render(request,'pages/campaign/create_campaign.html',context)
+            
+        except Exception as error :
+            print("error in create_campaign :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{"error":error})
 
-        available_agents = Agent.objects.filter(is_deleted=False)
-
-        #### QA parameters list
-        qa_parameters = QAParameters.objects.filter(is_deleted=False,organisation_name__in = org_names)
-        
-        if not request.user.is_superuser:
-            available_agents = available_agents.filter(organisation_name__in=org_names)
-        print('available_agents ',available_agents)
-        # available_voice = Agent.objects.filter(is_deleted=False)
-
-        context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Create Campaign"},
-                   "telephony_providers_list":telephony_providers_list,"org_names":org_names,"qa_parameters":qa_parameters,
-                   "available_agents":available_agents
-                   }   
-        
-        return render(request,'pages/campaign/create_campaign.html',context)
     elif request.method == "POST":
-        data = json.loads(request.body)
-        print("datad ",data)
+        try:
+            data = json.loads(request.body)
+            print("datad ",data)
 
-        provider = Provider.objects.get(id=data['provider'])
-        agent = Agent.objects.get(id=data['agent'])
-        agent.agent_prompt = data['prompt']
-        agent.save()
+            provider = Provider.objects.get(id=data['provider'])
+            agent = Agent.objects.get(id=data['agent'])
+            agent.agent_prompt = data['prompt']
+            agent.save()
 
-        new_contact_list = []
-        for contact in data['contact_list']:
-            # add a unique identifiier to each contact
-            contact["contact_id"] = "contact_"+str(uuid.uuid4().hex)
-            new_contact_list.append(contact)
+            new_contact_list = []
+            for contact in data['contact_list']:
+                # add a unique identifiier to each contact
+                contact["contact_id"] = "contact_"+str(uuid.uuid4().hex)
+                new_contact_list.append(contact)
 
-        campaign = Campaign.objects.create(
-            campaign_name=data['campaign_name'],
-            is_schedule=data['is_schedule'],
-            organisation_name=data['organisation_name'],
-            show_transcript=data['show_transcript'],
-            process_type=data['process_type'],
-            provider=provider,
-            # contact_list = new_contact_list,  # removed old logic of single list
-            agent=agent,
-            summarization_prompt=data['summarization_prompt'],
-            qa_parameters_id= data["qa_parameters_list"],
-            show_recording=data['show_recording'],
-            show_numbers=data['show_numbers'],
- 
-        )
+            campaign = Campaign.objects.create(
+                campaign_name=data['campaign_name'],
+                is_schedule=data['is_schedule'],
+                organisation_name=data['organisation_name'],
+                show_transcript=data['show_transcript'],
+                process_type=data['process_type'],
+                provider=provider,
+                # contact_list = new_contact_list,  # removed old logic of single list
+                agent=agent,
+                summarization_prompt=data['summarization_prompt'],
+                qa_parameters_id= data["qa_parameters_list"],
+                show_recording=data['show_recording'],
+                show_numbers=data['show_numbers'],
+    
+            )
 
-        #######################################################
-        """ #### New Logic for adding contact list ######## """
-        campaign_id = campaign.id
+            #######################################################
+            """ #### New Logic for adding contact list ######## """
+            campaign_id = campaign.id
 
-        # Save the campaign contact list and mark it as active
-        campaign_contact_list = ContactList.objects.create(
-            list_name="default",
-            campaign_id=campaign_id,
-            contact_list=new_contact_list,
-            is_active=True,  # Make it active by default
-            organisation_name=data['organisation_name'],
-            created_by="system",
-            modified_by="system",
-        )
+            # Save the campaign contact list and mark it as active
+            campaign_contact_list = ContactList.objects.create(
+                list_name="default",
+                campaign_id=campaign_id,
+                contact_list=new_contact_list,
+                is_active=True,  # Make it active by default
+                organisation_name=data['organisation_name'],
+                created_by="system",
+                modified_by="system",
+            )
 
-        # Update the campaign with the contact_list_id
-        campaign.contact_list_id = campaign_contact_list.id
-        campaign.save()
-        #######################################################
-        return JsonResponse({"message": "Campaign created successfully!", "campaign_id": campaign.id,"success":True})
-
+            # Update the campaign with the contact_list_id
+            campaign.contact_list_id = campaign_contact_list.id
+            campaign.save()
+            #######################################################
+            return JsonResponse({"message": "Campaign created successfully!", "campaign_id": campaign.id,"success":True})
+        except Exception as error :
+            print("error in create_campaign :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{"error":error})
     return JsonResponse({"error": "Invalid request method","success":False, "error":True }, status=500)
     
 ############ upload new contacts csv #######
@@ -175,28 +182,32 @@ def upload_contact_list(request, campaign_id):
 ## render view campaign page
 @login_required(login_url="/login_home")    
 def campaign_list(request):
-    search_query = request.GET.get('q', '')  # Get the search query from the URL
-    campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
-    
-    paginator = Paginator(campaigns, 10)  # Show 10 campaigns per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Add custom key-value pairs to the campaigns in page_obj after pagination
-    for campaign in page_obj:
-        if campaign.is_schedule:
-            # find out schedule_date
-            schedule_obj = ScheduleCampaign.objects.filter(campaign=campaign,is_finished=False).first().schedule_date
-            campaign.scheduled_date = schedule_obj
-        else:
-            campaign.scheduled_date = ""
+    try :
+        search_query = request.GET.get('q', '')  # Get the search query from the URL
+        campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
+        
+        paginator = Paginator(campaigns, 10)  # Show 10 campaigns per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Add custom key-value pairs to the campaigns in page_obj after pagination
+        for campaign in page_obj:
+            if campaign.is_schedule:
+                # find out schedule_date
+                schedule_obj = ScheduleCampaign.objects.filter(campaign=campaign,is_finished=False).first().schedule_date
+                campaign.scheduled_date = schedule_obj
+            else:
+                campaign.scheduled_date = ""
 
-    context = {
-        "breadcrumb":{"title":"Campaign Management","parent":"Pages", "child":"Campaign Management"},
-        'page_obj': page_obj,
-        'search_query': search_query,
-    }
-    return render(request, 'pages/campaign/list_campaign.html', context)
+        context = {
+            "breadcrumb":{"title":"Campaign Management","parent":"Pages", "child":"Campaign Management"},
+            'page_obj': page_obj,
+            'search_query': search_query,
+        }
+        return render(request, 'pages/campaign/list_campaign.html', context)
+    except Exception as error :
+            print("error in create_campaign :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{})
 
 
 def edit_campaign():
@@ -852,7 +863,7 @@ def list_call_logs(request):
             total_pages = 0
             page = 1
             paginated_logs =[]
-
+            
             if campaign_id:
                 call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-created_at')
                 if call_status:
@@ -887,13 +898,14 @@ def list_call_logs(request):
 
             return render(request, 'pages/campaign/call_logs.html', context)
 
-        except Exception as error:
-            print("error in list_call_logs: ", error)
-            return JsonResponse({"error": "No call logs found for this campaign"}, status=404)
+        except Exception as error :
+            print("error in no call log found :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{"error":error})
 
         
     elif request.method == "POST":
-        return JsonResponse({"error": "POST method not supported for this endpoint"}, status=405)
+        print("POST method not supported for this endpoint :",error)
+        return render(request,'pages/error-pages/error-500.html',{"error":error})
 
 
 ###################################################################################

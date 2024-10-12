@@ -18,9 +18,9 @@ def agent_create(request):
 
         llm_providers_list =  Provider.objects.filter(provider_type="llm")
         if request.user.is_superuser:
-            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
+            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
         else:
-            org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
+            org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
             
         # voices list
         voices = Voice.objects.filter(is_delete=False)

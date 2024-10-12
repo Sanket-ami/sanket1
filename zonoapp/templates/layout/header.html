@@ -111,42 +111,7 @@
         $('#notification-count').text('0'); // Reset the notification count to zero
       });
 
-      $('.notification-box').hover(function() {
-        $.ajax({
-            url: '/fetch-notification/',  // URL for the notifications view
-            method: 'GET',
-            success: function(data) {
-                // Clear existing notifications
-                $('#notification-list').empty();
-
-                // Append new notifications
-                if (data.notifications.length > 0) {
-                    
-                    $.each(data.notifications, function(index, notification) {
-                        $('#notification-list').append(`
-                            <li>
-                                <div class="user-notification">
-                                    
-                                    <div class="user-description">
-                                        <a href="/letter_box">
-                                            <h4>${notification.message}</h4>
-                                        </a>
-                                        <span>${new Date(notification.created_at).toLocaleString()}</span>
-                                    </div>
-                                </div>
-                                
-                            </li>
-                        `);
-                    });
-                } else {
-                    $('#notification-list').append('<li>No new notifications.</li>');
-                }
-            },
-            error: function() {
-                console.error('Error fetching notifications');
-            }
-        });
-    });
+      
 
 
 
@@ -182,50 +147,47 @@
     const FetchCountNotification = () =>{
       console.log("Hi");
       
-      $.ajax({
-            url: '/count_notifications/',  // URL for the notifications view
-            method: 'GET',
+        $.ajax({
+            url: '/fetch-notification/',  // URL for the notifications view
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}', 
+            },
             success: function(data) {
                 // Clear existing notifications
                 $('#notification-list').empty();
-
+                $('#notification-count').text(data.notification);
                 // Append new notifications
-                console.log("Data  : ",data.notifications);
-                // if (data.notifications.length > 0) { 
-                  
-                  
-                $('#notification-count').text(data.notifications);
-                // } else {
-                //     $('#notification-list').append('<li>No new notifications.</li>');
-                // }
+                if (data.notifications.length > 0) {
+                    
+                    $.each(data.notifications, function(index, notification) {
+                        $('#notification-list').append(`
+                            <li>
+                                <div class="user-notification">
+                                    
+                                    <div class="user-description">
+                                        <a href="/letter_box">
+                                            <h4>${notification.message}</h4>
+                                        </a>
+                                        <span>${new Date(notification.created_at).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                
+                            </li>
+                        `);
+                    });
+                } else {
+                    $('#notification-list').append('<li>No new notifications.</li>');
+                }
             },
             error: function() {
                 console.error('Error fetching notifications');
             }
         });
-      // fetch('/count_notifications/', {
-      //       method: 'POST',
-      //       headers: {
-      //           'Content-Type': 'application/json',
-      //           'X-CSRFToken': '{{ csrf_token }}', 
-      //       },
-      //       credentials: 'include' 
-      //   })
-      //   .then(response => {
-      //       if (response.ok) {
-      //           return response.json();
-      //       } else {
-      //           throw new Error('Network response was not ok');
-      //       }
-      //   })
-      //   .then(data => {
-      //     console.log("data ",data.notifications.length);
-          
-      //     $('#notification-count').text(data.notifications.length);
-      //   })
-      //   .catch(error => {
-      //       console.log('There was a problem with the fetch operation:', error);
-      //   });
+    
+      
+      
     }
     // Call fetchGravatar after user logs in
     // Make sure to call this function after a successful login

@@ -41,25 +41,74 @@ def count_notification(request):
 
 # Notification all 
 
-
+@login_required(login_url="/login_home")
 def all_notifications_view(request):
-    if request.user.is_authenticated:
-        notifications = Notification.objects.filter().order_by('-created_at')
-        notification_list = [
-            {
-                'message': notification.message,
-                'created_at': notification.created_at.isoformat(),
-            }
-            for notification in notifications
-        ]
-        # print(notification_list)
-        notifications.update(is_read=True)
-        paginator = Paginator(notification_list, 2) 
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        # print(page_obj)
-        return render(request, 'pages/user_management/users_notification.html', {'notifications': page_obj})
-    return redirect('login') 
+    if request.method == 'POST' and request.user.is_authenticated:
+        try:
+            if request.user.is_superuser :
+                notifications = Notification.objects.filter().order_by('-id')
+                print("superuser")
+            else :
+                notifications = Notification.objects.filter(organisation_name = request.user.organisation_name).order_by('-id') 
+            
+            notifications_temp =notifications[:4]
+            notification_list = [
+                {
+                    'message': notification.message,
+                    'created_at': notification.created_at.isoformat(),
+                }
+                for notification in notifications_temp
+            ]
+            print("notification list")
+            notifications_count =notifications.filter(is_read=False).count()
+            
+            # print(request.user.organisation_name)
+            print(notification_list)
+            return JsonResponse({'notifications': notification_list , 'notification':notifications_count})
+        except Exception as error :
+            print("User not have permission :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{})
+    if request.user.is_superuser and request.method == 'GET':
+        try:
+            notifications = Notification.objects.filter().order_by('-id')
+            notification_list = [
+                {
+                    'message': notification.message,
+                    'created_at': notification.created_at.isoformat(),
+                }
+                for notification in notifications
+            ]
+            # print(notification_list)
+            notifications.update(is_read=True)
+            paginator = Paginator(notification_list, 10) 
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+            # print(page_obj)
+            return render(request, 'pages/user_management/users_notification.html', {'notifications': page_obj , "breadcrumb":{"title":"Notifications","parent":"Pages", "child":"Notifications"}})
+        except Exception as error :
+            print("error user not have permission :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{})
+    elif request.user.is_authenticated and request.method == 'GET':
+        try:
+            notifications = Notification.objects.filter(organisation_name = request.user.organisation_name).order_by('-id')
+            notification_list = [
+                {
+                    'message': notification.message,
+                    'created_at': notification.created_at.isoformat(),
+                }
+                for notification in notifications
+            ]
+            # print(notification_list)
+            notifications.update(is_read=True)
+            paginator = Paginator(notification_list, 10) 
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+            return render(request, 'pages/user_management/users_notification.html', {'notifications': page_obj , "breadcrumb":{"title":"Notifications","parent":"Pages", "child":"Notifications"}})
+        except Exception as error :
+            print("error user have not permission :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{})
+    return render(request,'pages/error-pages/error-500.html',{})
+    
 
 
 # Notification view 
@@ -68,7 +117,7 @@ def all_notifications_view(request):
 def notifications_view(request):
     if request.user.is_authenticated:
 
-        notifications = Notification.objects.filter(organisation_name = request.user.organisation_name).order_by('-created_at')[:5]
+        notifications = Notification.objects.filter(organisation_name = request.user.organisation_name).order_by('-created_at')[:4]
         notification_list = [
             {
                 'message': notification.message,

@@ -41,7 +41,7 @@
                         <label for="organisationName" class="form-label">Organisation Name</label>
                         <select class="form-select" id="organisationName" name="organisation_name" required>
                             {% for org in org_names %}
-                            <option value="{{ org }}">{{ org }}</option>
+                            <option value="{{ org.organisation_name }}">{{ org.organisation_name }}</option>
                             {% endfor %}
                         </select>
                         <div class="invalid-feedback">Please select a valid organisation name.</div>
