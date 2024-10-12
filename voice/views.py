@@ -24,7 +24,7 @@ def voice_view(request):
                 'voice_provider': voice.voice_provider,
                 'voice_configuration': voice_config
             })
-        org_names = User.objects.all()
+        org_names = User.objects.all().distinct('organisation_name')
         voice_provider = Provider.objects.all()
         paginator = Paginator(voices, 9)
         page_number = request.GET.get('page')

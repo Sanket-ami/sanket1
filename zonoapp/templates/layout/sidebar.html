@@ -38,7 +38,8 @@
             <div>
               <h6 class="lan-0">Outbound</h6>
             </div>
-          </li>   
+          </li> 
+          {% if request.user.role.role != 'Caller' and request.user.role.role != 'QA' %} 
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'create_campaign' %}">
             <svg class="stroke-icon">
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-email"></use>
@@ -47,6 +48,7 @@
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-email"></use>
             </svg><span class=" ">Create Campaign</span></a>
           </li>
+          {% endif %}
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'list_call_logs' %}">
               <svg class="stroke-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-contact"></use>
@@ -54,7 +56,8 @@
               <svg class="fill-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-contact"></use>
               </svg><span class=" ">Call Logs</span></a>  
-          </li>          
+          </li> 
+          {% if request.user.role.role != 'QA' %}        
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'manage_campaign' %}">
             <svg class="stroke-icon">
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-widget"></use>
@@ -63,8 +66,9 @@
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-widget"></use>
             </svg><span class=" ">Campaign Managent</span></a>
             
-  
-          
+          </li>
+          {% endif %}
+          {% if request.user.role.role != 'Caller' and request.user.role.role != 'QA'  %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-21">
@@ -80,7 +84,8 @@
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-user"></use>
             </svg><span class=" ">Agent Management</span></a>
           </li>  
-
+          {% endif %}
+          {% if request.user.role.role != 'Caller' and request.user.role.role != 'QA' %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-21">
@@ -96,8 +101,8 @@
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-user"></use>
             </svg><span class=" ">User Management</span></a>
           </li>
-          
-          
+          {% endif %}
+          {% if request.user.role.role != 'QA' %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-21"> Call Monitoring
@@ -112,6 +117,7 @@
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-contact"></use>
             </svg><span class=" ">Live Monitoring</span></a>
           </li>
+          {% endif %}
 
 
 
@@ -167,7 +173,7 @@
             </ul>
           </li> -->
           <!-- Voice -->
-           
+          {% if request.user.role.role != 'Caller'  and request.user.role.role != 'QA' %}
           <li class="sidebar-main-title">
             <div>
                 <h6>Voice</h6>
@@ -195,10 +201,11 @@
             <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-internationalization"></use>
           </svg><span class=" ">Voice</span></a>
         </li>
-
+        {% endif %}
 
           
           <!-- Provider -->
+          {% if request.user.role.role != 'Admin' and request.user.role.role != 'Caller' and request.user.role.role != 'QA' %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-22">
@@ -214,7 +221,8 @@
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-learning"></use>
             </svg><span class=" ">Provider</span></a>
           </li>
-
+          {% endif %}
+          {% if request.user.role.role != 'Caller'  %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-22">
@@ -230,6 +238,7 @@
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-task"></use>
             </svg><span class=" ">QA Parameters</span></a>
           </li>
+          {% endif %}
           
 
 

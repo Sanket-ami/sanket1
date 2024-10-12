@@ -6,13 +6,12 @@ from django.db import models
 class User(AbstractUser):
     organisation_name = models.CharField(max_length=255, blank=False)
     role = models.ForeignKey('Role', on_delete=models.SET_NULL,null=True)
-    is_deleted = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
     def __str__(self):
         return self.username
 
 class Role(models.Model):
     role = models.CharField(max_length=255, blank=False)
-    organisation_name = models.CharField(max_length=255, blank=False)
     is_deleted = models.BooleanField(default=True)
     
     class meta:
