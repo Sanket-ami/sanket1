@@ -34,7 +34,7 @@
                 <input class="form-control" id="provider_type" name="provider_type" type="text" aria-label="Provider Type" required>
             </div> -->
             <div class="mb-3">
-                <label for="provider_type" class="form-label">Organisation Name</label>
+                <label for="provider_type" class="form-label">Provider Type</label>
                 <select class="form-select" id="provider_type" name="provider_type" required>
                    
                     <option value="llm">LLM</option>
@@ -125,7 +125,7 @@
             text: message,
             icon: type,
             confirmButtonText: 'OK'
-        });
+        }).then(() => { location.reload(); });
     }
 </script>
 
