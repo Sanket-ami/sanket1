@@ -477,7 +477,15 @@ editForm.addEventListener("sdadsasad", function (event) {
                 .then(response => response.json())
                 .then(data => {
                     console.log("Form submission successful", data);
+                    if (data['status_code']==400 && data['status']=='email'){
+                        showToast('error', ' email already Present !');   
+                    }
+                    else if(data['status_code'] == 400 && data['status'] == 'username'){
+                        showToast('error', ' Username already Present !');   
+                    }else{
                     showToast('success', 'Form submitted successfully!');
+                    // Hide form and show table after successful submission
+                    }
                     // Hide form and show table after successful submission
                     modal.classList.add("d-none");
                     userTable.classList.remove("d-none");

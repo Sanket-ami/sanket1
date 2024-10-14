@@ -42,7 +42,14 @@ def list_of_user(request, user_id:int=None):
         print("data ====>", data)
         data['role'] = Role.objects.get(id=data['role'])
         # print("data role : ",data['role'])
+        
         try:
+            if User.objects.filter(username=data['username']).exists():
+                print("user name -- present")
+                return JsonResponse({'status': 'username' , 'status_code':400}, status=400)
+            elif User.objects.filter(email=data['email']).exists():
+                return JsonResponse({'status': 'email' , 'status_code':400}, status=400)
+
             user = User.objects.create(
                 username= data['username'],
                 first_name = data['first_name'],
@@ -89,7 +96,6 @@ def list_of_user(request, user_id:int=None):
 
         # Assuming 'user' refers to the user making the request
         user = request.user  # Get the current authenticated user
-
         # Update user information
         user_data.email = data['email']
         user_data.role = Role.objects.get(id=data['role'])
