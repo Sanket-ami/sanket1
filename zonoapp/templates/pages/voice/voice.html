@@ -8,7 +8,7 @@
 
 {% block content %}
 <!-- Add Voice Button -->
-<button class="btn btn-primary-gradien" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Voice</button>
+<button class="btn btn-primary" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Voice</button>
 
 <!-- Add Voice Modal -->
 <div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">
@@ -96,6 +96,7 @@
                                 <!-- Audio player with dynamic audio file path -->
                                 <audio id="audio-player-{{ forloop.counter }}" controls="" style="display: none;">
                                     <source src="{% static 'assets/audio/' %}{{ voice.voice_id }}.mp3" type="audio/mpeg">
+                                    <source src="{% static 'assets/audio/' %}{{ voice.voice_name }}.wav" type="audio/wav">
                                 </audio>
                                 <!-- Play button that targets the specific audio player -->
                                 <button id="play-pause-button-{{ forloop.counter }}" class="btn btn-success" onclick="toggleAudio({{ forloop.counter }})">▶ Play</button>
@@ -103,26 +104,40 @@
                         </div>
                     </div>
                 </div>
-                {% endfor %}
+                {% endfor %}                
             </div>
         </div>
     </div>
-    <div class="pagination"></div>
-        <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?search={{ search_query }}&page=1">&laquo; first</a>
-                <a href="?search={{ search_query }}&page={{ page_obj.previous_page_number }}">previous</a>
-            {% endif %}
-    
-            <span class="current">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-            </span>
-    
-            {% if page_obj.has_next %}
-                <a href="?search={{ search_query }}&page={{ page_obj.next_page_number }}">next</a>
-                <a href="?search={{ search_query }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-            {% endif %}
-        </span>
+    <div class="job-pagination">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination pagination-primary">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&q={{ search_query }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
 </div>
 <!-- Container-fluid Ends-->
@@ -243,7 +258,7 @@ function showToast(type, message) {
         text: message,
         icon: type,
         confirmButtonText: 'Ok'
-    });
+    }).then(() => {location.reload();});
 }
 </script>
 {% endblock %}
