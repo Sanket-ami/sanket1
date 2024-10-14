@@ -10,7 +10,7 @@
 <button class="btn btn-primary" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Agent</button>
 <form method="GET" action="{% url 'agent_create' %}" style="display: flex; flex-direction: row; justify-content: flex-end;">
     <div class="form-group" style="margin-right: 0.5%;">
-        <input type="text" name="q" class="form-control" placeholder="Search Agents" value="{{ search_query }}">
+        <input type="text" name="search" class="form-control" placeholder="Search Agents" value="{{ search_query }}">
     </div>
     <button type="submit" class="btn btn-primary">Search</button>
 </form>
