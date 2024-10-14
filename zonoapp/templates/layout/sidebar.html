@@ -1,6 +1,23 @@
 {% load static %}
 {% load sass_tags %}
+<style>
+  .sidebar-wrapper {
+    height: 100vh; /* Full viewport height */
+    overflow-y: auto; /* Enable vertical scrolling */
+  }
 
+  #sidebar-menu {
+    max-height: 100%; /* Ensure the content doesn't exceed the sidebar's height */
+    overflow-y: auto; /* Enable scrolling for the menu */
+  }
+
+  .sidebar-links {
+    padding-bottom: 20px; /* Add some padding at the bottom */
+  }
+  .sidebar-list a {
+    white-space: nowrap; /* Ensure the text doesn't break into multiple lines */
+  }
+</style>
 <!-- Page Sidebar Start-->
 <div class="sidebar-wrapper" data-layout="stroke-svg">
   <div>
