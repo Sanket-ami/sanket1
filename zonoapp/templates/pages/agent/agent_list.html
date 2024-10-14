@@ -7,10 +7,12 @@
 
 {% block content %}
 <!-- Add Agent Button -->
-<button class="btn btn-primary-gradien" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Agent</button>
-<form method="get" class="form-control" style="display: flex; width: 30%; float: right;" action="{% url 'agent_create' %}">
-    <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search agents...">
-    <button class="btn btn-info" type="submit">Search</button>
+<button class="btn btn-primary" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Agent</button>
+<form method="GET" action="{% url 'agent_create' %}" style="display: flex; flex-direction: row; justify-content: flex-end;">
+    <div class="form-group" style="margin-right: 0.5%;">
+        <input type="text" name="q" class="form-control" placeholder="Search Agents" value="{{ search_query }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
 </form>
 <!-- Add Agent Modal -->
 <div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">
@@ -197,23 +199,38 @@
     </div>
     
     <!-- Pagination Controls -->
-    <div class="pagination">
-        <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?search={{ search_query }}&page=1">&laquo; first</a>
-                <a href="?search={{ search_query }}&page={{ page_obj.previous_page_number }}">previous</a>
-            {% endif %}
-    
-            <span class="current">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-            </span>
-    
-            {% if page_obj.has_next %}
-                <a href="?search={{ search_query }}&page={{ page_obj.next_page_number }}">next</a>
-                <a href="?search={{ search_query }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-            {% endif %}
-        </span>
+    <div class="job-pagination">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination pagination-primary">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&q={{ search_query }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
+</div>
     
 </div>
 <!-- Container-fluid Ends-->
