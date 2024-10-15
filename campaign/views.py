@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.http.response import HttpResponseRedirect,JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from zonoapp.models import User
+from zonoapp.models import User, Credits
 from voice.models import Voice
 from agent.models import Agent
 from .models import Campaign, Transcript,CallLogs, ContactList, ScheduleCampaign
@@ -26,7 +26,7 @@ import io
 from django.urls import reverse
 import csv
 from qa_parameters.models import QAParameters
-
+from zono.settings import CALL_SERVER_BASE_URL
 ## render create campaign page
 @login_required(login_url="/login_home")
 def create_campaign(request):
@@ -329,7 +329,7 @@ def start_campaign(request):
                 return JsonResponse({'message': 'No contacts present for this campaign',"success":False,"error":True}, status=200)
 
             prompt = campaign_obj.agent.agent_prompt
-
+            provider = campaign_obj.provider
             # Iterate over the data
             contact_list = campaign_obj.contact_list.contact_list
             voice_config = campaign_obj.agent.voice.voice_configuration
@@ -337,8 +337,15 @@ def start_campaign(request):
 
             # start a thread 
             wait_time_after_call,wait_time_after_5_calls = 1,1
+            organisation_name = campaign_obj.organisation_name
+            print("organisation name",organisation_name)
             try:
-                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name))
+                credits_remaining = 0
+                credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits    
+                pass
+                if credits_remaining <= 0:
+                    return JsonResponse({'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}, status=200)
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider))
                 thread.start()
             except Exception as err:
                 print("error in campaign start: ", err)
@@ -354,9 +361,10 @@ def start_campaign(request):
 
 
 # call queue thread
-def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt):
+def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, organisation_name, provider):
     # if the campaign is scheduled mark is_schedule as false as the campaign is already started
     campaign_obj = Campaign.objects.get(id=campaign_id)
+    organisation_name = campaign_obj.organisation_name
     try:
         if campaign_obj.is_schedule:
             campaign_obj.is_schedule=False
@@ -389,6 +397,11 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             
             try:
                 context={"prompt" : formatted_prompt}
+                           # Before starting the call check credits of the organization
+                credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits
+                if credits_remaining <= 0:
+                    print("You do not have enough credits to start this campaign. Please add credits to your account.")
+                    return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
                 # hit a post request on api
                 url = f"{settings.CALL_SERVER_BASE_URL}/start_call"
 
@@ -432,7 +445,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             mongo_id = call_log_entry.id
 
             # monitoring the call status
-            monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"]))
+            monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"], organisation_name, provider))
             monitor_thread.start()
         except Exception as err:
             print(f"error while calling: {call_details['contact_number']} error- {err}")
@@ -454,10 +467,10 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
 
 
 # monitoring ongoing call
-def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_start_time):
+def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_start_time, organisation_name, provider):
     call_status_current = ""
     not_started_count = 0
-    
+    #print("organisation name",organisation_name)
     while call_status_current not in ['ended', 'error']:
         time.sleep(1)  # wait for transcript
         # call_status_obj = call_client.calls.get_call(id=call_id)
@@ -475,7 +488,43 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
                 return False
 
         if call_status_current not in ['ended', 'error']:
+            try:
+                # Before starting the call check credits of the organization
+                credits_obj= Credits.objects.get(organisation_name=organisation_name)
+                credits_remaining = credits_obj.credits
+                if credits_remaining <= 0:
+                    print("You do not have enough credits to start this campaign. Please add credits to your account.")
+
+                    ## TODO: End the call using API
+                    try:
+                        # Make the external API request with the fetched call_id
+                        if provider == 'telnyx':
+                            api_url = f"{CALL_SERVER_BASE_URL}/end_call_telnyx"
+                        else:
+                            api_url = f"{CALL_SERVER_BASE_URL}/end_call"
+                        
+                        payload = {"call_id": call_status_id}
+                        headers = {
+                            # 'Authorization': 'Bearer a9e11af5ec4c6491dbd82e8a6f3dfde3'
+                            'Content-Type': 'application/json'
+                        }
+                        
+                        response = requests.post(api_url, headers=headers, json=payload)
+                        response = response.json()
+                        
+                        print("External API response:", response)
+                    except:
+                        pass
+                    return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
+                else:
+                    # Reduce credits
+                    credits_obj.credits = credits_obj.credits - 1  # reducing one minute
+                
+                    credits_obj.save()
+            except Exception:
+                pass
             time.sleep(60)
+
         
         elif call_status_current == 'ended':
             time.sleep(2)
@@ -487,15 +536,29 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             duration = 0
             end_time = datetime.fromisoformat(str(call_end))
             try:
+                if provider == 'telnyx':                # new logic for call duration                
+                    url = f"https://api.telnyx.com/calls/{call_status_id}/status"
+
+                    payload = {}
+                    headers = {
+                    'Accept': 'application/json',
+                    'Authorization': "Bearer " + os.getenv('TELNYX_V1_TOKEN')
+                    }
+
+                    response = requests.request("GET", url, headers=headers, data=payload)
+                    response = response.json()
+                    duration = response["data"]['call_duration']
+
+                else:
                 # Convert strings to datetime objects
-                start_time = datetime.fromisoformat(str(call_start_time))  # Remove 'Z' from end
-                # end_time = datetime.fromisoformat(str(call_end))      # Remove 'Z' from end
+                    start_time = datetime.fromisoformat(str(call_start_time))  # Remove 'Z' from end
+                    # end_time = datetime.fromisoformat(str(call_end))      # Remove 'Z' from end
 
-                # Calculate the difference
-                time_difference = end_time - start_time
+                    # Calculate the difference
+                    time_difference = end_time - start_time
 
-                # Extract the difference in seconds
-                duration = int(time_difference.total_seconds())
+                    # Extract the difference in seconds
+                    duration = int(time_difference.total_seconds())
             except:
                 pass
 
@@ -871,8 +934,19 @@ def list_call_logs(request):
                 paginated_logs = paginator.get_page(page)
                 total_pages = paginator.num_pages
                 print("num pages" ,total_pages)
-                call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
-                
+                #call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
+                call_logs_data=[]
+                for log in paginated_logs:
+                    normal_date = log.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    current_log = json.loads(log.to_json())
+
+                    # Convert '_id' to string and replace the '_id' field
+                    current_log['_id'] = str(log.id)       
+                                 
+                    current_log['created_at']  = normal_date
+                    call_logs_data.append(
+                        current_log
+                    )
                 # Extract dynamic columns from the first log
                 if call_logs_data:
                     dynamic_columns = list(call_logs_data[0].keys())
@@ -911,6 +985,7 @@ def fetch_call_details(request):
         campaign_id, mongo_id, call_id = request_body['campaign_id'],request_body['mongo_id'], request_body['call_id']
 
         response = {}
+        
         # fetch transcript and summary
         transcript_data =Transcript.objects.get(call_logs=call_id,campaign_id= campaign_id) 
         transcript_obj = {}
@@ -918,7 +993,7 @@ def fetch_call_details(request):
             transcript_obj["transcript"] = format_transcript(transcript_data.transcript)
         except:
             transcript_obj["transcript"] = ""
-
+        
         transcript_obj['summary'] = transcript_data.summary
 
         # fetch telephony
@@ -927,6 +1002,7 @@ def fetch_call_details(request):
 
         transcript_obj['telephony_name']  = telephony_data
         transcript_obj["transcript_obj_id"] = transcript_data.id
+        print("campaign_id", campaign_id)
         try:
             transcript_obj['qa_analysis'] = create_html_component_with_div(json.loads(transcript_data.qa_analysis.replace("```json","").replace("```","")))
         except Exception:
@@ -964,26 +1040,33 @@ def create_html_component_with_div(json_list):
     # HTML structure
     html_content = ""
     id_count = 1
-    for item in json_list:
-        parameter = item.get('parameter', '')
-        result = item.get('result', '')
-        html_content += "<div>\n"
-        html_content += f"""  <span id="params{id_count}" name="params{id_count}">{parameter}</span>\n"""
-        html_content += """<br>
-        <select id="result{id_count}" name="{parameter}">
-            <option value="met" {met_selected}>Met</option>
-            <option value="not met" {not_met_selected}>Not Met</option>
-        </select>
-        """.format(
-            met_selected="selected" if result == "met" else "",
-            not_met_selected="selected" if result == "not met" else "",
-            id_count=id_count,
-            parameter=parameter
-        )
-        html_content += "</div><br>\n"
-        id_count += 1
+    
+    try:
+        print("===================", json_list.replace("```json", "").replace("```", "").replace("\n", ""), "+++++++++")
+        json_list = json.loads(json_list.replace("```json", "").replace("```", "").replace("\n", ""))
+        print(json_list)
+        for item in json_list:
+            parameter = item.get('parameter', '')
+            result = item.get('result', '')
+            html_content += "<div>\n"
+            html_content += f"""  <span id="params{id_count}" name="params{id_count}">{parameter}</span>\n"""
+            html_content += """<br>
+            <select id="result{id_count}" name="{parameter}">
+                <option value="met" {met_selected}>Met</option>
+                <option value="not met" {not_met_selected}>Not Met</option>
+            </select>
+            """.format(
+                met_selected="selected" if result == "met" else "",
+                not_met_selected="selected" if result == "not met" else "",
+                id_count=id_count,
+                parameter=parameter
+            )
+            html_content += "</div><br>\n"
+            id_count += 1
 
-
+        print(html_content)
+    except Exception as e:
+        print("Error========", e)
     return html_content
 
 def fetch_audio(request):
@@ -1001,7 +1084,7 @@ def fetch_audio(request):
         if not call_id:
             return JsonResponse({"error": True, "success":False, "message":"No call_id provided"}, status=400)
         
-        if telephony_name == "twilio" or telephony_name == "telnyx" :  # hardocded for testing
+        if telephony_name == "twilio" :  # hardocded for testing
             # Construct the URL for the Call API
             base_url = 'https://api.twilio.com'
             url= f'{base_url}/2010-04-01/Accounts/{account_sid}/Calls/{call_id}/Recordings.json'
@@ -1031,8 +1114,51 @@ def fetch_audio(request):
                     return "Failed to fetch the recording.", 500
             else:
                 print('No recordings found for the call.')
-                return "Failed to fetch the recording.", 500
+                return "Failed to fetch the recording.", 500 
 
+        if telephony_name == "telnyx":
+            url = f"https://api.telnyx.com/calls/{call_id}/status"
+
+            payload = {}
+            print(os.getenv('TELNYX_V1_TOKEN'))
+            headers = {
+            'Accept': 'application/json',
+            'Authorization': "Bearer " + os.getenv('TELNYX_V1_TOKEN')
+            }
+
+            response = requests.request("GET", url, headers=headers, data=payload)
+            response = response.json()
+            print(response)
+            call_session_id = response["data"]['call_session_id']
+
+            # fetch the recording url using session id
+
+            url = f"https://api.telnyx.com/recordings?telnyx_session_uuid={call_session_id}"
+
+            payload = {}
+            headers = {
+                'Accept': 'application/json',
+                'x-api-user': 'prajwal.jumde@aminfoweb.com',
+                'x-api-token': os.getenv('TELNYX_V1_TOKEN')
+            }
+            print(456)
+            response = requests.request("GET", url, headers=headers, data=payload)
+            print(123)
+            # get the recording URL
+            response = response.json()
+            recording_url = response['data'][0]['download_urls']['mp3']
+
+            # Get recording data from recording URL
+            response = requests.get(recording_url)
+            if response.status_code == 200:
+                # audio_stream = io.BytesIO(response.content)
+                # return send_file(audio_stream, mimetype='audio/mpeg', as_attachment=False, download_name=f'{call_id}_audio.mp3')
+                audio_stream = io.BytesIO(response.content)
+                audio_stream.seek(0)  # Reset stream position to the start
+                return FileResponse(audio_stream, as_attachment=False, content_type='audio/mpeg')
+
+            else:
+                return "Failed to fetch the recording.", 500
         # if response.ok:
         #     # Create an in-memory byte-stream for the audio file
         #     audio_stream = BytesIO(response.content)
@@ -1139,8 +1265,14 @@ def end_call(request):
             call_id = call_history_record.call_id
             # print("Found call history record with call_id:", call_id)
             
-            # Make the external API request with the fetched call_id
-            api_url = f"{settings.CALL_SERVER_BASE_URL}/end_call"
+            # Make the external API request with the fetched call_id end_call_telnyx
+            campaign_obj = Campaign.objects.get(id=campaign_id)
+            if campaign_obj.provider == 'twilio':
+                print("twilio        ==============")
+                api_url = f"{settings.CALL_SERVER_BASE_URL}/end_call"
+            else:
+                print("telnyx dfknvelkrm")
+                api_url = f"{settings.CALL_SERVER_BASE_URL}/end_call_telnyx"
             
             payload = {"call_id": call_id}
             headers = {
@@ -1198,7 +1330,18 @@ def live_call_list(request):
                     paginated_logs = paginator.get_page(page)
                     total_pages = paginator.num_pages
                     print("num pages" ,total_pages)
-                    call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
+                    call_logs_data=[]
+                    for log in paginated_logs:
+                        normal_date = log.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                        current_log = json.loads(log.to_json())
+
+                        # Convert '_id' to string and replace the '_id' field
+                        current_log['_id'] = str(log.id)       
+                                    
+                        current_log['created_at']  = normal_date
+                        call_logs_data.append(
+                            current_log
+                        )
                     
                     # Extract dynamic columns from the first log
                     if call_logs_data:
