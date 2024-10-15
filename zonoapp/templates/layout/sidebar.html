@@ -257,7 +257,21 @@
           </li>
           {% endif %}
           
-
+          <li class="sidebar-main-title"></li>
+            <div>
+              <h6 class="lan-22">
+                Contact Sales
+              </h6>
+            </div>
+          </li>
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'contact_sale' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-task"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-task"></use>
+            </svg><span class=" ">Contact Sales</span></a>
+          </li>
 
           
         </ul>

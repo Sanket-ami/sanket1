@@ -10,6 +10,7 @@ from django.contrib.auth.hashers import make_password
 from django.http import JsonResponse
 import json
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator
 
 def list_of_user(request, user_id:int=None):
     if request.method == "GET":
@@ -18,12 +19,18 @@ def list_of_user(request, user_id:int=None):
                 user_list = User.objects.filter(is_deleted=False)
                 role_list = Role.objects.values('role','id').distinct('role')
                 organisation_list = User.objects.values('organisation_name').distinct('organisation_name')               
+                paginator = Paginator(user_list, 10)  # Show 10 campaigns per page
+                page_number = request.GET.get('page')
+                user_list = paginator.get_page(page_number)
                 return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list,"breadcrumb":{"title":"User Management","parent":"Pages", "child":"User Management"}})
             
             if request.user.role.role == 'Admin':
                 user_list = User.objects.all().filter(organisation_name=request.user.organisation_name,is_deleted=False)
                 role_list = Role.objects.values('role','id').distinct('role')
                 organisation_list = User.objects.values('organisation_name').filter(organisation_name=request.user.organisation_name).distinct()
+                paginator = Paginator(user_list, 10)  # Show 10 campaigns per page
+                page_number = request.GET.get('page')
+                user_list = paginator.get_page(page_number)
                 return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list,"breadcrumb":{"title":"User Management","parent":"Pages", "child":"User Management"}})
             return render(request,'pages/error-pages/error-500.html',{})
         except Exception as error :
@@ -35,7 +42,14 @@ def list_of_user(request, user_id:int=None):
         print("data ====>", data)
         data['role'] = Role.objects.get(id=data['role'])
         # print("data role : ",data['role'])
+        
         try:
+            if User.objects.filter(username=data['username']).exists():
+                print("user name -- present")
+                return JsonResponse({'status': 'username' , 'status_code':400}, status=400)
+            elif User.objects.filter(email=data['email']).exists():
+                return JsonResponse({'status': 'email' , 'status_code':400}, status=400)
+
             user = User.objects.create(
                 username= data['username'],
                 first_name = data['first_name'],
@@ -82,7 +96,6 @@ def list_of_user(request, user_id:int=None):
 
         # Assuming 'user' refers to the user making the request
         user = request.user  # Get the current authenticated user
-
         # Update user information
         user_data.email = data['email']
         user_data.role = Role.objects.get(id=data['role'])
