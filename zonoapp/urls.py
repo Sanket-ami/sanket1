@@ -22,6 +22,7 @@ urlpatterns = [
     path('', calls_per_hour, name='index'),
     path('index', calls_per_hour, name='index'),
     path('dashboard_02', views.dashboard_02, name="dashboard_02"),
+    path('get_credits',views.get_credits,name="get_credits"),
     
     
     # #-----------------------Widgets
