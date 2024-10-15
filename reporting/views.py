@@ -2,7 +2,10 @@ from django.http import HttpResponse
 import csv
 from campaign.models import Campaign, CallLogs  # Import your models
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
+
+@login_required(login_url="/login_home")
 def report_download(request):
     if request.method == 'POST':
         start_date = request.POST.get('start_date')

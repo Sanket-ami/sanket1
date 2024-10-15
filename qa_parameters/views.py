@@ -4,7 +4,10 @@ import json
 from django.http import JsonResponse
 from zonoapp.models import User
 # Create your views here.
+from django.contrib.auth.decorators import login_required
 
+
+@login_required(login_url="/login_home")
 def qa_parameters(request):
     if request.method == 'GET':
         qa_parameter = QAParameters.objects.all().filter(is_deleted=False)
