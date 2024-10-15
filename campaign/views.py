@@ -228,7 +228,12 @@ def contact_list(request, campaign_id):
             contact_list = ContactList.objects.filter(is_deleted = False, campaign=campaign)
             # select the specfic list from a campaign
             selected_list = request.GET.get("selected_contact_list")
-
+            search = request.GET.get('patient_name')
+            print("Search  : ",search)
+            # if search:
+            #     contact_list = contact_list.filter(patient_name = search)
+            if search is None :
+                search = ""
             if selected_list:
                 contact_list = contact_list.filter(id = selected_list)
                 contact_list_id = contact_list[0].id
@@ -240,11 +245,15 @@ def contact_list(request, campaign_id):
                     contact_list_id = contact_list[0].id
                     is_active = contact_list[0].is_active
                     contact_list = list(contact_list[0].contact_list)
-
+            if search :
+                contact_list = [patient for patient in contact_list if  patient['patient_name'].lower().startswith(search.lower()) ]
             print("final_conact_list_b4 uload + ",contact_list)
+            paginator = Paginator(contact_list, 10)  # Show 10 campaigns per page
+            page_number = request.GET.get('page')
+            contact_list = paginator.get_page(page_number)
             context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Contact List"},"contact_list": contact_list,"campaign_id":campaign_id,
                         "all_contact_list_names":all_contact_list_names, "selected_contact_list":selected_list,"contact_list_id":contact_list_id,
-                        "is_active":is_active
+                        "is_active":is_active , "patient_name":search
                     }
             
             return render(request, 'pages/campaign/contact_list.html', context)
