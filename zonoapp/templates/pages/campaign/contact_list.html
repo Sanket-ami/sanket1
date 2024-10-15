@@ -3,55 +3,27 @@
 
 {% block content %}
 <div class="container-md" id="filterList">
-    
-    <div class="row">
-        <!-- First Column -->
-        <div class="col" style="margin-top: -2%;">
-            <form method="GET" action="{% url 'contact_list' campaign_id %}" id="filterForm" class="d-flex flex-column">
-                <label for="selectedContactList" class="form-label">Select Contact list</label>
-                <div class="d-flex">
-                    <button type="submit" class="btn btn-primary me-2">Filter</button>
-                    <select class="form-select" aria-label=" " name="selected_contact_list" id="selectedContactList">
-                        {% for contact in all_contact_list_names %}
-                        <option value="{{ contact.1 }}" {% if contact.1|stringformat:"s" == selected_contact_list %}selected{% endif %}>{{ contact.0 }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </form>
+    <form method="GET" action="{% url 'contact_list' campaign_id %}" id="filterForm" class="d-flex flex-column">
+        <label for="selectedContactList" class="form-label">Select Contact list</label>
+        <div class="d-flex">
+            <button type="submit" class="btn btn-primary me-2">Filter</button>
+            <select class="form-select" aria-label=" " name="selected_contact_list" id="selectedContactList">
+                {% for contact in all_contact_list_names %}
+                <option value="{{ contact.1 }}" {% if contact.1|stringformat:"s" == selected_contact_list %}selected{% endif %}>{{ contact.0 }}</option>
+                {% endfor %}
+            </select>
         </div>
-
-        <!-- Second Column -->
-        <div class="col">
-            <form method="GET" action="{% url 'contact_list' campaign_id %}">
-                <div class="d-flex justify-content-center mb-4">
-                    <div data-mdb-input-init class="form-outline me-3" style="width: 14rem">
-                        <input type="text" name="patient_name" id="patient_name" value="{{ patient_name }}" class="form-control" placeholder="Enter Patient Name"/>
-                    </div>
-                    <button type="submit" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary">Submit</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Spacer Column -->
-        <div class="col"></div>
-
-        <!-- Third Column -->
-        <div class="col text-end" style="margin-right: -10%;">
-            <button type="button" id="uploadContactList" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload Contact List</button>
-        </div>
-
-        <!-- Fourth Column -->
-        <div class="col text-end">
-            {% if is_active %}
-            <button type="button" class="btn btn-secondary" disabled>Active</button>
-            {% else %}
-            <button type="button" id="markListActive" class="btn btn-info">Make Active</button>
-            {% endif %}
-        </div>
+    </form>
+    <div class="mt-2">
+        {% if is_active %}
+        <button type="button" class="btn btn-secondary float-end" disabled>Active</button>
+        {% else %}
+        <button type="button" id="markListActive" class="btn btn-info float-end">Make Active</button>
+        {% endif %}
     </div>
-    
+     <!-- New Upload Contact List Button -->
+     <button type="button" id="uploadContactList" class="btn btn-primary float-end me-2" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload Contact List</button>
 </div>
-
 
 <!-- Bootstrap Modal for Uploading CSV -->
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
@@ -113,44 +85,12 @@
             {% endfor %}
         </tbody>
     </table>
-    <div class="job-pagination">
-        <nav aria-label="Page navigation example">
-            <ul class="pagination pagination-primary">
-                {% if contact_list.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ contact_list.previous_page_number }}&patient_name={{ patient_name }}">Previous</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                    <a class="page-link">Previous</a>
-                </li>
-                {% endif %}
-
-                {% for num in contact_list.paginator.page_range %}
-                <li class="page-item {% if contact_list.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}&patient_name={{ patient_name }}">{{ num }}</a>
-                </li>
-                {% endfor %}
-
-                {% if contact_list.has_next %}
-                
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ contact_list.next_page_number }}&patient_name={{ patient_name }}">Next</a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                    <a class="page-link">Next</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-    </div>
 </div>
 
 <!-- Include jQuery and DataTables JS and CSS files from CDN -->
-<!-- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"> -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script> -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <!-- Script block -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -249,15 +189,15 @@
 
 
         // Initialize DataTables
-        // new DataTable('#contactTable', {
-        //     paging: true,
-        //     responsive: true,
-        //     scroller: {
-        //         loadingIndicator: true
-        //     },
-        //     searching: true,
-        //     ordering: true
-        // });
+        new DataTable('#contactTable', {
+            paging: true,
+            responsive: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            searching: true,
+            ordering: true
+        });
 
         /// Handling contact deletion
         let selectedContacts = [];
