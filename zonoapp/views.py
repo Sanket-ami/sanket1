@@ -23,7 +23,7 @@ from .models import Notification
 
 @login_required(login_url="/login_home")
 def contact_sale(request):
-    context = { "breadcrumb":{"title":"Contact sale","parent":"Email", "child":"Letter Box"}}
+    context = { "breadcrumb":{"title":"Contact sale","parent":"Pages", "child":"Contact Sales"}}
     return render(request,"pages/contact_sale/contactsale.html",context)
 
 

@@ -1,6 +1,23 @@
 {% load static %}
 {% load sass_tags %}
+<style>
+  .sidebar-wrapper {
+    height: 100vh; /* Full viewport height */
+    overflow-y: auto; /* Enable vertical scrolling */
+  }
 
+  #sidebar-menu {
+    max-height: 100%; /* Ensure the content doesn't exceed the sidebar's height */
+    overflow-y: auto; /* Enable scrolling for the menu */
+  }
+
+  .sidebar-links {
+    padding-bottom: 20px; /* Add some padding at the bottom */
+  }
+  .sidebar-list a {
+    white-space: nowrap; /* Ensure the text doesn't break into multiple lines */
+  }
+</style>
 <!-- Page Sidebar Start-->
 <div class="sidebar-wrapper" data-layout="stroke-svg">
   <div>
@@ -264,7 +281,21 @@
               </svg><span class=" ">Claim status</span></a>  
           </li> 
           {% endif %} -->
-
+          <li class="sidebar-main-title"></li>
+            <div>
+              <h6 class="lan-22">
+                Contact Sales
+              </h6>
+            </div>
+          </li>
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'contact_sale' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-task"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-task"></use>
+            </svg><span class=" ">Contact Sales</span></a>
+          </li>
 
           
         </ul>

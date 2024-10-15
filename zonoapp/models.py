@@ -29,3 +29,16 @@ class Notification(models.Model):
     def __str__(self):
         return self.message
 
+# model to store credits of users
+class Credits(models.Model):
+    credits = models.IntegerField(default=0)
+    organisation_name = models.CharField(max_length=255, unique=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+    created_by = models.CharField(max_length=255, null=True,default='SYSTEM')
+    modified_by = models.CharField(max_length=255, null=True,default='SYSTEM')    
+    is_deleted = models.BooleanField(default=True)
+    class meta:
+        db_table = "credits"
+    def __str__(self):
+        return self.user.username

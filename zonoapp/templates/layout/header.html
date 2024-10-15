@@ -14,19 +14,19 @@
     </div>
     <form class="col-sm-4 form-inline search-full d-none d-xl-block" action="#" method="get">
       <div class="form-group">
-        <div class="Typeahead Typeahead--twitterUsers">
+        <!-- <div class="Typeahead Typeahead--twitterUsers">
           <div class="u-posRelative">
             <input class="demo-input Typeahead-input form-control-plaintext w-100" type="text" placeholder="Type to Search .." name="q" title="" autofocus>
             <svg class="search-bg svg-color">
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#search"></use>
             </svg>
           </div>
-        </div>
+        </div> -->
       </div>
     </form>
     <div class="nav-right col-xl-8 col-lg-12 col-auto pull-right right-header p-0">
       <ul class="nav-menus">
-        <li class="serchinput">
+        <!-- <li class="serchinput">
           <div class="serchbox">
             <svg>
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#search"></use>
@@ -34,6 +34,19 @@
           </div>
           <div class="form-group search-form">
             <input type="text" placeholder="Search here...">
+          </div>
+        </li> -->
+        <li class="message ">
+          <div class="credit-icon" style=" display: flex; flex-direction: row; height:3vh;">
+
+            <span class="text-center"> <i class="fa fa-dollar"></i> <b>Credits Balence</b><br> $ <strong
+                id="userCredit"> 0.00 </strong></span>
+            <div class="div-add-card">&nbsp;
+              <a href="{% url 'contact_sale' %}"> <button class="btn btn-primary d-flex justify-content-center align-items-center" type="button" style="width: 10px;height: 80%;">
+                <i class="fa fa-plus"></i> 
+              </button></a>
+
+            </div>
           </div>
         </li>
         <li class="onhover-dropdown position-relative"> 
@@ -167,9 +180,9 @@
                                 <div class="user-notification">
                                     
                                     <div class="user-description">
-                                        <a href="/letter_box">
-                                            <h4>${notification.message}</h4>
-                                        </a>
+                                        
+                                            <h6>${notification.message}</h6>
+                                        
                                         <span>${new Date(notification.created_at).toLocaleString()}</span>
                                     </div>
                                 </div>

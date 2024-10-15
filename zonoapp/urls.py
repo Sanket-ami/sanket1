@@ -4,7 +4,7 @@ from .user_management_views import list_of_user, get_user
 from .views import all_notifications_view, contact_sale, count_notification, fetch_gravatar, notifications_view
 from django.conf import settings
 from django.conf.urls.static import static
-
+from dashboard.views import  calls_per_hour
 
 
 
@@ -19,8 +19,8 @@ urlpatterns = [
     path('fetch-gravatar/', fetch_gravatar, name='fetch_gravatar'),
     path('user_list', list_of_user, name="list-user"),
     path('<int:user_id>', get_user, name="get-user"),
-    path('', views.index, name='index'),
-    path('index', views.index, name='index'),
+    path('', calls_per_hour, name='index'),
+    path('index', calls_per_hour, name='index'),
     path('dashboard_02', views.dashboard_02, name="dashboard_02"),
     
     
