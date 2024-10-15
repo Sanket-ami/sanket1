@@ -4,7 +4,10 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 import json
 
+from django.contrib.auth.decorators import login_required
 
+
+@login_required(login_url="/login_home")
 def provider_view(request):
     if request.method == 'GET':
         providers = Provider.objects.all().filter(is_delete=False).order_by('-id')
@@ -28,6 +31,8 @@ def provider_view(request):
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+
+@login_required(login_url="/login_home")
 def provider_delete(request, provider_id: int):
     provider = Provider.objects.get(id=provider_id)
     provider.is_delete = True  
