@@ -256,7 +256,7 @@
             </svg><span class=" ">QA Parameters</span></a>
           </li>
           {% endif %}
-          <!-- {% if request.user.role.role != 'Caller'  %}
+        {% if request.user.role.role != 'Caller'  %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-22">
@@ -264,7 +264,7 @@
               </h6>
             </div>
           </li>
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'eligiblity' %}">
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="">
             <svg class="stroke-icon">
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-email"></use>
             </svg>
@@ -272,7 +272,7 @@
               <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-email"></use>
             </svg><span class=" ">Eligiblity</span></a>
           </li>
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'claimstatus' %}">
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="">
               <svg class="stroke-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-contact"></use>
               </svg>
@@ -280,7 +280,7 @@
                 <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-contact"></use>
               </svg><span class=" ">Claim status</span></a>  
           </li> 
-          {% endif %} -->
+          {% endif %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-22">
