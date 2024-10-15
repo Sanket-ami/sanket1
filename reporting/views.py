@@ -68,4 +68,4 @@ def report_download(request):
 
         return response
 
-    return render(request, 'pages/report/report.html', {"breadcrumb": {"title": "Report", "parent": "Pages", "child": "Calls"}})
+    return render(request, 'pages/report/report.html', {"breadcrumb": {"title": "Report", "parent": "Pages", "child": "Download Report"}})
