@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect
 from django.contrib import messages
-from django.http.response import HttpResponseRedirect,JsonResponse
+from django.http.response import HttpResponseRedirect,JsonResponse,HttpResponse 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from zonoapp.models import User, Credits
@@ -132,7 +132,7 @@ def upload_contact_list(request, campaign_id):
         if contact_list.contact_list:
             keys_to_match =  list(contact_list.contact_list[0].keys())
             try:
-                keys_to_match.remove("contact_id")
+                keys_to_match.remove('contact_id')
             except:
                 pass # removing the auto generated_column
         else:
@@ -144,7 +144,7 @@ def upload_contact_list(request, campaign_id):
         try:
             csv_data = csv.DictReader(csv_file.read().decode('utf-8').splitlines())
             uploaded_columns = csv_data.fieldnames
-            
+            print(uploaded_columns)
             # Check if columns match
             if set(uploaded_columns) != set(current_columns):
                 return JsonResponse({'status': 'error', 'message': 'CSV columns do not match the existing contact list.'})
@@ -176,7 +176,7 @@ def upload_contact_list(request, campaign_id):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)     
 
 
 ## render view campaign page
@@ -1422,4 +1422,46 @@ def schedule_campaign(request):
             return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required(login_url="/login_home")
+def sample_csv(request):
+    # Download a sample CSV for demo call
+    try:
+        # import pdb;pdb.set_trace()
+        campaign_id = request.GET.get("campaign_id")
+        if not campaign_id:
+            return JsonResponse({'message': 'Campaign ID is required'}, status=400)
+
+        # Get the campaign details
+        column_names = get_csv_coulmns(campaign_id)
+        if 'contact_number' not in column_names:
+            column_names.append('contact_number')
+        try:
+            column_names.remove('contact_id')
+        except:
+            pass
+        # Generate the CSV content
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="sample.csv"'
+
+        writer = csv.writer(response)
+        # Writing CSV headers and sample data
+        writer.writerow(column_names)  # Add actual headers here
+        # writer.writerow(['Sample1', 'Sample2', 'Sample3'])  # Add sample data here
+
+        return response
+
+    except Exception as e:
+        print("Error in sample_csv: ",e)
+        return JsonResponse({'message': 'Error generating the CSV: ' + str(e)}, status=500)
+
+def get_csv_coulmns(campaign_id):
+    contact_list=Campaign.objects.get(id=campaign_id).contact_list.contact_list
+    # print(contact_list)
+    unique_keys = []
+    for d in contact_list:
+        for key in d.keys():
+            if key not in unique_keys:
+                unique_keys.append(key)
+    return unique_keys
 ################################################################### END ################################################################################
