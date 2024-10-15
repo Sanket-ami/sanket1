@@ -9,7 +9,10 @@ from zonoapp.models import User
 from provider.models import Provider
 from django.core.paginator import Paginator
 
+from django.contrib.auth.decorators import login_required
 
+
+@login_required(login_url="/login_home")
 def voice_view(request):
     if request.method == 'GET':
         voices_list = []
@@ -78,6 +81,8 @@ def voice_view(request):
 import requests
 import os
 
+
+@login_required(login_url="/login_home")
 def get_voice(voice_id):
     try:
         url = f"https://api.elevenlabs.io/v1/voices/{voice_id}"
@@ -112,6 +117,9 @@ def get_voice(voice_id):
 import json
 import os
 import requests
+
+
+@login_required(login_url="/login_home")
 def get_voice_cartesia(voice, json_file):
     try:
         # Load the JSON data from the file

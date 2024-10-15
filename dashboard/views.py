@@ -3,6 +3,7 @@ from django.shortcuts import render
 from datetime import datetime, timedelta, time
 from campaign.models import CallLogs, Campaign
 from zonoapp.models import User
+from django.contrib.auth.decorators import login_required
 
 def update_interval_count(intervals, durations):
     for duration in durations:
@@ -22,6 +23,8 @@ def update_interval_count(intervals, durations):
             intervals['> 50'] += 1
     return intervals
 
+
+@login_required(login_url="/login_home")
 def calls_per_hour(request):
     if request.user.is_superuser:
         organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
