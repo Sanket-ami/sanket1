@@ -117,6 +117,7 @@
     <script class="empty-template" type="text/x-handlebars-template"><div class="EmptyMessage">Your search turned up 0 results. This most likely means the backend is down, yikes!</div></script>
   </div>
 </div>
+<script src="{% static 'assets/js/jquery.min.js' %}"></script>
 
 <script>
   document.addEventListener( 'DOMContentLoaded', () => {
@@ -207,6 +208,19 @@
     fetchGravatar();
     FetchCountNotification(); 
   } );
+    // fetch credits of the organisation
+    $.ajax({
+    url: "{% url 'get_credits' %}", // creditsURL 
+    type: 'GET',
+    success: function(data) {
+        console.log('Success:', data);
+        $("#userCredit").html(data.credits_left)
+        
+    },
+    error: function(xhr, status, error) {
+        console.error('Error:', error);
+    }
+});
 </script>
 
 

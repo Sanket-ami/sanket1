@@ -15,7 +15,7 @@ from django.utils.safestring import mark_safe
 from django.http import JsonResponse
 from django.conf import settings
 from django.core.paginator import Paginator
-from .models import Notification
+from .models import Notification, Credits
 
 
 
@@ -23,7 +23,7 @@ from .models import Notification
 
 @login_required(login_url="/login_home")
 def contact_sale(request):
-    context = { "breadcrumb":{"title":"Contact sale","parent":"Pages", "child":"Contact Sales"}}
+    context = { "breadcrumb":{"title":"Contact sales","parent":"Pages", "child":"Contact Sales"}}
     return render(request,"pages/contact_sale/contactsale.html",context)
 
 
@@ -165,6 +165,22 @@ def fetch_gravatar(request):
     return JsonResponse({'error': 'User not authenticated'}, status=403)
 
 
+################################ Get credits ###########################
+@login_required(login_url="/login_home")
+def get_credits(request):
+    try:
+        # fetch the orgnisation
+        organisation_name = request.user.organisation_name
+        # fetch the credits
+        credits= Credits.objects.get(organisation_name=organisation_name)
+        credits_left = credits.credits
+
+        return JsonResponse({'credits_left': credits_left})
+    except Exception as e:
+        print()
+        return JsonResponse({"credits_left":0,'error': str(e)})
+
+ 
 # Create your views here.
 
 @login_required(login_url="/login_home")
