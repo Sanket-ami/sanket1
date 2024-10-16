@@ -413,11 +413,12 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
                     return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
                 # hit a post request on api
                 url = f"{settings.CALL_SERVER_BASE_URL}/start_call"
-
+                print('provider', type(provider))
                 payload = json.dumps({
                     "to_phone": to_phone,
                     "context":context,
-                    "voice_configuration":voice_config
+                    "voice_configuration":voice_config,
+                    "telephony_name":provider.provider_name
                 })
                 headers = {
                 'Content-Type': 'application/json'
@@ -991,6 +992,7 @@ def list_call_logs(request):
 def fetch_call_details(request):
     try:
         request_body = json.loads(request.body)
+        print(request_body)
         campaign_id, mongo_id, call_id = request_body['campaign_id'],request_body['mongo_id'], request_body['call_id']
 
         response = {}
@@ -998,11 +1000,12 @@ def fetch_call_details(request):
         # fetch transcript and summary
         transcript_data =Transcript.objects.get(call_logs=call_id,campaign_id= campaign_id) 
         transcript_obj = {}
+        print(print(transcript_obj))
         try:
             transcript_obj["transcript"] = format_transcript(transcript_data.transcript)
         except:
             transcript_obj["transcript"] = ""
-        
+        print(transcript_obj)
         transcript_obj['summary'] = transcript_data.summary
 
         # fetch telephony
@@ -1021,6 +1024,7 @@ def fetch_call_details(request):
 
         
     except Exception as err:
+        print("===============================", err)
         return JsonResponse({"error": True, "success":False, "message":"Error fetching call details "}, status=500)
 
 ## functio to format transctipt
@@ -1051,8 +1055,10 @@ def create_html_component_with_div(json_list):
     id_count = 1
     
     try:
-        print("===================", json_list.replace("```json", "").replace("```", "").replace("\n", ""), "+++++++++")
-        json_list = json.loads(json_list.replace("```json", "").replace("```", "").replace("\n", ""))
+        if type(json_list) == str:
+            json_list = json.loads(json_list.replace("```json", "").replace("```", "").replace("\n", ""))
+        else:
+            pass
         print(json_list)
         for item in json_list:
             parameter = item.get('parameter', '')
@@ -1093,7 +1099,7 @@ def fetch_audio(request):
         if not call_id:
             return JsonResponse({"error": True, "success":False, "message":"No call_id provided"}, status=400)
         
-        if telephony_name == "twilio" :  # hardocded for testing
+        if telephony_name == "twillio" :  # hardocded for testing
             # Construct the URL for the Call API
             base_url = 'https://api.twilio.com'
             url= f'{base_url}/2010-04-01/Accounts/{account_sid}/Calls/{call_id}/Recordings.json'
