@@ -146,7 +146,7 @@ def fetch_gravatar(request):
         user = request.user.username 
         hashed_email = md5(email.lower().encode('utf-8')).hexdigest()
         first_imagename = f"{user}.jpg"
-        default = "https://aminfoweb1.s3.amazonaws.com/rsz_oig4t8bwcoafedyic_dfqvc.jpg"
+        default = "https://aminfoweb1.s3.amazonaws.com/favicon+16x16-1.png"
         first_check = os.path.join(settings.STATIC_ROOT, 'images', first_imagename)
         if os.path.exists(first_check):
             return JsonResponse({'image_url': f"{settings.STATIC_URL}images/{first_imagename}"})
