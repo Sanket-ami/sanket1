@@ -34,9 +34,9 @@ def create_campaign(request):
         try:
             telephony_providers_list =  Provider.objects.filter(provider_type="telephony")
             if request.user.is_superuser:
-                org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
+                org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
             else:
-                org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
+                org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
             print('org_names ',org_names)
 
             available_agents = Agent.objects.filter(is_deleted=False)
