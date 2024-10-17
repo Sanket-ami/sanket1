@@ -64,11 +64,11 @@ def calls_per_hour(request):
                         continue
                     if hasattr(call, 'call_duration'):
                         connected_call += 1
-                        if call.call_duration < 10:
+                        if int(call.call_duration) < 10:
                             failedCalls += 1
                             pass
-                        total_dur += call.call_duration
-                        total_dur_list.append(int(call.call_duration / 60))
+                        total_dur += int(call.call_duration)
+                        total_dur_list.append(int(int(call.call_duration) / 60))
 
                 dates.append(end_time.strftime("%d"))
                 avg_handling_time.append(int(total_dur / 60) / connected_call if connected_call > 0 else 0)
