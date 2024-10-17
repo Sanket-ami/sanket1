@@ -183,9 +183,15 @@ def upload_contact_list(request, campaign_id):
 @login_required(login_url="/login_home")    
 def campaign_list(request):
     try :
+        # import pdb; pdb.set_trace()
         search_query = request.GET.get('q', '')  # Get the search query from the URL
-        campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
-        
+        if request.user.is_superuser:
+            user_organization = request.user.organisation_name  # Adjust this based on your user model
+            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
+        else:
+            user_organization = request.user.organisation_name  # Adjust this based on your user model
+            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query,organisation_name=user_organization).order_by('-id')  # Filter campaigns based on the search query
+             
         paginator = Paginator(campaigns, 10)  # Show 10 campaigns per page
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -742,28 +748,28 @@ def analyze_call(request_body):
 
 
         llm_prompt = """
-                You are a QA anlyst whose job analyze the call that an associate handled and judge the call quality.
-                The quality will be judged based on the parameters given to you in a json format, each parameter has to judged accordingly.
+                You are a Quality Analyst whose job is to analyze the call your associate handled. 
+                Judge the quality of the call based on the parameters provided to you in a json format, where each parameter has to judged accordingly.
 
                 The Parameters will depend upon the process.
                 %s
 
                 The inputs are as follows:
-                parameters: The calling parmaeters that the acssociate must meet during the call.
-                summary: The short summary about the things that happend in the call.
-                Transcript: The full conversation that took place between the handled
+                Parameters: The calling parameters that the associate must meet during the call.
+                Summary: The short summary about the things that happend in the call.
+                Transcript: The full conversation that took place between the associate and the facility employee.
 
-                Remember that you are only supposed to only judge the acossiates contents and not the facility employee's content
-                The response must be in json format for each and every parameter. The response will contain two keys in list of dictionary "parameter" and "result"
-                The result key will contain only "met" or "not met" value depending upon the call quality.
+                Remember that you are supposed to judge the associate based on his conversation content and not the content by the facility employee.
+                The response must be in json format for each and every parameter. The response will contain two keys, "parameter" and "result" in list of dictionary.
+                The result key will contain value as either "met" or "not met" depending upon the call quality.
                 example:
                 [
                     {
-                        "parameter":"..."
+                        "parameter":"Did the associate create clear and concise notes? (Status notes and facility notes)"
                         "result": "met"
                     },
                     {
-                        "parameter":"..."
+                        "parameter":"Did the associate take the appropriate steps to speak to a live contact and request for the office manager/supervisor when necessary? Exhaust all options."
                         "result": "not met"
                     }
                 ]

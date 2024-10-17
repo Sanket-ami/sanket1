@@ -28,7 +28,7 @@ def agent_create(request):
 
         print('org_names ',org_names)
         search_query = request.GET.get('search', '')
-        agents = Agent.objects.filter( is_deleted=False).order_by('-modified_at')
+        agents = Agent.objects.filter( is_deleted=False, organisation_name__in=org_names).order_by('-modified_at')
         if search_query:
             agents = agents.filter(agent_name__icontains=search_query)
 
