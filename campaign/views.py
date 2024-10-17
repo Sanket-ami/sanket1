@@ -446,6 +446,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             call_log["call_status"] = call_status
             call_log["start_time"] = datetime.now()
             call_log["end_time"] = None
+            call_log['organisation_name']=organisation_name
 
             # Create an instance of CallLogs with the dynamic fields
             call_log_entry = CallLogs(**call_log)
@@ -561,15 +562,14 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
                 else:
                 # Convert strings to datetime objects
-                    start_time = datetime.fromisoformat(str(call_start_time))  # Remove 'Z' from end
-                    # end_time = datetime.fromisoformat(str(call_end))      # Remove 'Z' from end
+                    url = f"https://api.twilio.com/2010-04-01/Accounts/{os.getenv('TWILIO_ACCOUNT_SID')}/Calls/{call_status_id}.json"
 
-                    # Calculate the difference
-                    time_difference = end_time - start_time
-
-                    # Extract the difference in seconds
-                    duration = int(time_difference.total_seconds())
-            except:
+                    response = requests.request("GET", url, auth=(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN')))
+                    response=response.json()
+                    duration = response['duration']
+                    print("+++++++++++++", duration)
+            except Exception as e:
+                print("Error====>", e)
                 pass
 
             # import pdb;pdb.set_trace()
@@ -1094,8 +1094,7 @@ def fetch_audio(request):
 
         # Twilio account credentials
         account_sid = os.getenv('TWILIO_ACCOUNT_SID') 
-        auth_token =  os.getenv('TWILIO_AUTH_TOKEN')  # Replace with your Twilio Auth Token
-            
+        auth_token =  os.getenv('TWILIO_AUTH_TOKEN')  
         if not call_id:
             return JsonResponse({"error": True, "success":False, "message":"No call_id provided"}, status=400)
         
