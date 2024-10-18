@@ -9,6 +9,7 @@ urlpatterns = [
         path('campaign/<int:campaign_id>/contacts/', views.contact_list, name='contact_list'),      
         path('campaign/<int:campaign_id>/contacts/delete', views.delete_contact, name='delete_contacts'),
         path('/start_campaign', views.start_campaign, name='start_campaign'),
+        path('/start_campaign_secheduler', views.start_campaign_secheduler, name='start_campaign_secheduler'),
         path('/call_logs', views.list_call_logs, name='list_call_logs'),
         path('/call_details', views.fetch_call_details, name='fetch_call_details'),
         path('/fetch_audio', views.fetch_audio, name='fetch_audio'),
