@@ -77,37 +77,52 @@
     </div>
 </div>
 
-<!-- List of Existing Voices -->
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-header pb-0">
-            <h4>Voices</h4>
-        </div>
-        <div class="card-body">
-            <div class="row g-sm-4 g-3">
-                {% for voice in voices %}
-                <div class="col-xl-4 col-md-6 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title" style="font-weight: bold;">{{ voice.voice_name }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
-                            <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
-                            <div class="d-flex justify-content-between">
-                                <!-- Audio player with dynamic audio file path -->
-                                <audio id="audio-player-{{ forloop.counter }}" controls="" style="display: none;">
-                                    <source src="{% static 'assets/audio/' %}{{ voice.voice_id }}.mp3" type="audio/mpeg">
-                                    <source src="{% static 'assets/audio/' %}{{ voice.voice_name }}.wav" type="audio/wav">
-                                </audio>
-                                <!-- Play button that targets the specific audio player -->
-                                <button id="play-pause-button-{{ forloop.counter }}" class="btn btn-success" onclick="toggleAudio({{ forloop.counter }})">▶ Play</button>
-                            </div>
-                        </div>
-                    </div>
+<div class="row">
+    {% for voice in voices %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title" style="font-weight: bold;">{{ voice.voice_name }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
+                <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
+                <div class="d-flex justify-content-between">
+                    <audio id="audio-player-{{ forloop.counter }}" controls="" style="display: none;">
+                        <source src="{% static 'assets/audio/' %}{{ voice.voice_id }}.mp3" type="audio/mpeg">
+                        <source src="{% static 'assets/audio/' %}{{ voice.voice_name }}.wav" type="audio/wav">
+                    </audio>
+                    <button id="play-pause-button-{{ forloop.counter }}" class="btn btn-success" onclick="toggleAudio({{ forloop.counter }})">▶ Play</button>
+                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editVoiceModal" onclick="populateEditModal({{ voice.id }}, '{{ voice.voice_configuration|escapejs }}')">Edit</button>
                 </div>
-                {% endfor %}                
             </div>
         </div>
     </div>
+    {% endfor %}
+</div>
+
+<!-- Edit Voice Modal -->
+<div class="modal fade" id="editVoiceModal" tabindex="-1" aria-labelledby="editVoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editVoiceModalLabel">Edit Voice Configuration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editVoiceForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_voice_id" name="voice_id">
+                    <div class="mb-3">
+                        <label for="edit_voice_config" class="form-label">Voice Configuration</label>
+                        <div id="edit_voice_config" style="height: 200px; width: 100%; border: 1px solid #ced4da;"></div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" type="submit">Update Voice</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
     <div class="job-pagination">
         <nav aria-label="Page navigation example">
             <ul class="pagination pagination-primary">
@@ -260,5 +275,60 @@ function showToast(type, message) {
         confirmButtonText: 'Ok'
     }).then(() => {location.reload();});
 }
+function populateEditModal(voiceId, voiceConfig) {
+    document.getElementById("edit_voice_id").value = voiceId;
+
+    // Initialize Ace Code Editor for edit modal
+    const editEditor = ace.edit("edit_voice_config");
+    editEditor.setTheme("ace/theme/monokai");
+    editEditor.session.setMode("ace/mode/json");
+    
+    // Set the current voice configuration in the editor
+    try {
+        editEditor.setValue(JSON.stringify(JSON.parse(voiceConfig), null, 2), 1);
+    } catch (error) {
+        console.error('Error parsing JSON for edit:', error);
+    }
+}
+
+// Handle edit voice form submission using AJAX
+document.getElementById("editVoiceForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const editForm = this;
+    const editSubmitButton = editForm.querySelector("button[type='submit']");
+    
+    if (!editForm.checkValidity()) {
+        editForm.classList.add("was-validated");
+        return;
+    }
+
+    let editFormData = {
+        'voice_id': document.getElementById("edit_voice_id").value,
+        'voice_config': ace.edit("edit_voice_config").getValue()
+    };
+    
+    editSubmitButton.disabled = true;
+
+    // AJAX request to update voice
+    fetch("{% url 'edit_voice' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+        },
+        body: JSON.stringify(editFormData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        editSubmitButton.disabled = false;
+        console.log("Edit submission successful", data);
+        showToast('success', 'Voice updated successfully!');
+    })
+    .catch(error => {
+        console.error("Edit submission error", error);
+        showToast('error', 'Voice update failed!');
+    });
+});
 </script>
 {% endblock %}

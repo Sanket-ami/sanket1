@@ -34,9 +34,9 @@ def create_campaign(request):
         try:
             telephony_providers_list =  Provider.objects.filter(provider_type="telephony")
             if request.user.is_superuser:
-                org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
+                org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
             else:
-                org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
+                org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
             print('org_names ',org_names)
 
             available_agents = Agent.objects.filter(is_deleted=False)
@@ -183,9 +183,15 @@ def upload_contact_list(request, campaign_id):
 @login_required(login_url="/login_home")    
 def campaign_list(request):
     try :
+        # import pdb; pdb.set_trace()
         search_query = request.GET.get('q', '')  # Get the search query from the URL
-        campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
-        
+        if request.user.is_superuser:
+            user_organization = request.user.organisation_name  # Adjust this based on your user model
+            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
+        else:
+            user_organization = request.user.organisation_name  # Adjust this based on your user model
+            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query,organisation_name=user_organization).order_by('-id')  # Filter campaigns based on the search query
+             
         paginator = Paginator(campaigns, 10)  # Show 10 campaigns per page
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -796,28 +802,28 @@ def analyze_call(request_body):
 
 
         llm_prompt = """
-                You are a QA anlyst whose job analyze the call that an associate handled and judge the call quality.
-                The quality will be judged based on the parameters given to you in a json format, each parameter has to judged accordingly.
+                You are a Quality Analyst whose job is to analyze the call your associate handled. 
+                Judge the quality of the call based on the parameters provided to you in a json format, where each parameter has to judged accordingly.
 
                 The Parameters will depend upon the process.
                 %s
 
                 The inputs are as follows:
-                parameters: The calling parmaeters that the acssociate must meet during the call.
-                summary: The short summary about the things that happend in the call.
-                Transcript: The full conversation that took place between the handled
+                Parameters: The calling parameters that the associate must meet during the call.
+                Summary: The short summary about the things that happend in the call.
+                Transcript: The full conversation that took place between the associate and the facility employee.
 
-                Remember that you are only supposed to only judge the acossiates contents and not the facility employee's content
-                The response must be in json format for each and every parameter. The response will contain two keys in list of dictionary "parameter" and "result"
-                The result key will contain only "met" or "not met" value depending upon the call quality.
+                Remember that you are supposed to judge the associate based on his conversation content and not the content by the facility employee.
+                The response must be in json format for each and every parameter. The response will contain two keys, "parameter" and "result" in list of dictionary.
+                The result key will contain value as either "met" or "not met" depending upon the call quality.
                 example:
                 [
                     {
-                        "parameter":"..."
+                        "parameter":"Did the associate create clear and concise notes? (Status notes and facility notes)"
                         "result": "met"
                     },
                     {
-                        "parameter":"..."
+                        "parameter":"Did the associate take the appropriate steps to speak to a live contact and request for the office manager/supervisor when necessary? Exhaust all options."
                         "result": "not met"
                     }
                 ]
@@ -1466,24 +1472,47 @@ def schedule_campaign(request):
             schedule_date = data.get('schedule_date')
 
             # Assuming you have a campaign model to validate campaign_id
-
             campaign_obj = Campaign.objects.get(id=campaign_id)
-            if not campaign_obj.is_schedule:
+
+            # Check if the campaign is already scheduled
+            existing_schedule = ScheduleCampaign.objects.filter(campaign_id=campaign_id).first()
+            if existing_schedule:
+                # Update the existing schedule
+                existing_schedule.schedule_note = schedule_note
+                existing_schedule.schedule_date = schedule_date
+                existing_schedule.save()
+
+                return JsonResponse({'message': 'Campaign schedule updated successfully'}, status=200)
+            else:
+                # Create a new schedule if not already scheduled
                 ScheduleCampaign.objects.create(
                     campaign_id=campaign_id,
                     schedule_note=schedule_note,
                     schedule_date=schedule_date
                 )
-
-                # update the campaign is_scheduled to true
                 campaign_obj.is_schedule = True
                 campaign_obj.save()
 
                 return JsonResponse({'message': 'Campaign scheduled successfully'}, status=200)
-            else:
-                return JsonResponse({'message': 'Unable to schedule the Campaign as it is already sheduled'}, status=400)
+
+        except Campaign.DoesNotExist:
+            return JsonResponse({'error': 'Campaign does not exist'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+def update_campaign(request):
+    if request.method == 'GET':
+        campaign_id = request.GET.get('campaign_id')
+        try:
+            schedule = ScheduleCampaign.objects.get(campaign_id=campaign_id)
+            return JsonResponse({
+                'schedule_note': schedule.schedule_note,
+                'schedule_date': schedule.schedule_date
+            }, status=200)
+        except ScheduleCampaign.DoesNotExist:
+            return JsonResponse({'error': 'Schedule not found'}, status=404)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 

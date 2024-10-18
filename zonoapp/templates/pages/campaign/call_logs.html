@@ -10,7 +10,7 @@
     <h3 class="mb-4">Select Campaign</h3>
 
     <!-- Dropdown for selecting campaign -->
-     <div class="mb-3">
+    <div class="mb-3 d-flex justify-content-between" style="align-items: center;">
         <form method="GET" action='{% url "list_call_logs" %}' style=" width: 30%; display: flex; ">
             <select class="form-select" id="campaignSelect" name="campaign_id">
                 <option value="">----</option>
@@ -22,18 +22,25 @@
             </select>
             {% if request.user.role.role != "QA" %}
             <select class="form-select" id="statusSelect" name="call_status">
-                <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>  ongoing </option>
-                <option value="completed" {% if call_status == "completed" %}selected{% endif %}>  completed </option>
-                <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>   not_started </option>
+                <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>ongoing</option>
+                <option value="completed" {% if call_status == "completed" %}selected{% endif %}>completed</option>
+                <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>not_started</option>
+            </select>
             {% endif %}
-            </select>            
             <input type="hidden" name="page" value="{{ page }}">
             <input type="hidden" name="per_page" value="10">&nbsp;
             <input type="submit" class="btn btn-primary" value="Filter">
         </form>
+    
+        <div class="ms-3"> <!-- Add margin on the left for spacing -->
+            <label for="sortSelect" class="form-label">Sort by Created At</label>
+            <select id="sortSelect" class="form-select" onchange="sortTable()" style="width: 100%;"> <!-- Adjust width if needed -->
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
     </div>
-
-    <!-- Bootstrap Table for Call Logs -->
+    
     <table class="table table-inverse table-striped dataTable" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
         <thead>
             <tr>
@@ -41,8 +48,6 @@
                     {% for key in call_logs_data.0.keys %}
                     <th class="">{{ key }}</th>
                     {% endfor %}
-                {% else %}
-                    <th>No Data Available</th>
                 {% endif %}
             </tr>
         </thead>
@@ -258,6 +263,31 @@
 <script src="{% static 'assets/js/jquery.min.js' %}"></script>
 
 <script>
+function sortTable() {
+    const tableBody = document.getElementById("callLogsTable").querySelector("tbody");
+    const rows = Array.from(tableBody.rows);
+    const sortBy = document.getElementById("sortSelect").value;
+
+    // Assuming the created_at date is in the third column (index 2)
+    const dateColumnIndex = 2; // Update this index to the correct column
+
+    rows.sort((a, b) => {
+        const aValue = new Date(a.cells[dateColumnIndex].innerText);
+        const bValue = new Date(b.cells[dateColumnIndex].innerText);
+        
+        // Handle invalid dates
+        if (isNaN(aValue) || isNaN(bValue)) {
+            return 0; // If either value is not a valid date, keep original order
+        }
+
+        return sortBy === 'asc' 
+            ? aValue - bValue // Ascending order
+            : bValue - aValue; // Descending order
+    });
+
+    // Append the sorted rows to the table body
+    rows.forEach(row => tableBody.appendChild(row)); 
+}
 
     // offcanvas details
     // offcanvas details

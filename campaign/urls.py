@@ -22,4 +22,6 @@ urlpatterns = [
         path('upload_contact_list/<int:campaign_id>/', views.upload_contact_list, name='upload_contact_list'),
         path('schedule_campaign/', views.schedule_campaign, name='schedule_campaign'),
         path('/sample_csv', views.sample_csv, name='sample_csv'),
+        path('update_campaign/', views.update_campaign, name='update_campaign'),
+
 ]
