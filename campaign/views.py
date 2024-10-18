@@ -361,6 +361,52 @@ def start_campaign(request):
 
             # set the status to ongoing 
             campaign_obj.status = "ongoing"
+            
+            campaign_obj.save()
+
+            return JsonResponse({'message': 'Campaign started Successfully',"success":True,"error":False}, status=200)
+        except Exception as e:
+            print("error in start_campaig: ",e)
+            pass
+
+
+def start_campaign_secheduler(request):
+    if request.method == "GET":
+        try:  
+            token = request.GET.get('token')
+            campaign_id = request.GET.get('campaign_id')
+
+            if token != os.getenv('SECHEDULE_CAMPAIGN_TOKEN'):
+                return JsonResponse({'message': 'No contacts present for this campaign',"success":False,"error":True}, status=403)
+
+            campaign_obj = Campaign.objects.get(id=campaign_id)
+            if not campaign_obj.contact_list:
+                return JsonResponse({'message': 'No contacts present for this campaign',"success":False,"error":True}, status=200)
+
+            prompt = campaign_obj.agent.agent_prompt
+            provider = campaign_obj.provider
+            # Iterate over the data
+            contact_list = campaign_obj.contact_list.contact_list
+            voice_config = campaign_obj.agent.voice.voice_configuration
+            qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
+
+            # start a thread 
+            wait_time_after_call,wait_time_after_5_calls = 1,1
+            organisation_name = campaign_obj.organisation_name
+            print("organisation name",organisation_name)
+            try:
+                credits_remaining = 0
+                credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits    
+                pass
+                if credits_remaining <= 0:
+                    return JsonResponse({'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}, status=200)
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider))
+                thread.start()
+            except Exception as err:
+                print("error in campaign start: ", err)
+
+            # set the status to ongoing 
+            campaign_obj.status = "ongoing"
             campaign_obj.save()
 
             return JsonResponse({'message': 'Campaign started Successfully',"success":True,"error":False}, status=200)
@@ -378,11 +424,12 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
         if campaign_obj.is_schedule:
             campaign_obj.is_schedule=False
             campaign_obj.save()
-
+            print("======>", campaign_obj)
             # update the scheduled table
-            schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id,is_finished=False,is_ongoing=False).first()
+            schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_finished=False, is_ongoing=False).first()
             schedule_obj.is_ongoing=True
             schedule_obj.save()
+            print("=======================>", schedule_obj)
 
         else:
             pass
@@ -402,7 +449,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             # call log creation
             call_log = call_details
             call_log["call_status"] = "not_started"
-            call_log['campaign_id'] = campaign_id
+            call_log['campaign_id'] = int(campaign_id)
             
             try:
                 context={"prompt" : formatted_prompt}
@@ -467,7 +514,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
     # once all the calls are over update the schedule campaign object to completed
     try:
         # update the scheduled table
-        schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_ongoing=True).first()
+        schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_ongoing=False).first()
         schedule_obj.is_ongoing=False
         schedule_obj.is_finished=True
         schedule_obj.save()
@@ -481,6 +528,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
 def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_start_time, organisation_name, provider):
     call_status_current = ""
     not_started_count = 0
+    print("==================================>", call_status_id)
     #print("organisation name",organisation_name)
     while call_status_current not in ['ended', 'error']:
         time.sleep(1)  # wait for transcript
@@ -497,9 +545,10 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
             if not_started_count > 4:
                 return False
-
+        print("call_status_current", call_status_current)
         if call_status_current not in ['ended', 'error']:
             try:
+                print(123)
                 # Before starting the call check credits of the organization
                 credits_obj= Credits.objects.get(organisation_name=organisation_name)
                 credits_remaining = credits_obj.credits
@@ -509,7 +558,8 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
                     ## TODO: End the call using API
                     try:
                         # Make the external API request with the fetched call_id
-                        if provider == 'telnyx':
+                        if provider.provider_name == 'telnyx':
+                            print("tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt")
                             api_url = f"{CALL_SERVER_BASE_URL}/end_call_telnyx"
                         else:
                             api_url = f"{CALL_SERVER_BASE_URL}/end_call"
@@ -529,7 +579,8 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
                     return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
                 else:
                     # Reduce credits
-                    credits_obj.credits = credits_obj.credits - 1  # reducing one minute
+                    print("call started")
+                    credits_obj.credits = credits_obj.credits - 1  
                 
                     credits_obj.save()
             except Exception:
@@ -546,8 +597,9 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
             duration = 0
             end_time = datetime.fromisoformat(str(call_end))
+            print("sdbejw", provider)
             try:
-                if provider == 'telnyx':                # new logic for call duration                
+                if provider.provider_name == 'telnyx':                # new logic for call duration                
                     url = f"https://api.telnyx.com/calls/{call_status_id}/status"
 
                     payload = {}
@@ -566,6 +618,7 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
                     response = requests.request("GET", url, auth=(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN')))
                     response=response.json()
+                    print(response)
                     duration = response['duration']
                     print("+++++++++++++", duration)
             except Exception as e:
@@ -652,6 +705,7 @@ def get_current_call_status(call_id):
 
         # print(response.text)
         response = response.json()
+        print(response)
         call_status = response["call_status"]
         call_uuid = response["call_id"]
         return response
@@ -1049,14 +1103,16 @@ def format_transcript(transcript):
     return '\n'.join(formatted_lines)
 
 def create_html_component_with_div(json_list):
-    print("json_list=======", json_list)
+    print("json_list=======", type(json_list))
     # HTML structure
     html_content = ""
     id_count = 1
     
     try:
         if type(json_list) == str:
+            print(json_list)
             json_list = json.loads(json_list.replace("```json", "").replace("```", "").replace("\n", ""))
+            print(json_list)
         else:
             pass
         print(json_list)
@@ -1281,7 +1337,8 @@ def end_call(request):
             
             # Make the external API request with the fetched call_id end_call_telnyx
             campaign_obj = Campaign.objects.get(id=campaign_id)
-            if campaign_obj.provider == 'twilio':
+            print("campaign_obj.provider", campaign_obj.provider)
+            if campaign_obj.provider.provider_name == 'twillio':
                 print("twilio        ==============")
                 api_url = f"{settings.CALL_SERVER_BASE_URL}/end_call"
             else:
