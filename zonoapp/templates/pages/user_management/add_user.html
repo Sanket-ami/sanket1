@@ -189,351 +189,376 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Form validation
-            const forms = document.querySelectorAll('.needs-validation');
-            Array.from(forms).forEach(form => {
-                form.addEventListener('submit', event => {
-                    if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    form.classList.add('was-validated');
-                });
-            });
 
-            const usernameInput = document.getElementById('user-name');
-            const emailInput = document.getElementById('exampleFormControlInput1');
-            const passwordInput = document.getElementById('inputPassword1');
-            const submitButton = document.getElementById('submitAdd');
-
-            // Enable/Disable submit button based on input validity
-            function checkValidity() {
-                const isUsernameValid = validateUsername(usernameInput.value);
-                const isEmailValid = validateEmail(emailInput.value);
-                const isPasswordValid = validatePassword(passwordInput.value);
-                submitButton.disabled = !(isUsernameValid && isEmailValid && isPasswordValid);
-            }
-
-            // Add event listeners for input validation
-            usernameInput.addEventListener('input', checkValidity);
-            emailInput.addEventListener('input', checkValidity);
-            passwordInput.addEventListener('input', checkValidity);
-
-            // Username validation
-            function validateUsername(username) {
-                const usernameRegex = /^[a-zA-Z0-9]+$/; 
-                var valid = usernameRegex.test(username);
-                const invalidMessage = document.getElementById('invalid-user-name'); 
-
-                if (!valid) {
-                    invalidMessage.style.display = 'block'; 
-                    return false; 
-                } else {
-                    invalidMessage.style.display = 'none'; 
-                }
-                return true; 
-            }
-
-            // Email validation
-            function validateEmail(email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
-                var valid = emailRegex.test(email);
-                const invalidMessage = document.getElementById('invalid-user-email'); 
-                if (!valid) {
-                    invalidMessage.style.display = 'block'; 
-                    return false; 
-                } else {
-                    invalidMessage.style.display = 'none'; 
-                }
-                return true; 
-            }
-
-            // Password validation
-            function validatePassword(password) {
-                const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/; // At least 8 chars, 1 uppercase, 1 special
-                var valid = passwordRegex.test(password);
-                const invalidMessage = document.getElementById('invalid-user-pass'); 
-                if (!valid) {
-                    invalidMessage.style.display = 'block'; 
-                    return false; 
-                } else {
-                    invalidMessage.style.display = 'none'; 
-                }
-                return true; 
-            }
-
-            document.getElementById('submitAdd').addEventListener('click', function() {
-                const username = document.getElementById('user-name').value;
-                const email = document.getElementById('exampleFormControlInput1').value;
-                const password = document.getElementById('inputPassword1').value;
-
-                if (!validateUsername(username)) {
-                    return;
-                }
-
-                if (!validateEmail(email)) {
-                    return;
-                }
-
-                if (!validatePassword(password)) {
-                    return;
-                }
-
-                // Proceed with form submission
-                const formData = new FormData(document.querySelector('#addAgentModal form'));
-                fetch('/path/to/add/user', { method: 'POST', body: formData })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire('Success', 'User added successfully!', 'success');
-                            // Optionally reset the form
-                            document.querySelector('#addAgentModal form').reset();
-                            submitButton.disabled = true; // Disable the button again
-                        } else {
-                            Swal.fire('Error', data.message, 'error');
-                        }
-                    });
-            });
-    function edit_user(agent_id) {
-        const email = document.getElementById("editAgentName").value;
-        email = document.getElementById("editAgentName").value;
-        user_id = document.getElementById("editAgentId").value;
-        Swal.fire({
-                title: 'Are you sure?',
-                text: 'You won\'t be able to revert this!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Change it!',
-                cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                    // Proceed with the deletion via AJAX
-                    $.ajax({
-                        url: "{% url 'list-user' %}", // Django URL
-                        method: "PUT",
-                        data: JSON.stringify({ "user_id": user_id, "role": role, "email": email }),
-                        contentType: "application/json",
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
-                        },
-        
-                        success: function(response) {
-                            // Show success message using SweetAlert2
- 
-                            showToast("success", "User updated");
-                        },
-                        error: function(xhr, status, error) {
-                            // Show error message using SweetAlert2
-                            showToast("error", "Failed to delete contact! " + error,"Delete User");
-                        }
-                    });
-                }
-            });
-
-        }
-
-function deleteAgent(userId) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: 'You won\'t be able to revert this!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Proceed with deletion via AJAX
-            fetch(`/path/to/delete/user/${userId}`, { method: 'DELETE' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire('Deleted!', 'User has been deleted.', 'success');
-                        // Optionally remove user row from table
-                    } else {
-                        Swal.fire('Error', data.message, 'error');
-                    }
-                });
-        }
-    });
-}
-
-document.getElementById('addUserButton').addEventListener('click', function() {
-    document.getElementById('addAgentModal').classList.remove('d-none');
-});
-});
-    const editForm = document.querySelector(".edit-agent-form");
-editForm.addEventListener("sdadsasad", function (event) {
-    event.preventDefault();
-
-    // Collect the form data
-    const formData = {
-        'user_id': editAgentIdField.value,
-        'username': editAgentNameField.value,
-        'email': editEmailField.value,
-        'organisation_name': editOrganisationField.value,
-        'role': document.querySelector("input[name='editRole']:checked").value
-    };
-
-    // Make an AJAX request to update the user
-    fetch(`/update_user/${formData.user_id}/`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("User updated successfully", data);
-        showToast('success', 'User updated successfully!');
-        // Close modal and refresh the table or reload the page as needed
-        new bootstrap.Modal(editModal).hide();
-        location.reload();
-    })
-    .catch(error => {
-        console.error("Error updating user", error);
-        showToast('error', 'User update failed!');
-    });
-});
-
-        function deleteAgent(user_id,agent_name){
-        Swal.fire({
-                title: 'Are you sure?',
-                text: 'You won\'t be able to revert this!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                    // Proceed with the deletion via AJAX
-                    $.ajax({
-                        url: "{% url 'list-user' %}", // Django URL
-                        method: "DELETE",
-                        data: JSON.stringify({ "user_id": user_id }),
-                        contentType: "application/json",
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
-                        },
-        
-                        success: function(response) {
-                            // Show success message using SweetAlert2
- 
-                            showToast("success", "Delete User");
-                        },
-                        error: function(xhr, status, error) {
-                            // Show error message using SweetAlert2
-                            showToast("error", "Failed to delete contact! " + error,"Delete User");
-                        }
-                    });
-                }
-            });
-
-    }
 
         document.addEventListener("DOMContentLoaded", function () {
-            const form = document.querySelector(".needs-validation");
-            const addUserButton = document.getElementById("addUserButton");
-            const modal = document.getElementById("addAgentModal");
-            const userTable = document.getElementById("userTable");
+            const editButtons = document.querySelectorAll(".edit-agent-button");
             const editModal = document.getElementById("editAgentModal");
-
-
-            // Show form and hide table when the "Add user" button is clicked
-            addUserButton.addEventListener("click", function () {
-                modal.classList.remove("d-none");
-                userTable.classList.add("d-none");
-            });
-            editModal.addEventListener("click", function () {
-                editModal.classList.remove("d-none");
-                // userTable.classList.add("d-none");
-            });
-
-
-            $("#submitAdd").on("click", function(event) {
-                event.preventDefault();
-
-                let formData = {
-                    'username': document.getElementById("user-name").value,
-                    'first_name': document.getElementById("first-name").value,
-                    'last_name': document.getElementById("last-name").value,
-                    'email': document.getElementById("exampleFormControlInput1").value,
-                    'password': document.getElementById("inputPassword1").value,
-                    'confirm_password': document.getElementById("inputPassword2").value,
-                    'role': document.getElementById("roleName").value,
-                    'organisation_name':  document.getElementById("organisationName").value
-                };
-                console.log(formData);
-                if (formData.password !== formData.confirm_password) {
-                    showToast('error', 'Passwords do not match!');
-                    return; // Stop form submission if passwords don't match
-                }
-                // AJAX request to submit form data
-                fetch("/user_list", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Form submission successful", data);
-                    if (data['status_code']==400 && data['status']=='email'){
-                        showToast('error', ' email already Present !');   
+            const editAgentIdField = document.getElementById("editAgentId");
+            const editAgentNameField = document.getElementById("editAgentName");
+            const editEmailField = document.getElementById("edit-email");
+            const editOrganisationField = document.getElementById("editOrganisationName");
+            const editRoleRadios = document.getElementsByName("editRole");
+        
+            // Event Listener for Edit Buttons
+            editButtons.forEach(button => {
+                button.addEventListener("click", function () {
+                    const userId = button.getAttribute("data-user-id");
+                    const username = button.getAttribute("data-username");
+                    const email = button.getAttribute("data-email");
+                    const organisation = button.getAttribute("data-organisation");
+                    const role = button.getAttribute("data-role");
+        
+                    // Populate the fields in the edit modal
+                    editAgentIdField.value = userId;
+                    editAgentNameField.value = email;
+                    editEmailField.value = email;
+                    editOrganisationField.value = organisation;
+        
+                    // Check the role radio button corresponding to the user's role
+                    for (let radio of editRoleRadios) {
+                        radio.checked = (radio.nextElementSibling.innerText.trim() === role);
                     }
-                    else if(data['status_code'] == 400 && data['status'] == 'username'){
-                        showToast('error', ' Username already Present !');   
-                    }else{
-                    showToast('success', 'Form submitted successfully!');
-                    // Hide form and show table after successful submission
-                    }
-                    // Hide form and show table after successful submission
-                    modal.classList.add("d-none");
-                    userTable.classList.remove("d-none");
-                })
-                .catch(error => {
-                    console.error("Form submission error", error);
-                    Swal.fire({
-                        title:'Error',
-                        text: 'Form submission error ',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    })
+        
+                    // Optionally, open the modal if it's not already open
+                    new bootstrap.Modal(editModal).show();
                 });
             });
         });
-
-        function showToast(type, message) {
-            Swal.fire({
-                title: type === 'success' ? 'Success' : 'Error',
-                text: message,
-                icon: type,
-                confirmButtonText: 'OK'
-            }).then(() => { location.reload(); });
-        }
-
-        document.querySelector('.btn-close').addEventListener('click', function() {
-    // Hide the modal
-    var myModal = new bootstrap.Modal(document.getElementById('editAgentModal'));
-    myModal.hide();
-    
-    // Remove the backdrop if it still exists
-    let modalBackdrop = document.querySelector('.modal-backdrop');
-    if (modalBackdrop) {
-        modalBackdrop.remove();
-    }
-    
-    // Remove the 'modal-open' class from the body
-    document.body.classList.remove('modal-open');
-   });
-
-
-    </script>
+        function edit_user(user_id,agent_name){
+                role = document.getElementById("editOrganisationName").value;
+                console("role: ", role)
+                email = document.getElementById("editAgentName").value;
+                user_id = document.getElementById("editAgentId").value;
+                Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'You won\'t be able to revert this!',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Change it!',
+                        cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                            // Proceed with the deletion via AJAX
+                            $.ajax({
+                                url: "{% url 'list-user' %}", // Django URL
+                                method: "PUT",
+                                data: JSON.stringify({ "user_id": user_id, "role": role, "email": email }),
+                                contentType: "application/json",
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                                },
+                
+                                success: function(response) {
+                                    // Show success message using SweetAlert2
+         
+                                    showToast("success", "User updated");
+                                },
+                                error: function(xhr, status, error) {
+                                    // Show error message using SweetAlert2
+                                    showToast("error", "Failed to delete contact! " + error,"Delete User");
+                                }
+                            });
+                        }
+                    });
+        
+            }
+         function deleteAgent(user_id,agent_name){
+                Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'You won\'t be able to revert this!',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                            // Proceed with the deletion via AJAX
+                            $.ajax({
+                                url: "{% url 'list-user' %}", // Django URL
+                                method: "DELETE",
+                                data: JSON.stringify({ "user_id": user_id }),
+                                contentType: "application/json",
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                                },
+                
+                                success: function(response) {
+                                    // Show success message using SweetAlert2
+         
+                                    showToast("success", "Delete User");
+                                },
+                                error: function(xhr, status, error) {
+                                    // Show error message using SweetAlert2
+                                    showToast("error", "Failed to delete contact! " + error,"Delete User");
+                                }
+                            });
+                        }
+                    });
+        
+            }
+            const editForm = document.querySelector(".edit-agent-form");
+        editForm.addEventListener("sdadsasad", function (event) {
+            event.preventDefault();
+        
+            // Collect the form data
+            const formData = {
+                'user_id': editAgentIdField.value,
+                'username': editAgentNameField.value,
+                'email': editEmailField.value,
+                'organisation_name': editOrganisationField.value,
+                'role': document.querySelector("input[name='editRole']:checked").value
+            };
+        
+            // Make an AJAX request to update the user
+            fetch(`/update_user/${formData.user_id}/`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("User updated successfully", data);
+                showToast('success', 'User updated successfully!');
+                // Close modal and refresh the table or reload the page as needed
+                new bootstrap.Modal(editModal).hide();
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error updating user", error);
+                showToast('error', 'User update failed!');
+            });
+        });
+        
+                function deleteAgent(user_id,agent_name){
+                Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'You won\'t be able to revert this!',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                            // Proceed with the deletion via AJAX
+                            $.ajax({
+                                url: "{% url 'list-user' %}", // Django URL
+                                method: "DELETE",
+                                data: JSON.stringify({ "user_id": user_id }),
+                                contentType: "application/json",
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                                },
+                
+                                success: function(response) {
+                                    // Show success message using SweetAlert2
+         
+                                    showToast("success", "Delete User");
+                                },
+                                error: function(xhr, status, error) {
+                                    // Show error message using SweetAlert2
+                                    showToast("error", "Failed to delete contact! " + error,"Delete User");
+                                }
+                            });
+                        }
+                    });
+        
+            }
+        
+                document.addEventListener("DOMContentLoaded", function () {
+                    const form = document.querySelector(".needs-validation");
+                    const addUserButton = document.getElementById("addUserButton");
+                    const modal = document.getElementById("addAgentModal");
+                    const userTable = document.getElementById("userTable");
+                    const editModal = document.getElementById("editAgentModal");
+        
+        
+                    // Show form and hide table when the "Add user" button is clicked
+                    addUserButton.addEventListener("click", function () {
+                        modal.classList.remove("d-none");
+                        userTable.classList.add("d-none");
+                    });
+                    editModal.addEventListener("click", function () {
+                        editModal.classList.remove("d-none");
+                        // userTable.classList.add("d-none");
+                    });
+        
+        
+                    $("#submitAdd").on("click", function(event) {
+                        event.preventDefault();
+        
+                        let formData = {
+                            'username': document.getElementById("user-name").value,
+                            'first_name': document.getElementById("first-name").value,
+                            'last_name': document.getElementById("last-name").value,
+                            'email': document.getElementById("exampleFormControlInput1").value,
+                            'password': document.getElementById("inputPassword1").value,
+                            'confirm_password': document.getElementById("inputPassword2").value,
+                            'role': document.getElementById("roleName").value,
+                            'organisation_name':  document.getElementById("organisationName").value
+                        };
+                        console.log(formData);
+                        if (formData.password !== formData.confirm_password) {
+                            showToast('error', 'Passwords do not match!');
+                            return; // Stop form submission if passwords don't match
+                        }
+                        // AJAX request to submit form data
+                        fetch("/user_list", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                            },
+                            body: JSON.stringify(formData)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Form submission successful", data);
+                            if (data['status_code']==400 && data['status']=='email'){
+                                showToast('error', ' email already Present !');   
+                            }
+                            else if(data['status_code'] == 400 && data['status'] == 'username'){
+                                showToast('error', ' Username already Present !');   
+                            }else{
+                            showToast('success', 'Form submitted successfully!');
+                            // Hide form and show table after successful submission
+                            }
+                            // Hide form and show table after successful submission
+                            modal.classList.add("d-none");
+                            userTable.classList.remove("d-none");
+                        })
+                        .catch(error => {
+                            console.error("Form submission error", error);
+                            showToast('error', 'Form submission failed!');
+                        });
+                    });
+                });
+        
+                function showToast(type, message) {
+                    Swal.fire({
+                        title: type === 'success' ? 'Success' : 'Error',
+                        text: message,
+                        icon: type,
+                        confirmButtonText: 'OK'
+                    }).then(() => { location.reload(); });
+                }
+        
+                document.querySelector('.btn-close').addEventListener('click', function() {
+            // Hide the modal
+            var myModal = new bootstrap.Modal(document.getElementById('editAgentModal'));
+            myModal.hide();
+            
+            // Remove the backdrop if it still exists
+            let modalBackdrop = document.querySelector('.modal-backdrop');
+            if (modalBackdrop) {
+                modalBackdrop.remove();
+            }
+            
+            // Remove the 'modal-open' class from the body
+            document.body.classList.remove('modal-open');
+            document.body.style = ""; // Reset body styles to default
+        });
+        
+        const usernameInput = document.getElementById('user-name');
+                    const emailInput = document.getElementById('exampleFormControlInput1');
+                    const passwordInput = document.getElementById('inputPassword1');
+                    const submitButton = document.getElementById('submitAdd');
+        
+                    // Enable/Disable submit button based on input validity
+                    function checkValidity() {
+                        const isUsernameValid = validateUsername(usernameInput.value);
+                        const isEmailValid = validateEmail(emailInput.value);
+                        const isPasswordValid = validatePassword(passwordInput.value);
+                        submitButton.disabled = !(isUsernameValid && isEmailValid && isPasswordValid);
+                    }
+        
+                    // Add event listeners for input validation
+                    usernameInput.addEventListener('input', checkValidity);
+                    emailInput.addEventListener('input', checkValidity);
+                    passwordInput.addEventListener('input', checkValidity);
+        
+                    // Username validation
+                    function validateUsername(username) {
+                        const usernameRegex = /^[a-zA-Z0-9]+$/; 
+                        var valid = usernameRegex.test(username);
+                        const invalidMessage = document.getElementById('invalid-user-name'); 
+        
+                        if (!valid) {
+                            invalidMessage.style.display = 'block'; 
+                            return false; 
+                        } else {
+                            invalidMessage.style.display = 'none'; 
+                        }
+                        return true; 
+                    }
+        
+                    // Email validation
+                    function validateEmail(email) {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
+                        var valid = emailRegex.test(email);
+                        const invalidMessage = document.getElementById('invalid-user-email'); 
+                        if (!valid) {
+                            invalidMessage.style.display = 'block'; 
+                            return false; 
+                        } else {
+                            invalidMessage.style.display = 'none'; 
+                        }
+                        return true; 
+                    }
+        
+                    // Password validation
+                    function validatePassword(password) {
+                        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/; // At least 8 chars, 1 uppercase, 1 special
+                        var valid = passwordRegex.test(password);
+                        const invalidMessage = document.getElementById('invalid-user-pass'); 
+                        if (!valid) {
+                            invalidMessage.style.display = 'block'; 
+                            return false; 
+                        } else {
+                            invalidMessage.style.display = 'none'; 
+                        }
+                        return true; 
+                    }
+        
+                    document.getElementById('submitAdd').addEventListener('click', function() {
+                        const username = document.getElementById('user-name').value;
+                        const email = document.getElementById('exampleFormControlInput1').value;
+                        const password = document.getElementById('inputPassword1').value;
+        
+                        if (!validateUsername(username)) {
+                            return;
+                        }
+        
+                        if (!validateEmail(email)) {
+                            return;
+                        }
+        
+                        if (!validatePassword(password)) {
+                            return;
+                        }
+        
+                        // Proceed with form submission
+                        const formData = new FormData(document.querySelector('#addAgentModal form'));
+                        fetch('/path/to/add/user', { method: 'POST', body: formData })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire('Success', 'User added successfully!', 'success');
+                                    // Optionally reset the form
+                                    document.querySelector('#addAgentModal form').reset();
+                                    submitButton.disabled = true; // Disable the button again
+                                } else {
+                                    Swal.fire('Error', data.message, 'error');
+                                }
+                            });
+                    });
+        
+        
+            </script>
+        
 
 
 {% endblock %}

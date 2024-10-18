@@ -1415,24 +1415,47 @@ def schedule_campaign(request):
             schedule_date = data.get('schedule_date')
 
             # Assuming you have a campaign model to validate campaign_id
-
             campaign_obj = Campaign.objects.get(id=campaign_id)
-            if not campaign_obj.is_schedule:
+
+            # Check if the campaign is already scheduled
+            existing_schedule = ScheduleCampaign.objects.filter(campaign_id=campaign_id).first()
+            if existing_schedule:
+                # Update the existing schedule
+                existing_schedule.schedule_note = schedule_note
+                existing_schedule.schedule_date = schedule_date
+                existing_schedule.save()
+
+                return JsonResponse({'message': 'Campaign schedule updated successfully'}, status=200)
+            else:
+                # Create a new schedule if not already scheduled
                 ScheduleCampaign.objects.create(
                     campaign_id=campaign_id,
                     schedule_note=schedule_note,
                     schedule_date=schedule_date
                 )
-
-                # update the campaign is_scheduled to true
                 campaign_obj.is_schedule = True
                 campaign_obj.save()
 
                 return JsonResponse({'message': 'Campaign scheduled successfully'}, status=200)
-            else:
-                return JsonResponse({'message': 'Unable to schedule the Campaign as it is already sheduled'}, status=400)
+
+        except Campaign.DoesNotExist:
+            return JsonResponse({'error': 'Campaign does not exist'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+def update_campaign(request):
+    if request.method == 'GET':
+        campaign_id = request.GET.get('campaign_id')
+        try:
+            schedule = ScheduleCampaign.objects.get(campaign_id=campaign_id)
+            return JsonResponse({
+                'schedule_note': schedule.schedule_note,
+                'schedule_date': schedule.schedule_date
+            }, status=200)
+        except ScheduleCampaign.DoesNotExist:
+            return JsonResponse({'error': 'Schedule not found'}, status=404)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
