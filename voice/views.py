@@ -17,7 +17,10 @@ from django.shortcuts import render, get_object_or_404
 def voice_view(request):
     if request.method == 'GET':
         voices_list = []
+        search_query = request.GET.get('search', '')
         voices = Voice.objects.all()
+        if search_query:
+            voices = voices.filter(voice_name__icontains=search_query)
         for voice in voices:
             try:
                 voice_config = voice.voice_configuration

@@ -344,5 +344,11 @@ urlpatterns = [
     path('signup_home', views.signup_home, name="signup_home"),
     path('login_home', views.login_home, name="login_home"),
     path('logout_view', views.logout_view, name="logout_view"),
+     path('get_credits',views.get_credits,name="get_credits"),
+#-------------------------------- Reset Password --------------------------------------
+    path('send_otp', views.send_otp, name="send_otp"),
+    path('validate_otp', views.validate_otp, name="validate_otp"),
+    path('change_password', views.change_password, name="change_password"),
+    
 ]
 
