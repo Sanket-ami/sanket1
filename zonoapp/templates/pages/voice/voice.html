@@ -8,7 +8,19 @@
 
 {% block content %}
 <!-- Add Voice Button -->
-<button class="btn btn-primary" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Voice</button>
+<div class="d-flex justify-content-between align-items-center" style="margin: 1%;">
+    <!-- Add Voice Button -->
+    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Voice</button>
+
+    <!-- Search Form -->
+    <form method="GET" action="{% url 'voice_view' %}" style="display: flex; flex-direction: row; align-items: center;">
+        <div class="form-group" style="margin-right: 0.5%;">
+            <input type="text" name="search" class="form-control" placeholder="Search Voices" value="{{ search_query }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+</div>
+
 
 <!-- Add Voice Modal -->
 <div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">

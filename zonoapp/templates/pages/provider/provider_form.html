@@ -15,49 +15,42 @@
 {% endblock %}
 
 {% block content %}
-<div class="card height-equal" style="min-height: 952.812px;">
+<div class="card height-equal">
     <div class="card-header pb-0">
-        <h4>Providers Configuration</h4>
+        <h4>Add Provider</h4>
     </div>
     <div class="card-body custom-input">
-        <form class="row g-3" id="providerForm">
+        <form id="providerForm" action="{% url 'provider_form' %}" method="POST" class="row g-3">
             {% csrf_token %}
             
-            <div class="col-12"> 
+            <div class="col-12">
                 <label class="form-label" for="provider_name">Provider Name</label>
-                <input class="form-control" id="provider_name" name="provider_name" type="text" aria-label="Provider Name" required>
+                <input class="form-control" id="provider_name" name="provider_name" type="text" required>
             </div>
-
-
-            <!-- <div class="col-12"> 
+        
+            <div class="col-12">
                 <label class="form-label" for="provider_type">Provider Type</label>
-                <input class="form-control" id="provider_type" name="provider_type" type="text" aria-label="Provider Type" required>
-            </div> -->
-            <div class="mb-3">
-                <label for="provider_type" class="form-label">Provider Type</label>
                 <select class="form-select" id="provider_type" name="provider_type" required>
-                   
                     <option value="llm">LLM</option>
                     <option value="telephony">Telephony</option>
                     <option value="syntesizer">TTS</option>
                     <option value="transcriber">STT</option>
                 </select>
-                <div class="invalid-feedback">Please select a valid organisation name.</div>
             </div>
-
+        
             <div class="col-12">
                 <label class="form-label" for="provider_config">Provider Configuration (JSON)</label>
                 <div id="providerConfigEditor"></div>
-                <!-- Hidden input to store the content of the Ace Editor -->
                 <input type="hidden" id="provider_config" name="provider_config" required>
             </div>
-
-            <div class="col-12"> 
-                <button class="btn btn-primary" type="button" id="submitForm">Submit</button>
+        
+            <div class="col-12">
+                <button class="btn btn-primary" type="submit" id="submitForm">Submit</button>
             </div>
-        </form>
+        </form>        
     </div>
 </div>
+
 
 <!-- Include Ace Editor library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
@@ -70,63 +63,51 @@
     editor.session.setMode("ace/mode/json");  // Set the mode to JSON for proper syntax highlighting
     editor.setValue("{\n\t\"example_key\": \"example_value\"\n}");  // Default content (optional)
 
-    // Listen for form submission
-    document.getElementById('submitForm').addEventListener('click', function() {
-        // Set the value of the hidden input field to the Ace editor content
-        document.getElementById('provider_config').value = editor.getValue();
+    document.getElementById('submitForm').addEventListener('click', function(event) {
+    event.preventDefault();  // Prevent default form submission
 
-        // Validate JSON before submission
-        try {
-            JSON.parse(editor.getValue()); // Validate JSON
-        } catch (e) {
-            showToast('error', 'Invalid JSON format!'); // Show error if JSON is invalid
-            return; // Prevent submission
-        }
+    // Set the value of the hidden input field to the Ace editor content
+    document.getElementById('provider_config').value = editor.getValue();
 
-        // Get the form element
-        const form = document.getElementById('providerForm');
-
-        // Create a FormData object to capture the form inputs
-        const formData = new FormData(form);
-
-        // Convert the FormData to a JSON object
-        const data = {};
-        formData.forEach((value, key) => {
-            data[key] = value;
-        });
-
-        // Get CSRF token
-        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-        // Fetch API to submit form data asynchronously
-        fetch("{% url 'provider_view' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken  // Include CSRF token
-            },
-            body: JSON.stringify(data),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Form submission successful", data);
-            showToast('success', 'Form submitted successfully!');
-        })
-        .catch(error => {
-            console.error("Form submission error", error);
-            showToast('error', 'Form submission failed!');
-        });
-    });
-
-    // Toast function to display feedback messages
-    function showToast(type, message) {
-        Swal.fire({
-            title: type === 'success' ? 'Success' : 'Error',
-            text: message,
-            icon: type,
-            confirmButtonText: 'OK'
-        }).then(() => { location.reload(); });
+    // Validate JSON before submission
+    try {
+        JSON.parse(editor.getValue());  // Validate JSON
+    } catch (e) {
+        showToast('error', 'Invalid JSON format!');
+        return;  // Prevent submission if JSON is invalid
     }
+
+    // Get the form element
+    const form = document.getElementById('providerForm');
+    
+    // Create a FormData object from the form
+    const formData = new FormData(form);
+
+    // Send the form data via Fetch API
+    fetch("{% url 'provider_form' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.fire({
+            title: 'Success',
+            text: 'Form submitted successfully!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+        }).then(() => {
+            window.location.href = "{% url 'provider_view' %}";
+        });
+    })
+    .catch(error => {
+        console.error("Form submission error", error);
+        showToast('error', 'Form submission failed!');
+    });
+});
+
 </script>
 
 {% endblock %}

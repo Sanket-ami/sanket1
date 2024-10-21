@@ -16,7 +16,72 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.core.paginator import Paginator
 from .models import Notification, Credits
-
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth import update_session_auth_hash
+from django.views.decorators.csrf import csrf_exempt
+User = get_user_model()
+########## Reset Password #############
+def send_otp(request):
+    email = request.GET.get('email')
+    if User.objects.filter(email=email).exists():
+        user = User.objects.get(email=email)
+        otp = default_token_generator.make_token(user)
+        send_mail(
+                'Password Reset',
+                f'Your OTP is: {otp}',
+                'from@example.com',
+                [email],
+                fail_silently=False,
+        )
+        return JsonResponse({'status': 'success'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Email not found'})
+def validate_otp(request):
+    otp = request.GET.get('otp')
+    email = request.GET.get('email')
+    if User.objects.filter(email=email).exists():
+        user = User.objects.get(email=email)
+        if default_token_generator.check_token(user, otp):
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid OTP'})
+    return JsonResponse({'status': 'error', 'message': 'User not found'})
+# def change_password(request):
+#     import pdb;pdb.set_trace()
+#     if request.method == 'POST':
+#         form = PasswordResetForm(request.user, request.POST)
+#         if form.is_valid():
+#             user = form.save()
+#             update_session_auth_hash(request, user)  # Important to update session
+#             messages.success(request, 'Your password was successfully updated!')
+#             return redirect('/login_home')
+#         else:
+#             messages.error(request, 'Please correct the error below.')
+#     else:
+#         form = PasswordResetForm(request.user)
+#     return render(request, 'password_change.html', {'form': form})
+ 
+@csrf_exempt
+def change_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        new_password = request.POST.get('new_password')
+        try:
+            user = User.objects.get(email=email)  # Fetch user based on email
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'User not found.'})
+        form = SetPasswordForm(user, request.POST)  # Using SetPasswordForm, no old password required
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, user)  # Important: update the session after password change
+            return JsonResponse({'status': 'success', 'message': 'Password updated successfully.'})
+        else:
+            errors = form.errors.as_json()  # Return form errors in JSON format
+            return JsonResponse({'status': 'error', 'message': 'Password reset failed.', 'errors': errors})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
 
 
 # Contact cell 
@@ -1070,7 +1135,7 @@ def unlock(request):
     return render(request,'pages/authentication/unlock.html')
     
 
-@login_required(login_url="/login_home")
+# @login_required(login_url="/login_home")
 def forget_password(request):
     return render(request,'pages/authentication/forget-password.html')
     
