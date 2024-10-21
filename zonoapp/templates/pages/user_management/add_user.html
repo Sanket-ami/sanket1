@@ -196,7 +196,7 @@
             const editModal = document.getElementById("editAgentModal");
             const editAgentIdField = document.getElementById("editAgentId");
             const editAgentNameField = document.getElementById("editAgentName");
-            const editEmailField = document.getElementById("edit-email");
+            // const editEmailField = document.getElementById("edit-email");
             const editOrganisationField = document.getElementById("editOrganisationName");
             const editRoleRadios = document.getElementsByName("editRole");
         
@@ -212,7 +212,7 @@
                     // Populate the fields in the edit modal
                     editAgentIdField.value = userId;
                     editAgentNameField.value = email;
-                    editEmailField.value = email;
+                    // editEmailField.value = email;
                     editOrganisationField.value = organisation;
         
                     // Check the role radio button corresponding to the user's role
@@ -227,7 +227,7 @@
         });
         function edit_user(user_id,agent_name){
                 role = document.getElementById("editOrganisationName").value;
-                console("role: ", role)
+                console.log("role: ", role)
                 email = document.getElementById("editAgentName").value;
                 user_id = document.getElementById("editAgentId").value;
                 Swal.fire({
@@ -304,8 +304,8 @@
             // Collect the form data
             const formData = {
                 'user_id': editAgentIdField.value,
-                'username': editAgentNameField.value,
-                'email': editEmailField.value,
+                'email': editAgentNameField.value,
+                // 'email': editEmailField.value,
                 'organisation_name': editOrganisationField.value,
                 'role': document.querySelector("input[name='editRole']:checked").value
             };

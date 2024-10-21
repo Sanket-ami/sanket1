@@ -167,4 +167,12 @@ MESSAGE_TAGS = {
 }   
 AUTH_USER_MODEL = 'zonoapp.User'
 
-TRANSCRIPT_SERVER_URL = "https://9ce6-103-112-4-82.ngrok-free.app"
+TRANSCRIPT_SERVER_URL = "https://3eeb-136-232-53-94.ngrok-free.app"
+# email configs
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = str(os.getenv('EMAIL_HOST_USER'))
+EMAIL_HOST_PASSWORD = str(os.getenv('EMAIL_HOST_PASSWORD'))
+PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)

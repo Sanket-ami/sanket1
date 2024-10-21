@@ -91,148 +91,219 @@
     }
 </style>
 
-<div class="swal-modal" role="dialog" aria-modal="true" style="display: none;">
-    <div class="swal-icon swal-icon--warning">
-        <span class="swal-icon--warning__body">
-            <span class="swal-icon--warning__dot"></span>
-        </span>
-    </div>
-    <div class="swal-title">Are you sure?</div>
-    <div class="swal-text">Once deleted, you will not be able to recover this file!</div>
-    <div class="swal-footer">
-        <div class="swal-button-container">
-            <button class="swal-button swal-button--cancel">Cancel</button>
-        </div>
-        <div class="swal-button-container">
-            <button class="swal-button swal-button--confirm swal-button--danger">OK</button>
-        </div>
-    </div>
+<div class="card-header pb-0 card-no-border">
+    <a href="{% url 'provider_form' %}" class="btn btn-primary">Add Provider</a>
 </div>
-
 <div class="col-sm-12">
-    <div class="card">
-        <div class="card-header pb-0 card-no-border">
-            <h4>Provider Configurations</h4>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive custom-scrollbar">
-                <div id="basic-1_wrapper" class="dataTables_wrapper no-footer">
-                    <div class="dataTables_length" id="basic-1_length">
-                        <label>Show 
-                            <select name="basic-1_length" aria-controls="basic-1" class="">
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select> entries
-                        </label>
+    <div class="card-body">
+        <div id="basic-1_wrapper" class="dataTables_wrapper no-footer">
+            <div class="row mt-4">
+                {% for provider in providers %}
+                    <div class="col-xxl-6 col-xl-6 col-lg-6 col-md-6 col-sm-12 mb-4">
+                        <div class="card">
+                            <div class="job-search">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <img class="img-40 img-fluid m-r-20" src="{% static 'assets/images/customizer/4.png' %}" alt="campaign image">
+                                        <div class="flex-grow-1">
+                                            <h4>{{ provider.provider_name }}</h4>
+                                            <p class="mt-1 f-m-light">{{ provider.provider_type }}</p>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-danger" onclick="deleteProvider({{ provider.id }}, '{{ provider.provider_name|escapejs }}')">
+                                                🗑️
+                                            </button>
+                                            <button class="btn btn-warning" 
+                                                data-provider-id="{{ provider.id }}" 
+                                                data-provider-name="{{ provider.provider_name|escapejs }}" 
+                                                data-provider-type="{{ provider.provider_type|escapejs }}" 
+                                                data-provider-config="{{ provider.provider_config|escapejs }}" 
+                                                onclick="openEditProviderModal(this)">
+                                                ✏️
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-0">{{ provider.provider_config|safe }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="basic-1_filter" class="dataTables_filter">
-                        <label>Search:<input type="search" class="" placeholder="" aria-controls="basic-1"></label>
-                    </div>
-                    <table class="display dataTable no-footer" id="basic-1" role="grid" aria-describedby="basic-1_info">
-                        <thead>
-                            <tr role="row">
-                                <th>Name</th>
-                                <th>Configuration</th>
-                                <th>Type</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for provider in providers %}
-                            <tr role="row">
-                                <td>{{ provider.provider_name }}</td>
-                                <td>{{ provider.provider_config|safe }}</td>
-                                <td>{{ provider.provider_type }}</td>
-                                <td>
-                                    <ul class="action"> 
-                                        <li class="delete"> <a href="#" class="delete-provider" data-id="{{ provider.id }}"><i class="icon-trash"></i></a></li>
-                                    </ul>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5">No providers available.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <div class="dataTables_info" id="basic-1_info" role="status" aria-live="polite">
-                        Showing {{ providers.start_index }} to {{ providers.end_index }} of {{ providers.paginator.count }} entries
-                    </div>
-                    <div class="dataTables_paginate paging_simple_numbers" id="basic-1_paginate">
-                        {% if providers.has_previous %}
-                        <a class="paginate_button previous" href="?page={{ providers.previous_page_number }}" aria-controls="basic-1">Previous</a>
-                        {% else %}
-                        <a class="paginate_button previous disabled" aria-controls="basic-1">Previous</a>
-                        {% endif %}
-                        
-                        <span>
-                            {% for page in providers.paginator.page_range %}
-                                {% if page == providers.number %}
-                                    <a class="paginate_button current" href="#">{{ page }}</a>
-                                {% else %}
-                                    <a class="paginate_button" href="?page={{ page }}">{{ page }}</a>
-                                {% endif %}
-                            {% endfor %}
-                        </span>
-                        
-                        {% if providers.has_next %}
-                        <a class="paginate_button next" href="?page={{ providers.next_page_number }}" aria-controls="basic-1">Next</a>
-                        {% else %}
-                        <a class="paginate_button next disabled" aria-controls="basic-1">Next</a>
-                        {% endif %}
+                {% empty %}
+                    <p>No Provider found.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Edit Provider Modal -->
+            <div class="modal fade" id="editProviderModal" tabindex="-1" role="dialog" aria-labelledby="editProviderModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editProviderModalLabel">Edit Provider</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editProviderForm">
+                                <input type="hidden" id="editProviderId">
+                                <div class="form-group">
+                                    <label for="editProviderName">Provider Name</label>
+                                    <input type="text" class="form-control" id="editProviderName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editProviderType">Provider Type</label>
+                                    <select class="form-control" id="editProviderType" required>
+                                        <option value="" disabled>Select Provider Type</option>
+                                        {% for provider_type in provider_types %}
+                                            <option value="{{ provider_type }}">{{ provider_type }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div id="provider_config" style="height: 300px; width: 100%;"></div>
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="dataTables_paginate paging_simple_numbers" id="basic-1_paginate">
+                {% if providers.has_previous %}
+                    <a class="paginate_button previous" href="?page={{ providers.previous_page_number }}" aria-controls="basic-1">Previous</a>
+                {% else %}
+                    <a class="paginate_button previous disabled" aria-controls="basic-1">Previous</a>
+                {% endif %}
+                
+                <span>
+                    {% for page in providers.paginator.page_range %}
+                        {% if page == providers.number %}
+                            <a class="paginate_button current" href="#">{{ page }}</a>
+                        {% else %}
+                            <a class="paginate_button" href="?page={{ page }}">{{ page }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                
+                {% if providers.has_next %}
+                    <a class="paginate_button next" href="?page={{ providers.next_page_number }}" aria-controls="basic-1">Next</a>
+                {% else %}
+                    <a class="paginate_button next disabled" aria-controls="basic-1">Next</a>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+
 <script>
-    $(document).ready(function() {
-        $('.delete-provider').on('click', function(event) {
-            event.preventDefault();  // Prevent the default link behavior
+    function showToast(type, message, title) {
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: type,
+            confirmButtonText: 'OK'
+        }).then(() => { location.reload(); });
+    }
 
-            const providerId = $(this).data('id');
-
-            // Show the custom modal
-            $('.swal-modal').fadeIn();
-
-            // Handle Cancel button
-            $('.swal-button--cancel').off('click').on('click', function() {
-                $('.swal-modal').fadeOut();  // Hide the modal
-            });
-
-            // Handle Confirm button
-            $('.swal-button--confirm').off('click').on('click', function() {
+    function deleteProvider(providerId, providerName) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `You won't be able to revert this! Provider: ${providerName}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
                 $.ajax({
-                    url: `/provider/delete/${providerId}/`,
+                    url: "{% url 'delete_provider' %}",
                     type: 'POST',
+                    data: JSON.stringify({ "provider_id": providerId }),
+                    contentType: "application/json",
                     headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',  // Include CSRF token
+                        'X-CSRFToken': '{{ csrf_token }}',
                     },
-                    success: function(result) {
-                        location.reload();  // Refresh the page
+                    success: function(response) {
+                        showToast("success", response.message, "Delete Provider");
                     },
-                    error: function(xhr) {
-                        alert('Failed to delete the provider: ' + xhr.responseText);
-                        $('.swal-modal').fadeOut();  // Hide the modal
+                    error: function(xhr, status, error) {
+                        showToast("error", "Failed to delete provider! " + error, "Delete Provider");
                     }
                 });
-            });
+            }
+        });
+    }
+
+    function openEditProviderModal(button) {
+    // Get data from the clicked button
+    const providerId = $(button).data('provider-id');
+    const providerName = $(button).data('provider-name');
+    const providerType = $(button).data('provider-type');
+    const providerConfig = $(button).data('provider-config');
+
+    // Populate the modal fields with the retrieved data
+    $('#editProviderId').val(providerId);
+    $('#editProviderName').val(providerName);
+    $('#editProviderType').val(providerType);
+
+    // Initialize Ace Editor
+    let editor = ace.edit("provider_config");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/json");
+
+    // Debug: Log providerConfig to check its value
+    console.log('Provider Config:', providerConfig);
+
+    // Sanitize the JSON config string
+    try {
+        // Convert single quotes to double quotes and remove escape sequences
+        let sanitizedConfig = providerConfig.replace(/'/g, '"').replace(/\\u0027/g, '"');
+        editor.setValue(JSON.stringify(JSON.parse(sanitizedConfig), null, 2), -1);
+    } catch (error) {
+        console.error('Error parsing JSON:', error);
+        console.error('Invalid provider config:', providerConfig);
+        editor.setValue('// Invalid JSON format. Please correct.', -1);
+    }
+
+    // Show the modal
+    $('#editProviderModal').modal('show');
+}
+
+    $('#editProviderForm').on('submit', function(e) {
+        e.preventDefault(); // Prevent form submission
+
+        const providerId = $('#editProviderId').val();
+        const providerName = $('#editProviderName').val();
+        const providerType = $('#editProviderType').val();
+        const providerConfig = ace.edit("provider_config").getValue();
+
+        // Submit the edited provider data via AJAX
+        $.ajax({
+            url: "{% url 'edit_provider' %}",
+            type: 'POST',
+            data: JSON.stringify({ 
+                "provider_id": providerId,
+                "provider_name": providerName,
+                "provider_type": providerType,
+                "provider_config": providerConfig,
+            }),
+            contentType: "application/json",
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            success: function(response) {
+                showToast("success", response.message, "Edit Provider");
+            },
+            error: function(xhr, status, error) {
+                showToast("error", "Failed to edit provider! " + error, "Edit Provider");
+            }
         });
     });
 </script>
-
-
-{% include 'pages/sample-page/components/sample-page.html' %}
-
-{% endblock %}
-
-{% block scriptcontent %}
 
 {% endblock %}
 
