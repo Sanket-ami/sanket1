@@ -92,7 +92,7 @@
 </style>
 
 <div class="card-header pb-0 card-no-border">
-    <a href="{% url 'provider_form' %}" class="btn btn-primary">Add Provider</a>
+    <a href="{% url 'provider_form' %}" class="btn btn-primary">Add Configuration</a>
 </div>
 <div class="col-sm-12">
     <div class="card-body">
@@ -124,7 +124,7 @@
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <p class="mb-0">{{ provider.provider_config|safe }}</p>
+                                        <!-- <p class="mb-0">{{ provider.provider_config|safe }}</p> -->
                                     </div>
                                 </div>
                             </div>
@@ -147,13 +147,13 @@
                             <form id="editProviderForm">
                                 <input type="hidden" id="editProviderId">
                                 <div class="form-group">
-                                    <label for="editProviderName">Provider Name</label>
+                                    <label for="editProviderName">Configuration Name</label>
                                     <input type="text" class="form-control" id="editProviderName" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="editProviderType">Provider Type</label>
+                                    <label for="editProviderType">Configuration Type</label>
                                     <select class="form-control" id="editProviderType" required>
-                                        <option value="" disabled>Select Provider Type</option>
+                                        <option value="" disabled>Select Configuration Type</option>
                                         {% for provider_type in provider_types %}
                                             <option value="{{ provider_type }}">{{ provider_type }}</option>
                                         {% endfor %}
