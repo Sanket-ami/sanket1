@@ -1,9 +1,10 @@
 from django.http import JsonResponse
 from django.shortcuts import render
 from datetime import datetime, timedelta, time
-from campaign.models import CallLogs, Campaign
+from campaign.models import CallLogs, Campaign, Transcript
 from zonoapp.models import User
 from django.contrib.auth.decorators import login_required
+import json
 
 def update_interval_count(intervals, durations):
     for duration in durations:
@@ -23,9 +24,33 @@ def update_interval_count(intervals, durations):
             intervals['> 50'] += 1
     return intervals
 
+def qa_analysis(request):
+    print(request.user.organisation_name)
+    last_10_call = Transcript.objects.all().filter(organisation_name=request.user.organisation_name).exclude(transcript__isnull=True, qa_analysis__isnull=True).order_by('-id')[:10]
+    met = []
+    not_met = []
+    for call in last_10_call:
+        if type(call.qa_analysis) == str:
+            try:
+                qa_analysis = call.qa_analysis.replace("```json", "").replace("```", "").replace("\n", "")
+                qa_analysis = json.loads(qa_analysis)
+                met_count = [i for i in qa_analysis if i['result']=='met']
+                met.append(len(met_count))
+                not_met.append(len(qa_analysis)-len(met_count))
+            except Exception:
+                pass
+        else:
+            
+            met_count = [i for i in call.qa_analysis if i['result']=='met']
+            met.append(len(met_count))
+            not_met.append(len(call.qa_analysis)-len(met_count))
+
+    return met, not_met
+    
 
 @login_required(login_url="/login_home")
 def calls_per_hour(request):
+    
     if request.user.is_superuser:
         organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
     else:
@@ -80,6 +105,8 @@ def calls_per_hour(request):
                 organisation_list = User.objects.values('organisation_name').distinct('organisation_name')
             else:
                 organisation_list = [{'organisation_name': request.user.organisation_name}]
+            met, not_met = qa_analysis(request)
+            print(met, not_met)
             response_data ={
                 'results': results,
                 'avg_handling_time': avg_handling_time,
@@ -95,8 +122,13 @@ def calls_per_hour(request):
                 'totalDialedCalls': connected_call,
                 'compromised_call':connected_call - failedCalls,
                 'failed_call': failedCalls, 
+                'met': met,
+                'not_met': not_met,
+                'total_qa_calls': [f'Call {count}' for count in range(1, len(met)+1)],
+                'met_percent': round(sum(met) * 100 / (sum(met) + sum(not_met))),
+                'met_sum': sum(met),
+                'not_met_sum': sum(not_met)
             }
-
             return JsonResponse(response_data)  
         return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"Dashboard"}, 'organisation_list': organisation_list})
     return render(request, 'pages/dashboard/dashboard.html', {"breadcrumb":{"title":"Dashboard","parent":"Pages", "child":"Dashboard"}, 'organisation_list': organisation_list})     
