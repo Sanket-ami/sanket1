@@ -40,10 +40,7 @@
           <div class="card-header">
             <h4>Average Handling Time</h4>
           </div>  
-          <div class="card-body">
-                <button class="btn p-0" type="button" id="durationOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="bx bx-dots-vertical-rounded bx-lg text-muted"></i>
-                </button>
+          <div class="card-body"> 
                 <div aria-labelledby="durationOptions">
                   <ul class="nav nav-pills" role="tablist">
                     <li class="nav-item">
@@ -65,8 +62,12 @@
       <div class="col-xxl-4 proorder-xl-1 box-col-6">
         <div class="card">
           
-          <div class="card-header" style="display: flex; justify-content: space-around;">
+          <div class="card-header pb-0">
+            <div class="header-top">
               <h4 class="fw-bold">Failed Calls</h4>
+            </div>
+          </div>
+          <div class="card-body">
               <div aria-labelledby="durationOptions">
                 <ul class="nav nav-pills" role="tablist">
                   <li class="nav-item">
@@ -80,7 +81,8 @@
                   </li>
                 </ul>
                   </div>
-          </div>
+            </div>      
+          
           <div class="card-body" style="display: flex;
           justify-content: center;
           height: 400px;">
@@ -94,9 +96,9 @@
             </div>
              <canvas id="callFailureChart" ></canvas>
           </div>
-
         </div>
-      </div>
+        </div>
+
 
 
       <div class="row">
@@ -166,18 +168,14 @@
         <div class="card">
           <div class="card-header"> 
             <div class="header-top">
-              <h4>Recent QA Ana </h4>
-              <div class="dropdown icon-dropdown setting-menu">
-                <button class="btn dropdown-toggle" id="userdropdown34" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <svg> 
-                    <use href="{% static 'assets/svg/icon-sprite.svg' %}#setting"> </use>
-                  </svg>
-                </button>
+              <h4>Recent QA Analysis </h4>
+
                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown34">
-                  <a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly</a></div>
-              </div>
+                  <a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly</a>
+                </div>
             </div>
-          </div>
+            </div>
+       
           <div class="card">
            
           <div class="card-body pt-0"> 
@@ -186,7 +184,7 @@
           </div>
           </div>
         </div>
-      </div>
+    </div>
       <div class="col-xxl-8 col-lg-6 proorder-xl-5 box-col-6">
         <div class="card">
           <div class="card-header pb-0">
