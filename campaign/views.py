@@ -63,7 +63,7 @@ def create_campaign(request):
     elif request.method == "POST":
         try:
             data = json.loads(request.body)
-            print("datad ",data)
+           
 
             provider = Provider.objects.get(id=data['provider'])
             agent = Agent.objects.get(id=data['agent'])

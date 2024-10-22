@@ -13,7 +13,7 @@ def qa_parameters(request):
         qa_parameter = QAParameters.objects.all().filter(is_deleted=False)
         if request.user.is_superuser:
             print("super")
-            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
+            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
         else:
             org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
         print(org_names)
