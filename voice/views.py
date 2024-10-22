@@ -56,7 +56,8 @@ def voice_view(request):
                 voice_configuration=data['voice_config'],
                 voice_name=data.get('voice_name')
             )
-
+            print(voice.voice_id)
+            # import pdb; pdb.set_trace()
             # Download the sample files
             if voice_provider.provider_name == 'ElevenLabs':
                 get_voice(voice.voice_id)
@@ -84,7 +85,6 @@ def voice_view(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-@login_required(login_url="/login_home")
 def get_voice(voice_id):
     try:
         url = f"https://api.elevenlabs.io/v1/voices/{voice_id}"
@@ -117,7 +117,6 @@ def get_voice(voice_id):
         print(f"An unexpected error occurred: {e}")
 
 
-@login_required(login_url="/login_home")
 def get_voice_cartesia(voice, json_file):
     try:
         with open(json_file, 'r') as file:
