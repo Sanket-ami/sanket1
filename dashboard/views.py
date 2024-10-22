@@ -125,7 +125,10 @@ def calls_per_hour(request):
                 'met': met,
                 'not_met': not_met,
                 'total_qa_calls': [f'Call {count}' for count in range(1, len(met)+1)],
-                'met_percent': round(sum(met) * 100 / (sum(met) + sum(not_met))),
+                'met_percent': (
+        0 if (sum(met) + sum(not_met)) == 0 
+        else round(sum(met) * 100 / (sum(met) + sum(not_met)))
+                ),
                 'met_sum': sum(met),
                 'not_met_sum': sum(not_met)
             }
