@@ -56,8 +56,7 @@ def voice_view(request):
                 voice_configuration=data['voice_config'],
                 voice_name=data.get('voice_name')
             )
-            print(voice.voice_id)
-            # import pdb; pdb.set_trace()
+
             # Download the sample files
             if voice_provider.provider_name == 'ElevenLabs':
                 get_voice(voice.voice_id)
