@@ -28,6 +28,16 @@
             <input type="submit" class="btn btn-primary" value="Filter">
         </form>
     </div>
+    <!-- Display call counts next to the filter button -->
+    <div class="d-flex align-items-center" style="margin-left: 20px;">
+        <p><h3><strong>Call Counts: </strong></h3></p>
+        <span class="badge bg-primary mx-2">Ongoing: {{ ongoing_count }}</span>
+        <span class="badge bg-warning mx-2">Not Started: {{ not_started_count }}</span>
+        <span class="badge bg-success mx-2">Completed: {{ completed_count }}</span>
+        <span class="badge bg-success mx-2">Total: {{ total_count }}</span>
+    </div>
+    
+
 
     <!-- Bootstrap Table for Call Logs -->
     <table class="table table-inverse table-striped dataTable" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">

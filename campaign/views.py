@@ -19,6 +19,8 @@ from django.conf import settings
 import requests
 import time
 from datetime import datetime
+from django.utils import timezone
+import re
 import os
 from requests.auth import HTTPBasicAuth
 from django.http import FileResponse
@@ -27,6 +29,8 @@ from django.urls import reverse
 import csv
 from qa_parameters.models import QAParameters
 from zono.settings import CALL_SERVER_BASE_URL
+import boto3
+
 ## render create campaign page
 @login_required(login_url="/login_home")
 def create_campaign(request):
@@ -603,20 +607,25 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
             duration = 0
             end_time = datetime.fromisoformat(str(call_end))
-            print("sdbejw", provider)
+            call_session_id = ""
             try:
                 if provider.provider_name == 'telnyx':                # new logic for call duration                
-                    url = f"https://api.telnyx.com/calls/{call_status_id}/status"
+                    # url = f"https://api.telnyx.com/calls/{call_status_id}/status"
+                    url = f"https://api.telnyx.com/v2/calls/{call_status_id}" # v2
+                    # telnyx_token = get_valid_token()
+                    # if not telnyx_token:
+                    telnyx_token = os.getenv('TELNYX_AUTH_TOKEN')
 
                     payload = {}
                     headers = {
                     'Accept': 'application/json',
-                    'Authorization': "Bearer " + os.getenv('TELNYX_V1_TOKEN')
+                    'Authorization': "Bearer " + telnyx_token
                     }
 
                     response = requests.request("GET", url, headers=headers, data=payload)
                     response = response.json()
                     duration = response["data"]['call_duration']
+                    call_session_id = response["data"]['call_session_id']
 
                 else:
                 # Convert strings to datetime objects
@@ -626,10 +635,44 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
                     response=response.json()
                     print(response)
                     duration = response['duration']
-                    print("+++++++++++++", duration)
+                    # fetch and save call session id for recording 
+                    call_session_id = response["data"]['call_session_id']
             except Exception as e:
                 print("Error====>", e)
                 pass
+            recording_url=""
+            if call_session_id:
+                try:
+                    # Fetch the recording from telnyx
+                    url = f"https://api.telnyx.com/v2/recordings?call_session_id={call_session_id}"
+                    payload = {}
+                    headers = {
+                    'Accept': 'application/json',
+                    'Authorization': 'Bearer '+telnyx_token
+                    }
+                    response = requests.request("GET", url, headers=headers, data=payload)
+                    response = response.json()
+                    if response:
+                        recording_url_temp = response['data'][0]['download_urls']['mp3']
+                    # Download the recording
+                    recording_response = requests.get(recording_url_temp)
+                    recording_response.raise_for_status()  # Raises an error for bad responses
+                    # upload the recording to s3 bucket
+                    s3_client = boto3.client('s3',
+                            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                            region_name=os.getenv('AWS_S3_REGION_NAME') 
+                        )
+                    bucket_name = 'telnyx-recordings-callbot' 
+                    # Prepare S3 upload
+                    call_status_id_refined = sanitize_call_id(call_status_id)
+                    file_name = f"recording_{call_status_id_refined}.mp3"  # Filename for S3
+                    s3_client.put_object(Bucket=bucket_name, Key=file_name, Body=recording_response.content)
+                    # Construct the S3 URL
+                    recording_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
+                    print(f"Recording uploaded to S3: {recording_url}")
+                except Exception as error:
+                    print(f"Error fetching recording..: {error}")
 
             # import pdb;pdb.set_trace()
             summary = ""
@@ -653,6 +696,7 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
             ## transcript save
             transcript_obj = Transcript()
+            transcript_obj.recording = recording_url
             transcript_obj.campaign_id =  campaign_id
             transcript_obj.call_logs = call_status_id
             transcript_obj.summary = summary
@@ -695,6 +739,10 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
   
             return True
     return True
+def sanitize_call_id(call_id):
+    # Remove all special characters except alphanumeric, hyphens, and underscores
+    sanitized_id = re.sub(r'[^a-zA-Z0-9_-]', '', call_id)
+    return sanitized_id
 
 
 """
@@ -993,7 +1041,7 @@ def list_call_logs(request):
             paginated_logs =[]
             
             if campaign_id:
-                call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-created_at')
+                call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-id')
                 if call_status:
                     call_logs = call_logs.filter(call_status=call_status)
 
@@ -1118,10 +1166,10 @@ def create_html_component_with_div(json_list):
         if type(json_list) == str:
             print(json_list)
             json_list = json.loads(json_list.replace("```json", "").replace("```", "").replace("\n", ""))
-            print(json_list)
+
         else:
             pass
-        print(json_list)
+
         for item in json_list:
             parameter = item.get('parameter', '')
             result = item.get('result', '')
@@ -1141,7 +1189,7 @@ def create_html_component_with_div(json_list):
             html_content += "</div><br>\n"
             id_count += 1
 
-        print(html_content)
+        
     except Exception as e:
         print("Error========", e)
     return html_content
@@ -1193,36 +1241,48 @@ def fetch_audio(request):
                 return "Failed to fetch the recording.", 500 
 
         if telephony_name == "telnyx":
-            url = f"https://api.telnyx.com/calls/{call_id}/status"
+            # url = f"https://api.telnyx.com/calls/{call_id}/status"
 
-            payload = {}
-            print(os.getenv('TELNYX_V1_TOKEN'))
-            headers = {
-            'Accept': 'application/json',
-            'Authorization': "Bearer " + os.getenv('TELNYX_V1_TOKEN')
-            }
+            # payload = {}
+            # print(os.getenv('TELNYX_V1_TOKEN'))
+            # headers = {
+            # 'Accept': 'application/json',
+            # 'Authorization': "Bearer " + os.getenv('TELNYX_V1_TOKEN')
+            # }
 
-            response = requests.request("GET", url, headers=headers, data=payload)
-            response = response.json()
-            print(response)
-            call_session_id = response["data"]['call_session_id']
+            # response = requests.request("GET", url, headers=headers, data=payload)
+            # response = response.json()
+            # print(response)
+            # call_session_id = response["data"]['call_session_id']
 
-            # fetch the recording url using session id
+            # # fetch the recording url using session id
 
-            url = f"https://api.telnyx.com/recordings?telnyx_session_uuid={call_session_id}"
+            # url = f"https://api.telnyx.com/recordings?telnyx_session_uuid={call_session_id}"
 
-            payload = {}
-            headers = {
-                'Accept': 'application/json',
-                'x-api-user': 'prajwal.jumde@aminfoweb.com',
-                'x-api-token': os.getenv('TELNYX_V1_TOKEN')
-            }
-            print(456)
-            response = requests.request("GET", url, headers=headers, data=payload)
-            print(123)
-            # get the recording URL
-            response = response.json()
-            recording_url = response['data'][0]['download_urls']['mp3']
+            # payload = {}
+            # headers = {
+            #     'Accept': 'application/json',
+            #     'x-api-user': 'prajwal.jumde@aminfoweb.com',
+            #     'x-api-token': os.getenv('TELNYX_V1_TOKEN')
+            # }
+            # print(456)
+            # response = requests.request("GET", url, headers=headers, data=payload)
+            # print(123)
+            # # get the recording URL
+            # response = response.json()
+            # recording_url = response['data'][0]['download_urls']['mp3']
+            s3_client = boto3.client('s3',
+                            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                            region_name=os.getenv('AWS_S3_REGION_NAME') 
+                        )
+            # Generate a presigned URL for the uploaded file
+            bucket_name = 'telnyx-recordings-callbot' 
+            file_name = "recording_"+ sanitize_call_id(call_id)+".mp3"
+            presigned_url = s3_client.generate_presigned_url('get_object',
+                    Params={'Bucket': bucket_name, 'Key': file_name},
+                    ExpiresIn=3600)  # URL valid for 1 hour
+            recording_url = presigned_url
 
             # Get recording data from recording URL
             response = requests.get(recording_url)
@@ -1312,7 +1372,7 @@ def edit_transcript(request):
         # Build the URL with query parameters
         url = reverse('list_call_logs')  # Gets the URL path for the 'edit_summary' route
         page = request_body['page']
-        print(page)
+
 
         query_params = f'?call_status={status_filter.lower()}&campaign_id={campaign_id}&&page={page}&per_page=10'
 
@@ -1396,8 +1456,25 @@ def live_call_list(request):
                 total_pages = 0
                 page = 1
                 paginated_logs =[]
+                # Initialize call counts
+                ongoing_count = 0
+                not_started_count = 0
+                completed_count = 0
+                total_count = 0
+
                 if campaign_id:
                     call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-created_at')
+                    active_list = Campaign.objects.get(id=campaign_id).contact_list
+                    contact_list = ContactList.objects.get(id=active_list.id)
+                    count=len(contact_list.contact_list)
+
+                    # contact_list = list(contact_list.contact_list)
+                    # Count calls for each status
+                    ongoing_count = call_logs.filter(call_status="ongoing").count()
+                    not_started_count = call_logs.filter(call_status="not_started").count()
+                    completed_count = call_logs.filter(call_status="completed").count()
+                    total_count = count
+                    # Filter call logs based on the call_status (default "ongoing")
                     if call_status:
                         call_logs = call_logs.filter(call_status="ongoing")
 
@@ -1436,7 +1513,12 @@ def live_call_list(request):
                     "success": True,
                     "page": page,
                     "paginated_logs":paginated_logs,
-                    "campaign_id":str(campaign_id)
+                    "campaign_id":str(campaign_id),
+                    # Pass call counts to the template
+                    "ongoing_count": ongoing_count,
+                    "not_started_count": not_started_count,
+                    "completed_count": completed_count,
+                    "total_count": total_count
                 }
 
                 return render(request, 'pages/campaign/live_calls.html', context)
