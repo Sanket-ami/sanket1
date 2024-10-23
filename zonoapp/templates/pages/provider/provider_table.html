@@ -110,16 +110,16 @@
                                             <p class="mt-1 f-m-light">{{ provider.provider_type }}</p>
                                         </div>
                                         <div>
-                                            <button class="btn btn-danger" onclick="deleteProvider({{ provider.id }}, '{{ provider.provider_name|escapejs }}')">
-                                                🗑️
-                                            </button>
-                                            <button class="btn btn-warning" 
+                                            <button class="btn btn-info" 
                                                 data-provider-id="{{ provider.id }}" 
                                                 data-provider-name="{{ provider.provider_name|escapejs }}" 
                                                 data-provider-type="{{ provider.provider_type|escapejs }}" 
                                                 data-provider-config="{{ provider.provider_config|escapejs }}" 
-                                                onclick="openEditProviderModal(this)">
-                                                ✏️
+                                                onclick="openEditProviderModal(this)"><i class="fa fa-edit"></i>
+                                                
+                                            </button>
+                                            <button class="btn btn-danger" onclick="deleteProvider({{ provider.id }}, '{{ provider.provider_name|escapejs }}')">
+                                                🗑️
                                             </button>
                                         </div>
                                     </div>
