@@ -4,6 +4,8 @@ from agent.models import Agent
 from qa_parameters.models import QAParameters
 import mongoengine as me
 import datetime
+from django.utils import timezone
+
 # Create your models here.
 
 class Campaign(models.Model):
@@ -36,6 +38,7 @@ class Transcript(models.Model):
     call_logs = models.CharField(max_length=255)  # call_log mongo id
     transcript = models.TextField()
     organisation_name = models.CharField(max_length=255,null=True)  # Assuming VARCHAR has a maximum length
+    recording = models.TextField(null=True)
     summary = models.TextField()
     qa_analysis = models.JSONField(default=[])
     created_at = models.DateTimeField(auto_now_add=True)

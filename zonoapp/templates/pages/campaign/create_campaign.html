@@ -140,18 +140,38 @@
                     </div>
                     <div class="row g-3"  >
 
-                      <div class="col-xxl-4 col-sm-6" style="width: 100%;" > 
+                      <div class="col-xxl-4 col-sm-6" style="width: 100%;"> 
                         <div class="col-sm-6">
-                            <label class="form-label" for="Agents">Agents<span class="txt-danger">*</span></label>
-                            <select class="form-select" id="Agents" required="">
-                              {% for agent in available_agents %}
-                              <!-- dynamically populate Agents options -->
-                              <option selected=""  value="{{agent.id}}">{{agent.agent_name}}</option>
-                              {% endfor %}
-                            </select>
-                            <div class="invalid-feedback">Please select a valid provider.</div>
-                     </div>
-                    <h5 class="f-w-600 mt-4 mb-2">Prompt</h5>
+                          <label class="form-label" for="Agents">Agents<span class="txt-danger">*</span></label>
+                          <select class="form-select" id="Agents" required="">
+                            {% for agent in available_agents %}
+                            <option value="{{ agent.id }}" 
+                                    data-voice-id="{{ agent.voice.id }}" 
+                                    data-voice-name="{{ agent.voice.voice_name }}"
+                                    data-audio-id="{{agent.voice.voice_id}}">{{ agent.agent_name }}</option>
+                            {% endfor %}
+                          </select>
+                          <div class="invalid-feedback">Please select a valid agent.</div>
+                      
+                          <h5 class="f-w-600 mt-4 mb-2">Voice</h5> 
+                          <div class="col-sm-6">
+                            <label class="form-label">Voice<span class="txt-danger">*</span></label>
+                            <input type="hidden" id="actualvoiceid">
+                            <span id="voice" class="form-control-plaintext"></span> <!-- Non-editable span for displaying the voice name -->
+                          </div>
+                        </div>  
+                      
+                        <div class="d-flex justify-content-between mt-3">
+                          <audio id="audio-player" controls="" style="display: none;">
+                            <source id="audio-source-mp3" src="" type="audio/mpeg">
+                            <source id="audio-source-wav" src="" type="audio/wav">
+                            Your browser does not support the audio tag.
+                          </audio>
+                          <button id="play-pause-button" class="btn btn-success" onclick="toggleAudio()">▶ Play</button>
+                        </div>
+                      </div>
+                      
+                      <h5 class="f-w-600 mt-4 mb-2">Prompt</h5>
                       <div class="row shipping-method g-3">
                         <div class="col-12">
                           <label class="form-label" for="agentPrompt">Add variable in the prompt by using {variable_name} syntax.</label>
@@ -162,19 +182,6 @@
                         </div>
                       </div>
                           
-                     <h5 class="f-w-600 mt-4 mb-2">Voice</h5> 
-                      <div class="col-sm-6">
-                        <label class="form-label" for="voice">voice<span class="txt-danger">*</span></label>
-                        <select class="form-select" id="voice" required="">
-                          {% for voice in available_agents %}
-                          <!-- dynamically populate Agents options -->
-                          <option selected="" value="{{voice.voice.id}}">{{voice.voice.voice_name}}</option>
-                          {% endfor %}
-                        </select>
-                        <div class="invalid-feedback">Please select a valid provider.</div>
-                        </div>
-                      </div>  
-
                       <div class="col-12 text-end">
                         <button id="step3btn" type="button" onclick="validateStep3(event)" class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
                       </div>
@@ -294,23 +301,31 @@
   // Function to show toast
   function showToast(type, message) {
     Swal.fire({
-                title: 'Alert',
-                text: message, // Dynamic message from Django
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-    }
-
-    function showToastSuccess(type, message) {
-    Swal.fire({
-        title: 'Created Campaign',
-        text: message,
-        icon: 'success',
-        confirmButtonText: 'OK'
-    }).then(() => { 
-        window.location.href = "{% url 'manage_campaign' %}"; // Replace with your campaign management URL
+      title: 'Alert',
+      text: message,
+      icon: 'error',
+      confirmButtonText: 'OK'
     });
-}
+  }
+  function showToastSuccessCampaign(message) {
+    Swal.fire({
+      title: 'Created Campaign',
+      text: message,
+      icon: 'success',  
+      confirmButtonText: 'OK'
+    }).then(() => { window.location.href = "{% url 'manage_campaign' %}"; });
+    ;
+  }
+
+  // Function to show success toast using SweetAlert2
+  function showToastSuccess(message) {
+    Swal.fire({
+      title: 'Contact Uploaded',
+      text: message,
+      icon: 'success',
+      confirmButtonText: 'OK'
+    });
+  }
 
   // Function to validate the prompt
   function validatePrompt() {
@@ -391,9 +406,14 @@
     // }
 
     const fileInput = document.getElementById('formFile3');
-        const filePath = fileInput.value;
-        const allowedExtension = /\.csv$/i;
-        const errorMsg = document.getElementById('fileError');
+    const filePath = fileInput.value;
+    const allowedExtension = /\.csv$/i;
+    const errorMsg = document.getElementById('fileError');
+
+    if (!uploadedFile) {
+      showToast("error", "Upload the contact list correctly.");
+      return;
+    }
 
         if (!allowedExtension.exec(filePath)) {
             // Prevent the form submission or proceeding to the next step
@@ -421,7 +441,7 @@
     document.getElementById("finish-wizard-tab").click()
 
     } else {
-      console.log("Invalid prompt. Please fix errors.");
+      showToast("error", "Invalid prompt. Please fix errors.");
     }
   }
 
@@ -456,7 +476,7 @@
             // Handle the successful response, maybe show a success message
             console.log("Campaign created successfully");
             // alert("Campaign created successfully!");
-            showToastSuccess("success", "Campaign added successfully!");
+            showToastSuccessCampaign("success", "Campaign added successfully!");
         },
         error: function(xhr, status, error) {
             // Handle errors here
@@ -474,7 +494,7 @@
     const file = event.target.files[0];
 
     if (!file) {
-      alert("Please select a file.");
+      showToast("error", "Please select a file.");
       return;
     }
 
@@ -484,7 +504,7 @@
       rows = csvData.split('\n').map(row => row.split(','));
 
       if (rows.length < 1) {
-        alert("The CSV file is empty or invalid.");
+        showToast("error", "The CSV file is empty or invalid.");
         return;
       }
 
@@ -501,7 +521,7 @@
       const phoneNumberIndex = headerRow.indexOf('contact_number');
       console.log(phoneNumberIndex)
       if (phoneNumberIndex === -1) {
-        alert('CSV must contain a "contact_number" column.');
+        showToast("error", 'CSV must contain a "contact_number" column.');
         return;
       }
 
@@ -519,12 +539,12 @@
       });
       console.log(invalidNumbers)
       if (invalidNumbers) {
-        alert('The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.');
+        showToast("error", 'The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.');
         return;
       }
 
       // Store CSV data as JSON array of objects
-      const data = $.map(rows.slice(1), function(row) {
+      contactList = $.map(rows.slice(1), function(row) {
         let obj = {};
         $.each(row, function(i, cell) {
           obj[columnNames[i]] = $.trim(cell);
@@ -532,20 +552,63 @@
         return obj;
       });
 
-      // Enable the proceed button after validation
       $('#proceedButton').prop('disabled', false);
-      contactList = data
       console.log("Column Names: ", columnNames);
-      console.log("File Data: ", data);
-      alert('contacts upload successfull')
+      console.log("File Data: ", contactList);
+      showToastSuccess('Contacts uploaded successfully!');
 
-      // You can store the data in a global variable or handle it as needed
-      window.csvData = data;
+      // Populate available variables textarea
+      $('#availableVariabes').val(columnNames.join(', ')); // Assuming this is your textarea ID for available variables
     };
 
     reader.readAsText(file);
   });
+  $(document).ready(function () {
+  $('#Agents').on('change', function () {
+    // Get the selected agent's voice name and audio ID
+    var selectedVoiceName = $('#Agents option:selected').data('voice-name');
+    var selectedAudioId = $('#Agents option:selected').data('audio-id'); // Get the unique audio ID
+
+    // Set the voice span to the corresponding voice name
+    $('#voice').text(selectedVoiceName);
+    $('#actualvoiceid').val($('#Agents option:selected').data('voice-id')); // Set actual voice ID
+
+    // Update audio sources based on selected agent
+    $('#audio-source-mp3').attr('src', `{% static 'assets/audio/' %}${selectedAudioId}.mp3`);
+    $('#audio-source-wav').attr('src', `{% static 'assets/audio/' %}${selectedVoiceName}.wav`);
+
+    // Load the new audio source
+    $('#audio-player')[0].load();
+  });
+
+  // Trigger change event on page load to set initial voice and audio if needed
+  $('#Agents').trigger('change');
+
+  // Add event listener for audio ended event
+  $('#audio-player').on('ended', function () {
+    var playPauseButton = $('#play-pause-button');
+    playPauseButton.text('▶ Play'); // Change button text to Play when audio ends
+  });
+});
+
+// Play/Pause function for audio
+function toggleAudio() {
+  var audioPlayer = $('#audio-player')[0]; // Access the audio element
+  var playPauseButton = $('#play-pause-button');
+
+  if (audioPlayer.paused) {
+    audioPlayer.play(); // Play the audio
+    playPauseButton.text('❚❚ Pause'); // Change button text to Pause
+  } else {
+    audioPlayer.pause(); // Pause the audio
+    playPauseButton.text('▶ Play'); // Change button text to Play
+  }
+}
+8
+
 </script>
+
+
 
 {% endblock %}
 
