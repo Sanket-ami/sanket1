@@ -22,23 +22,45 @@ from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth import update_session_auth_hash
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.html import format_html
+
 User = get_user_model()
+
 ########## Reset Password #############
 def send_otp(request):
     email = request.GET.get('email')
     if User.objects.filter(email=email).exists():
         user = User.objects.get(email=email)
         otp = default_token_generator.make_token(user)
+        
+        subject = '🔒 Your OTP for Password Reset'
+        message = format_html(f'''
+            <html>
+            <body>
+                <h2 style="color: #4CAF50;">Hello {user},</h2>
+                <p>We received a request to reset your password. Please use the One-Time Password (OTP) below:</p>
+                <h1 style="font-size: 18px; color: #FF5722;">{otp}</h1>
+                <p>This OTP is valid for the next 10 minutes. If you did not request this, please ignore this email.</p>
+                <p>Thank you for using our service!</p>
+                <footer style="font-size: 12px; color: #888888;">
+                    <p>Best Regards,<br>Your Company Name</p>
+                </footer>
+            </body>
+            </html>
+        ''').format(username=user.username, otp=otp)
+
         send_mail(
-                'Password Reset',
-                f'Your OTP is: {otp}',
-                'from@example.com',
-                [email],
-                fail_silently=False,
+            subject,
+            message,
+            'from@example.com',
+            [email],
+            fail_silently=False,
+            html_message=message  # Send as HTML
         )
         return JsonResponse({'status': 'success'})
     else:
         return JsonResponse({'status': 'error', 'message': 'Email not found'})
+    
 def validate_otp(request):
     otp = request.GET.get('otp')
     email = request.GET.get('email')
@@ -49,20 +71,7 @@ def validate_otp(request):
         else:
             return JsonResponse({'status': 'error', 'message': 'Invalid OTP'})
     return JsonResponse({'status': 'error', 'message': 'User not found'})
-# def change_password(request):
-#     import pdb;pdb.set_trace()
-#     if request.method == 'POST':
-#         form = PasswordResetForm(request.user, request.POST)
-#         if form.is_valid():
-#             user = form.save()
-#             update_session_auth_hash(request, user)  # Important to update session
-#             messages.success(request, 'Your password was successfully updated!')
-#             return redirect('/login_home')
-#         else:
-#             messages.error(request, 'Please correct the error below.')
-#     else:
-#         form = PasswordResetForm(request.user)
-#     return render(request, 'password_change.html', {'form': form})
+
  
 @csrf_exempt
 def change_password(request):
