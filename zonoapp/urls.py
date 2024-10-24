@@ -1,17 +1,28 @@
 from django.urls import path
 from .import views
 from .user_management_views import list_of_user, get_user
-from .views import fetch_gravatar
+from .views import all_notifications_view, contact_sale, count_notification, fetch_gravatar, notifications_view
+from django.conf import settings
+from django.conf.urls.static import static
+from dashboard.views import  calls_per_hour
+
 
 
 
 urlpatterns = [
+
+
+    path('contact_sale/',contact_sale,name="contact_sale"),
+    path('count_notifications/',count_notification,name='count_notification') ,
+    path('all_notifications/', all_notifications_view, name='all_notifications'),
+    path('fetch-notification/',all_notifications_view , name='fetch_notification'),
     path('fetch-gravatar/', fetch_gravatar, name='fetch_gravatar'),
     path('user_list', list_of_user, name="list-user"),
     path('<int:user_id>', get_user, name="get-user"),
-    path('', views.index, name='index'),
-    path('index', views.index, name='index'),
+    path('', calls_per_hour, name='index'),
+    path('index', calls_per_hour, name='index'),
     path('dashboard_02', views.dashboard_02, name="dashboard_02"),
+    path('get_credits',views.get_credits,name="get_credits"),
     
     
     # #-----------------------Widgets
@@ -333,4 +344,11 @@ urlpatterns = [
     path('signup_home', views.signup_home, name="signup_home"),
     path('login_home', views.login_home, name="login_home"),
     path('logout_view', views.logout_view, name="logout_view"),
+     path('get_credits',views.get_credits,name="get_credits"),
+#-------------------------------- Reset Password --------------------------------------
+    path('send_otp', views.send_otp, name="send_otp"),
+    path('validate_otp', views.validate_otp, name="validate_otp"),
+    path('change_password', views.change_password, name="change_password"),
+    
 ]
+

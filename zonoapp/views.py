@@ -14,6 +14,199 @@ from django import template
 from django.utils.safestring import mark_safe
 from django.http import JsonResponse
 from django.conf import settings
+from django.core.paginator import Paginator
+from .models import Notification, Credits
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth import update_session_auth_hash
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.html import format_html
+
+User = get_user_model()
+
+########## Reset Password #############
+def send_otp(request):
+    email = request.GET.get('email')
+    if User.objects.filter(email=email).exists():
+        user = User.objects.get(email=email)
+        otp = default_token_generator.make_token(user)
+        
+        subject = '🔒 Your OTP for Password Reset'
+        message = format_html(f'''
+            <html>
+            <body>
+                <h2 style="color: #4CAF50;">Hello {user},</h2>
+                <p>We received a request to reset your password. Please use the One-Time Password (OTP) below:</p>
+                <h1 style="font-size: 18px; color: #FF5722;">{otp}</h1>
+                <p>This OTP is valid for the next 10 minutes. If you did not request this, please ignore this email.</p>
+                <p>Thank you for using our service!</p>
+                <footer style="font-size: 12px; color: #888888;">
+                    <p>Best Regards,<br>Your Company Name</p>
+                </footer>
+            </body>
+            </html>
+        ''').format(username=user.username, otp=otp)
+
+        send_mail(
+            subject,
+            message,
+            'from@example.com',
+            [email],
+            fail_silently=False,
+            html_message=message  # Send as HTML
+        )
+        return JsonResponse({'status': 'success'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Email not found'})
+    
+def validate_otp(request):
+    otp = request.GET.get('otp')
+    email = request.GET.get('email')
+    if User.objects.filter(email=email).exists():
+        user = User.objects.get(email=email)
+        if default_token_generator.check_token(user, otp):
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid OTP'})
+    return JsonResponse({'status': 'error', 'message': 'User not found'})
+
+ 
+@csrf_exempt
+def change_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        new_password = request.POST.get('new_password')
+        try:
+            user = User.objects.get(email=email)  # Fetch user based on email
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'User not found.'})
+        form = SetPasswordForm(user, request.POST)  # Using SetPasswordForm, no old password required
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, user)  # Important: update the session after password change
+            return JsonResponse({'status': 'success', 'message': 'Password updated successfully.'})
+        else:
+            errors = form.errors.as_json()  # Return form errors in JSON format
+            return JsonResponse({'status': 'error', 'message': 'Password reset failed.', 'errors': errors})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
+
+# Contact cell 
+
+@login_required(login_url="/login_home")
+def contact_sale(request):
+    context = { "breadcrumb":{"title":"Contact sales","parent":"Pages", "child":"Contact Sales"}}
+    return render(request,"pages/contact_sale/contactsale.html",context)
+
+
+
+# Count of Notification 
+
+def count_notification(request):
+    if request.user.is_authenticated:
+        notifications = Notification.objects.filter(is_read=False)
+        notifications_count = len(notifications)
+        print("Notification  ",len(notifications))
+        return JsonResponse({'notifications':notifications_count})
+    return JsonResponse({'error': 'User not authenticated'}, status=401)
+
+
+# Notification all 
+
+@login_required(login_url="/login_home")
+def all_notifications_view(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+        try:
+            if request.user.is_superuser :
+                notifications = Notification.objects.filter().order_by('-id')
+                print("superuser")
+            else :
+                notifications = Notification.objects.filter(organisation_name = request.user.organisation_name).order_by('-id') 
+            
+            notifications_temp =notifications[:4]
+            notification_list = [
+                {
+                    'message': notification.message,
+                    'created_at': notification.created_at.isoformat(),
+                }
+                for notification in notifications_temp
+            ]
+            print("notification list")
+            notifications_count =notifications.filter(is_read=False).count()
+            
+            # print(request.user.organisation_name)
+            print(notification_list)
+            return JsonResponse({'notifications': notification_list , 'notification':notifications_count})
+        except Exception as error :
+            print("User not have permission :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{})
+    if request.user.is_superuser and request.method == 'GET':
+        try:
+            notifications = Notification.objects.filter().order_by('-id')
+            notification_list = [
+                {
+                    'message': notification.message,
+                    'created_at': notification.created_at.isoformat(),
+                }
+                for notification in notifications
+            ]
+            # print(notification_list)
+            notifications.update(is_read=True)
+            paginator = Paginator(notification_list, 10) 
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+            # print(page_obj)
+            return render(request, 'pages/user_management/users_notification.html', {'notifications': page_obj , "breadcrumb":{"title":"Notifications","parent":"Pages", "child":"Notifications"}})
+        except Exception as error :
+            print("error user not have permission :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{})
+    elif request.user.is_authenticated and request.method == 'GET':
+        try:
+            notifications = Notification.objects.filter(organisation_name = request.user.organisation_name).order_by('-id')
+            notification_list = [
+                {
+                    'message': notification.message,
+                    'created_at': notification.created_at.isoformat(),
+                }
+                for notification in notifications
+            ]
+            # print(notification_list)
+            notifications.update(is_read=True)
+            paginator = Paginator(notification_list, 10) 
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+            return render(request, 'pages/user_management/users_notification.html', {'notifications': page_obj , "breadcrumb":{"title":"Notifications","parent":"Pages", "child":"Notifications"}})
+        except Exception as error :
+            print("error user have not permission :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{})
+    return render(request,'pages/error-pages/error-500.html',{})
+    
+
+
+# Notification view 
+
+
+def notifications_view(request):
+    if request.user.is_authenticated:
+
+        notifications = Notification.objects.filter(organisation_name = request.user.organisation_name).order_by('-created_at')[:4]
+        notification_list = [
+            {
+                'message': notification.message,
+                'created_at': notification.created_at.isoformat(),
+            }
+            for notification in notifications
+        ]
+        # print(request.user.organisation_name)
+        # print(notification_list)
+        return JsonResponse({'notifications': notification_list})
+
+    return JsonResponse({'error': 'User not authenticated'}, status=401)
+
+
+
 
 
 
@@ -25,27 +218,18 @@ def fetch_gravatar(request):
     if request.method == 'POST' and request.user.is_authenticated:
         email = request.user.email
         user = request.user.username 
-        # print("email : ",email)
-        # print("user : ",user)
         hashed_email = md5(email.lower().encode('utf-8')).hexdigest()
-        print(hashed_email)
         first_imagename = f"{user}.jpg"
-        # print(first_imagename)
+        default = "https://aminfoweb1.s3.amazonaws.com/favicon+16x16-1.png"
         first_check = os.path.join(settings.STATIC_ROOT, 'images', first_imagename)
         if os.path.exists(first_check):
-            print("find")
-            print(first_check)
             return JsonResponse({'image_url': f"{settings.STATIC_URL}images/{first_imagename}"})
-        params = urlencode({'s': str(40)})
-        # print(hashed_email)
+        params = urlencode({'d': default,'s': str(40)})
         gravatar_url = f"https://www.gravatar.com/avatar/{hashed_email}?{params}"
-        print(gravatar_url)
         image_filename = f"{user}.jpg"
         image_path = os.path.join(settings.STATIC_ROOT, 'images', image_filename)
-        print(image_path)
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         if not os.path.exists(image_path):
-            print("ok")
             response = requests.get(gravatar_url)
             if response.status_code == 200:
                 with open(image_path, 'wb') as f:
@@ -55,6 +239,22 @@ def fetch_gravatar(request):
     return JsonResponse({'error': 'User not authenticated'}, status=403)
 
 
+################################ Get credits ###########################
+@login_required(login_url="/login_home")
+def get_credits(request):
+    try:
+        # fetch the orgnisation
+        organisation_name = request.user.organisation_name
+        # fetch the credits
+        credits= Credits.objects.get(organisation_name=organisation_name)
+        credits_left = credits.credits
+
+        return JsonResponse({'credits_left': credits_left})
+    except Exception as e:
+        print()
+        return JsonResponse({"credits_left":0,'error': str(e)})
+
+ 
 # Create your views here.
 
 @login_required(login_url="/login_home")
@@ -944,7 +1144,7 @@ def unlock(request):
     return render(request,'pages/authentication/unlock.html')
     
 
-@login_required(login_url="/login_home")
+# @login_required(login_url="/login_home")
 def forget_password(request):
     return render(request,'pages/authentication/forget-password.html')
     

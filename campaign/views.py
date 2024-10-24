@@ -1,9 +1,9 @@
 from django.shortcuts import render,redirect
 from django.contrib import messages
-from django.http.response import HttpResponseRedirect,JsonResponse
+from django.http.response import HttpResponseRedirect,JsonResponse,HttpResponse 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from zonoapp.models import User
+from zonoapp.models import User, Credits
 from voice.models import Voice
 from agent.models import Agent
 from .models import Campaign, Transcript,CallLogs, ContactList, ScheduleCampaign
@@ -19,6 +19,8 @@ from django.conf import settings
 import requests
 import time
 from datetime import datetime
+from django.utils import timezone
+import re
 import os
 from requests.auth import HTTPBasicAuth
 from django.http import FileResponse
@@ -26,88 +28,97 @@ import io
 from django.urls import reverse
 import csv
 from qa_parameters.models import QAParameters
+from zono.settings import CALL_SERVER_BASE_URL
+import boto3
 
 ## render create campaign page
 @login_required(login_url="/login_home")
 def create_campaign(request):
     if request.method == "GET":
+        try:
+            telephony_providers_list =  Provider.objects.filter(provider_type="telephony")
+            if request.user.is_superuser:
+                org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
+            else:
+                org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
+            print('org_names ',org_names)
 
-        telephony_providers_list =  Provider.objects.filter(provider_type="telephony")
-        if request.user.is_superuser:
-            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
-        else:
-            org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
+            available_agents = Agent.objects.filter(is_deleted=False)
+            
+            #### QA parameters list
+            qa_parameters = QAParameters.objects.filter(is_deleted=False,organisation_name__in = org_names)
+            
+            if not request.user.is_superuser:
+                available_agents = available_agents.filter(organisation_name__in=org_names)
+            print('available_agents ',available_agents)
+            # available_voice = Agent.objects.filter(is_deleted=False)
 
-        print('org_names ',org_names)
+            context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Create Campaign"},
+                    "telephony_providers_list":telephony_providers_list,"org_names":org_names,"qa_parameters":qa_parameters,
+                    "available_agents":available_agents
+                    }   
+            
+            return render(request,'pages/campaign/create_campaign.html',context)
+            
+        except Exception as error :
+            print("error in create_campaign :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{"error":error})
 
-        available_agents = Agent.objects.filter(is_deleted=False)
-
-        #### QA parameters list
-        qa_parameters = QAParameters.objects.filter(is_deleted=False,organisation_name__in = org_names)
-        
-        if not request.user.is_superuser:
-            available_agents = available_agents.filter(organisation_name__in=org_names)
-        print('available_agents ',available_agents)
-        # available_voice = Agent.objects.filter(is_deleted=False)
-
-        context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Sample Page"},
-                   "telephony_providers_list":telephony_providers_list,"org_names":org_names,"qa_parameters":qa_parameters,
-                   "available_agents":available_agents
-                   }   
-        
-        return render(request,'pages/campaign/create_campaign.html',context)
     elif request.method == "POST":
-        data = json.loads(request.body)
-        print("datad ",data)
+        try:
+            data = json.loads(request.body)
+           
 
-        provider = Provider.objects.get(id=data['provider'])
-        agent = Agent.objects.get(id=data['agent'])
-        agent.agent_prompt = data['prompt']
-        agent.save()
+            provider = Provider.objects.get(id=data['provider'])
+            agent = Agent.objects.get(id=data['agent'])
+            agent.agent_prompt = data['prompt']
+            agent.save()
 
-        new_contact_list = []
-        for contact in data['contact_list']:
-            # add a unique identifiier to each contact
-            contact["contact_id"] = "contact_"+str(uuid.uuid4().hex)
-            new_contact_list.append(contact)
+            new_contact_list = []
+            for contact in data['contact_list']:
+                # add a unique identifiier to each contact
+                contact["contact_id"] = "contact_"+str(uuid.uuid4().hex)
+                new_contact_list.append(contact)
 
-        campaign = Campaign.objects.create(
-            campaign_name=data['campaign_name'],
-            is_schedule=data['is_schedule'],
-            organisation_name=data['organisation_name'],
-            show_transcript=data['show_transcript'],
-            process_type=data['process_type'],
-            provider=provider,
-            # contact_list = new_contact_list,  # removed old logic of single list
-            agent=agent,
-            summarization_prompt=data['summarization_prompt'],
-            qa_parameters_id= data["qa_parameters_list"],
-            show_recording=data['show_recording'],
-            show_numbers=data['show_numbers'],
- 
-        )
+            campaign = Campaign.objects.create(
+                campaign_name=data['campaign_name'],
+                is_schedule=data['is_schedule'],
+                organisation_name=data['organisation_name'],
+                show_transcript=data['show_transcript'],
+                process_type=data['process_type'],
+                provider=provider,
+                # contact_list = new_contact_list,  # removed old logic of single list
+                agent=agent,
+                summarization_prompt=data['summarization_prompt'],
+                qa_parameters_id= data["qa_parameters_list"],
+                show_recording=data['show_recording'],
+                show_numbers=data['show_numbers'],
+    
+            )
 
-        #######################################################
-        """ #### New Logic for adding contact list ######## """
-        campaign_id = campaign.id
+            #######################################################
+            """ #### New Logic for adding contact list ######## """
+            campaign_id = campaign.id
 
-        # Save the campaign contact list and mark it as active
-        campaign_contact_list = ContactList.objects.create(
-            list_name="default",
-            campaign_id=campaign_id,
-            contact_list=new_contact_list,
-            is_active=True,  # Make it active by default
-            organisation_name=data['organisation_name'],
-            created_by="system",
-            modified_by="system",
-        )
+            # Save the campaign contact list and mark it as active
+            campaign_contact_list = ContactList.objects.create(
+                list_name="default",
+                campaign_id=campaign_id,
+                contact_list=new_contact_list,
+                is_active=True,  # Make it active by default
+                organisation_name=data['organisation_name'],
+                created_by="system",
+                modified_by="system",
+            )
 
-        # Update the campaign with the contact_list_id
-        campaign.contact_list_id = campaign_contact_list.id
-        campaign.save()
-        #######################################################
-        return JsonResponse({"message": "Campaign created successfully!", "campaign_id": campaign.id,"success":True})
-
+            # Update the campaign with the contact_list_id
+            campaign.contact_list_id = campaign_contact_list.id
+            campaign.save()
+            #######################################################
+            return JsonResponse({"message": "Campaign created successfully!", "campaign_id": campaign.id,"success":True})
+        except Exception as error :
+            print("error in create_campaign :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{"error":error})
     return JsonResponse({"error": "Invalid request method","success":False, "error":True }, status=500)
     
 ############ upload new contacts csv #######
@@ -125,7 +136,7 @@ def upload_contact_list(request, campaign_id):
         if contact_list.contact_list:
             keys_to_match =  list(contact_list.contact_list[0].keys())
             try:
-                keys_to_match.remove("contact_id")
+                keys_to_match.remove('contact_id')
             except:
                 pass # removing the auto generated_column
         else:
@@ -137,7 +148,7 @@ def upload_contact_list(request, campaign_id):
         try:
             csv_data = csv.DictReader(csv_file.read().decode('utf-8').splitlines())
             uploaded_columns = csv_data.fieldnames
-            
+            print(uploaded_columns)
             # Check if columns match
             if set(uploaded_columns) != set(current_columns):
                 return JsonResponse({'status': 'error', 'message': 'CSV columns do not match the existing contact list.'})
@@ -169,33 +180,44 @@ def upload_contact_list(request, campaign_id):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)     
 
 
 ## render view campaign page
 @login_required(login_url="/login_home")    
 def campaign_list(request):
-    search_query = request.GET.get('q', '')  # Get the search query from the URL
-    campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
-    
-    paginator = Paginator(campaigns, 10)  # Show 10 campaigns per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Add custom key-value pairs to the campaigns in page_obj after pagination
-    for campaign in page_obj:
-        if campaign.is_schedule:
-            # find out schedule_date
-            schedule_obj = ScheduleCampaign.objects.filter(campaign=campaign,is_finished=False).first().schedule_date
-            campaign.scheduled_date = schedule_obj
+    try :
+        # import pdb; pdb.set_trace()
+        search_query = request.GET.get('q', '')  # Get the search query from the URL
+        if request.user.is_superuser:
+            user_organization = request.user.organisation_name  # Adjust this based on your user model
+            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
         else:
-            campaign.scheduled_date = ""
+            user_organization = request.user.organisation_name  # Adjust this based on your user model
+            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query,organisation_name=user_organization).order_by('-id')  # Filter campaigns based on the search query
+             
+        paginator = Paginator(campaigns, 10)  # Show 10 campaigns per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # Add custom key-value pairs to the campaigns in page_obj after pagination
+        for campaign in page_obj:
+            if campaign.is_schedule:
+                # find out schedule_date
+                schedule_obj = ScheduleCampaign.objects.filter(campaign=campaign,is_finished=False).first().schedule_date
+                campaign.scheduled_date = schedule_obj
+            else:
+                campaign.scheduled_date = ""
 
-    context = {
-        'page_obj': page_obj,
-        'search_query': search_query,
-    }
-    return render(request, 'pages/campaign/list_campaign.html', context)
+        context = {
+            "breadcrumb":{"title":"Campaign Management","parent":"Pages", "child":"Campaign Management"},
+            'page_obj': page_obj,
+            'search_query': search_query,
+        }
+        return render(request, 'pages/campaign/list_campaign.html', context)
+    except Exception as error :
+            print("error in create_campaign :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{})
 
 
 def edit_campaign():
@@ -216,7 +238,12 @@ def contact_list(request, campaign_id):
             contact_list = ContactList.objects.filter(is_deleted = False, campaign=campaign)
             # select the specfic list from a campaign
             selected_list = request.GET.get("selected_contact_list")
-
+            search = request.GET.get('patient_name')
+            print("Search  : ",search)
+            # if search:
+            #     contact_list = contact_list.filter(patient_name = search)
+            if search is None :
+                search = ""
             if selected_list:
                 contact_list = contact_list.filter(id = selected_list)
                 contact_list_id = contact_list[0].id
@@ -228,11 +255,15 @@ def contact_list(request, campaign_id):
                     contact_list_id = contact_list[0].id
                     is_active = contact_list[0].is_active
                     contact_list = list(contact_list[0].contact_list)
-
+            if search :
+                contact_list = [patient for patient in contact_list if  patient['patient_name'].lower().startswith(search.lower()) ]
             print("final_conact_list_b4 uload + ",contact_list)
-            context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Sample Page"},"contact_list": contact_list,"campaign_id":campaign_id,
+            paginator = Paginator(contact_list, 10)  # Show 10 campaigns per page
+            page_number = request.GET.get('page')
+            contact_list = paginator.get_page(page_number)
+            context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Contact List"},"contact_list": contact_list,"campaign_id":campaign_id,
                         "all_contact_list_names":all_contact_list_names, "selected_contact_list":selected_list,"contact_list_id":contact_list_id,
-                        "is_active":is_active
+                        "is_active":is_active , "patient_name":search
                     }
             
             return render(request, 'pages/campaign/contact_list.html', context)
@@ -281,7 +312,7 @@ def delete_contact(request, campaign_id):
                 return JsonResponse({'message': 'No contact IDs provided.'}, status=400)
 
             # Fetch the contact_list (assumed to be a list of dictionaries)
-            contact_list = campaign.contact_list
+            contact_list = campaign.contact_list.contact_list
 
             # Remove contacts with matching IDs from the contact_list
             updated_contact_list = [
@@ -289,12 +320,17 @@ def delete_contact(request, campaign_id):
             ]
 
             # Update the campaign's contact_list and save it
-            campaign.contact_list = updated_contact_list
-            campaign.save()
+            # campaign.contact_list.contact_list = updated_contact_list
+            # campaign.save()
+
+            contact_list_obj = campaign.contact_list  
+            contact_list_obj.contact_list = updated_contact_list  # Assuming contact_list is a JSON field or similar
+            contact_list_obj.save()  # Save the updated list to the database
 
             return JsonResponse({'message': 'Contacts deleted successfully.',"success":True}, status=200)
 
         except Exception as e:
+            print(e)
             return JsonResponse({'message': str(e),"success":False, "error":True}, status=500)
 
     return JsonResponse({'message': 'Invalid request method.',"error":True}, status=400)
@@ -307,26 +343,74 @@ def start_campaign(request):
         try:  
             request_body = json.loads(request.body)
             campaign_id = request_body['campaign_id']
-
-            # read the values of the camaign
             campaign_obj = Campaign.objects.get(id=campaign_id)
             if not campaign_obj.contact_list:
                 return JsonResponse({'message': 'No contacts present for this campaign',"success":False,"error":True}, status=200)
-            
-            # fetch the prompt
-            prompt = campaign_obj.agent.agent_prompt
 
+            prompt = campaign_obj.agent.agent_prompt
+            provider = campaign_obj.provider
             # Iterate over the data
             contact_list = campaign_obj.contact_list.contact_list
             voice_config = campaign_obj.agent.voice.voice_configuration
- 
-            # qa parameters and summarization
             qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
 
             # start a thread 
             wait_time_after_call,wait_time_after_5_calls = 1,1
+            organisation_name = campaign_obj.organisation_name
+            print("organisation name",organisation_name)
             try:
-                thread = threading.Thread(target=start_call_queue, args=(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt))
+                credits_remaining = 0
+                credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits    
+                pass
+                if credits_remaining <= 0:
+                    return JsonResponse({'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}, status=200)
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider))
+                thread.start()
+            except Exception as err:
+                print("error in campaign start: ", err)
+
+            # set the status to ongoing 
+            campaign_obj.status = "ongoing"
+            
+            campaign_obj.save()
+
+            return JsonResponse({'message': 'Campaign started Successfully',"success":True,"error":False}, status=200)
+        except Exception as e:
+            print("error in start_campaig: ",e)
+            pass
+
+
+def start_campaign_secheduler(request):
+    if request.method == "GET":
+        try:  
+            token = request.GET.get('token')
+            campaign_id = request.GET.get('campaign_id')
+
+            if token != os.getenv('SECHEDULE_CAMPAIGN_TOKEN'):
+                return JsonResponse({'message': 'No contacts present for this campaign',"success":False,"error":True}, status=403)
+
+            campaign_obj = Campaign.objects.get(id=campaign_id)
+            if not campaign_obj.contact_list:
+                return JsonResponse({'message': 'No contacts present for this campaign',"success":False,"error":True}, status=200)
+
+            prompt = campaign_obj.agent.agent_prompt
+            provider = campaign_obj.provider
+            # Iterate over the data
+            contact_list = campaign_obj.contact_list.contact_list
+            voice_config = campaign_obj.agent.voice.voice_configuration
+            qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
+
+            # start a thread 
+            wait_time_after_call,wait_time_after_5_calls = 1,1
+            organisation_name = campaign_obj.organisation_name
+            print("organisation name",organisation_name)
+            try:
+                credits_remaining = 0
+                credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits    
+                pass
+                if credits_remaining <= 0:
+                    return JsonResponse({'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}, status=200)
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider))
                 thread.start()
             except Exception as err:
                 print("error in campaign start: ", err)
@@ -342,18 +426,20 @@ def start_campaign(request):
 
 
 # call queue thread
-def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt):
+def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, organisation_name, provider):
     # if the campaign is scheduled mark is_schedule as false as the campaign is already started
     campaign_obj = Campaign.objects.get(id=campaign_id)
+    organisation_name = campaign_obj.organisation_name
     try:
         if campaign_obj.is_schedule:
             campaign_obj.is_schedule=False
             campaign_obj.save()
-
+            print("======>", campaign_obj)
             # update the scheduled table
-            schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id,is_finished=False,is_ongoing=False).first()
+            schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_finished=False, is_ongoing=False).first()
             schedule_obj.is_ongoing=True
             schedule_obj.save()
+            print("=======================>", schedule_obj)
 
         else:
             pass
@@ -373,17 +459,23 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             # call log creation
             call_log = call_details
             call_log["call_status"] = "not_started"
-            call_log['campaign_id'] = campaign_id
+            call_log['campaign_id'] = int(campaign_id)
             
             try:
                 context={"prompt" : formatted_prompt}
+                           # Before starting the call check credits of the organization
+                credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits
+                if credits_remaining <= 0:
+                    print("You do not have enough credits to start this campaign. Please add credits to your account.")
+                    return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
                 # hit a post request on api
                 url = f"{settings.CALL_SERVER_BASE_URL}/start_call"
-
+                print('provider', type(provider))
                 payload = json.dumps({
                     "to_phone": to_phone,
                     "context":context,
-                    "voice_configuration":voice_config
+                    "voice_configuration":voice_config,
+                    "telephony_name":provider.provider_name
                 })
                 headers = {
                 'Content-Type': 'application/json'
@@ -411,6 +503,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             call_log["call_status"] = call_status
             call_log["start_time"] = datetime.now()
             call_log["end_time"] = None
+            call_log['organisation_name']=organisation_name
 
             # Create an instance of CallLogs with the dynamic fields
             call_log_entry = CallLogs(**call_log)
@@ -420,7 +513,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             mongo_id = call_log_entry.id
 
             # monitoring the call status
-            monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"]))
+            monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"], organisation_name, provider))
             monitor_thread.start()
         except Exception as err:
             print(f"error while calling: {call_details['contact_number']} error- {err}")
@@ -431,7 +524,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
     # once all the calls are over update the schedule campaign object to completed
     try:
         # update the scheduled table
-        schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_ongoing=True).first()
+        schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_ongoing=False).first()
         schedule_obj.is_ongoing=False
         schedule_obj.is_finished=True
         schedule_obj.save()
@@ -442,10 +535,11 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
 
 
 # monitoring ongoing call
-def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_start_time):
+def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_start_time, organisation_name, provider):
     call_status_current = ""
     not_started_count = 0
-    
+    print("==================================>", call_status_id)
+    #print("organisation name",organisation_name)
     while call_status_current not in ['ended', 'error']:
         time.sleep(1)  # wait for transcript
         # call_status_obj = call_client.calls.get_call(id=call_id)
@@ -461,9 +555,48 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
             if not_started_count > 4:
                 return False
-
+        print("call_status_current", call_status_current)
         if call_status_current not in ['ended', 'error']:
+            try:
+                print(123)
+                # Before starting the call check credits of the organization
+                credits_obj= Credits.objects.get(organisation_name=organisation_name)
+                credits_remaining = credits_obj.credits
+                if credits_remaining <= 0:
+                    print("You do not have enough credits to start this campaign. Please add credits to your account.")
+
+                    ## TODO: End the call using API
+                    try:
+                        # Make the external API request with the fetched call_id
+                        if provider.provider_name == 'telnyx':
+                            print("tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt")
+                            api_url = f"{CALL_SERVER_BASE_URL}/end_call_telnyx"
+                        else:
+                            api_url = f"{CALL_SERVER_BASE_URL}/end_call"
+                        
+                        payload = {"call_id": call_status_id}
+                        headers = {
+                            # 'Authorization': 'Bearer a9e11af5ec4c6491dbd82e8a6f3dfde3'
+                            'Content-Type': 'application/json'
+                        }
+                        
+                        response = requests.post(api_url, headers=headers, json=payload)
+                        response = response.json()
+                        
+                        print("External API response:", response)
+                    except:
+                        pass
+                    return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
+                else:
+                    # Reduce credits
+                    print("call started")
+                    credits_obj.credits = credits_obj.credits - 1  
+                
+                    credits_obj.save()
+            except Exception:
+                pass
             time.sleep(60)
+
         
         elif call_status_current == 'ended':
             time.sleep(2)
@@ -474,18 +607,72 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
             duration = 0
             end_time = datetime.fromisoformat(str(call_end))
+            call_session_id = ""
             try:
+                if provider.provider_name == 'telnyx':                # new logic for call duration                
+                    # url = f"https://api.telnyx.com/calls/{call_status_id}/status"
+                    url = f"https://api.telnyx.com/v2/calls/{call_status_id}" # v2
+                    # telnyx_token = get_valid_token()
+                    # if not telnyx_token:
+                    telnyx_token = os.getenv('TELNYX_AUTH_TOKEN')
+
+                    payload = {}
+                    headers = {
+                    'Accept': 'application/json',
+                    'Authorization': "Bearer " + telnyx_token
+                    }
+
+                    response = requests.request("GET", url, headers=headers, data=payload)
+                    response = response.json()
+                    duration = response["data"]['call_duration']
+                    call_session_id = response["data"]['call_session_id']
+
+                else:
                 # Convert strings to datetime objects
-                start_time = datetime.fromisoformat(str(call_start_time))  # Remove 'Z' from end
-                # end_time = datetime.fromisoformat(str(call_end))      # Remove 'Z' from end
+                    url = f"https://api.twilio.com/2010-04-01/Accounts/{os.getenv('TWILIO_ACCOUNT_SID')}/Calls/{call_status_id}.json"
 
-                # Calculate the difference
-                time_difference = end_time - start_time
-
-                # Extract the difference in seconds
-                duration = int(time_difference.total_seconds())
-            except:
+                    response = requests.request("GET", url, auth=(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN')))
+                    response=response.json()
+                    print(response)
+                    duration = response['duration']
+                    # fetch and save call session id for recording 
+                    call_session_id = response["data"]['call_session_id']
+            except Exception as e:
+                print("Error====>", e)
                 pass
+            recording_url=""
+            if call_session_id:
+                try:
+                    # Fetch the recording from telnyx
+                    url = f"https://api.telnyx.com/v2/recordings?call_session_id={call_session_id}"
+                    payload = {}
+                    headers = {
+                    'Accept': 'application/json',
+                    'Authorization': 'Bearer '+telnyx_token
+                    }
+                    response = requests.request("GET", url, headers=headers, data=payload)
+                    response = response.json()
+                    if response:
+                        recording_url_temp = response['data'][0]['download_urls']['mp3']
+                    # Download the recording
+                    recording_response = requests.get(recording_url_temp)
+                    recording_response.raise_for_status()  # Raises an error for bad responses
+                    # upload the recording to s3 bucket
+                    s3_client = boto3.client('s3',
+                            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                            region_name=os.getenv('AWS_S3_REGION_NAME') 
+                        )
+                    bucket_name = 'telnyx-recordings-callbot' 
+                    # Prepare S3 upload
+                    call_status_id_refined = sanitize_call_id(call_status_id)
+                    file_name = f"recording_{call_status_id_refined}.mp3"  # Filename for S3
+                    s3_client.put_object(Bucket=bucket_name, Key=file_name, Body=recording_response.content)
+                    # Construct the S3 URL
+                    recording_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
+                    print(f"Recording uploaded to S3: {recording_url}")
+                except Exception as error:
+                    print(f"Error fetching recording..: {error}")
 
             # import pdb;pdb.set_trace()
             summary = ""
@@ -509,6 +696,7 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
 
             ## transcript save
             transcript_obj = Transcript()
+            transcript_obj.recording = recording_url
             transcript_obj.campaign_id =  campaign_id
             transcript_obj.call_logs = call_status_id
             transcript_obj.summary = summary
@@ -532,7 +720,6 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             }
 
             updated_call_log = update_call_log(mongo_id, updated_fields)
-            print(updated_call_log)
             return True
 
         elif call_status_current == 'error':
@@ -547,12 +734,15 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             }
 
             updated_call_log = update_call_log(mongo_id, updated_fields)
-            print(updated_call_log)
 
  
   
             return True
     return True
+def sanitize_call_id(call_id):
+    # Remove all special characters except alphanumeric, hyphens, and underscores
+    sanitized_id = re.sub(r'[^a-zA-Z0-9_-]', '', call_id)
+    return sanitized_id
 
 
 """
@@ -572,7 +762,6 @@ def get_current_call_status(call_id):
         print(response)
         call_status = response["call_status"]
         call_uuid = response["call_id"]
-        print(f"call_status => {call_status}, call_uuid => {call_uuid}")
         return response
     except Exception as error:
         print("error in call get_current_call_status call id --> ", call_id)
@@ -661,28 +850,28 @@ def analyze_call(request_body):
 
 
         llm_prompt = """
-                You are a QA anlyst whose job analyze the call that an associate handled and judge the call quality.
-                The quality will be judged based on the parameters given to you in a json format, each parameter has to judged accordingly.
+                You are a Quality Analyst whose job is to analyze the call your associate handled. 
+                Judge the quality of the call based on the parameters provided to you in a json format, where each parameter has to judged accordingly.
 
                 The Parameters will depend upon the process.
                 %s
 
                 The inputs are as follows:
-                parameters: The calling parmaeters that the acssociate must meet during the call.
-                summary: The short summary about the things that happend in the call.
-                Transcript: The full conversation that took place between the handled
+                Parameters: The calling parameters that the associate must meet during the call.
+                Summary: The short summary about the things that happend in the call.
+                Transcript: The full conversation that took place between the associate and the facility employee.
 
-                Remember that you are only supposed to only judge the acossiates contents and not the facility employee's content
-                The response must be in json format for each and every parameter. The response will contain two keys in list of dictionary "parameter" and "result"
-                The result key will contain only "met" or "not met" value depending upon the call quality.
+                Remember that you are supposed to judge the associate based on his conversation content and not the content by the facility employee.
+                The response must be in json format for each and every parameter. The response will contain two keys, "parameter" and "result" in list of dictionary.
+                The result key will contain value as either "met" or "not met" depending upon the call quality.
                 example:
                 [
                     {
-                        "parameter":"..."
+                        "parameter":"Did the associate create clear and concise notes? (Status notes and facility notes)"
                         "result": "met"
                     },
                     {
-                        "parameter":"..."
+                        "parameter":"Did the associate take the appropriate steps to speak to a live contact and request for the office manager/supervisor when necessary? Exhaust all options."
                         "result": "not met"
                     }
                 ]
@@ -840,31 +1029,42 @@ def list_call_logs(request):
             campaign_list = list(campaign_list.values("id", "campaign_name"))
 
             campaign_id = request.GET.get('campaign_id',0)
-            if not request.user.is_superuser and request.user.role.role == "QA":
+            if  request.user.is_superuser or request.user.role.role == "QA" or request.user.role.role == "Admin":
                 call_status = request.GET.get('call_status',"completed")
             else:
                 call_status = request.GET.get('call_status', "ongoing")
+            print("call_status", call_status)
             call_logs_data = []
             dynamic_columns = []
             total_pages = 0
             page = 1
             paginated_logs =[]
-
+            
             if campaign_id:
-                call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-created_at')
+                call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-id')
                 if call_status:
                     call_logs = call_logs.filter(call_status=call_status)
 
                 # Pagination logic
                 page = int(request.GET.get('page', 1))
                 per_page = int(request.GET.get('per_page', 10))
-                per_page=1
                 paginator = Paginator(call_logs, per_page)
                 paginated_logs = paginator.get_page(page)
                 total_pages = paginator.num_pages
                 print("num pages" ,total_pages)
-                call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
-                
+                #call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
+                call_logs_data=[]
+                for log in paginated_logs:
+                    normal_date = log.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    current_log = json.loads(log.to_json())
+
+                    # Convert '_id' to string and replace the '_id' field
+                    current_log['_id'] = str(log.id)       
+                                 
+                    current_log['created_at']  = normal_date
+                    call_logs_data.append(
+                        current_log
+                    )
                 # Extract dynamic columns from the first log
                 if call_logs_data:
                     dynamic_columns = list(call_logs_data[0].keys())
@@ -884,13 +1084,14 @@ def list_call_logs(request):
 
             return render(request, 'pages/campaign/call_logs.html', context)
 
-        except Exception as error:
-            print("error in list_call_logs: ", error)
-            return JsonResponse({"error": "No call logs found for this campaign"}, status=404)
+        except Exception as error :
+            print("error in no call log found :  ",error)
+            return render(request,'pages/error-pages/error-500.html',{"error":error})
 
         
     elif request.method == "POST":
-        return JsonResponse({"error": "POST method not supported for this endpoint"}, status=405)
+        print("POST method not supported for this endpoint :",error)
+        return render(request,'pages/error-pages/error-500.html',{"error":error})
 
 
 ###################################################################################
@@ -899,17 +1100,20 @@ def list_call_logs(request):
 def fetch_call_details(request):
     try:
         request_body = json.loads(request.body)
+        print(request_body)
         campaign_id, mongo_id, call_id = request_body['campaign_id'],request_body['mongo_id'], request_body['call_id']
 
         response = {}
+        
         # fetch transcript and summary
         transcript_data =Transcript.objects.get(call_logs=call_id,campaign_id= campaign_id) 
         transcript_obj = {}
+        print(print(transcript_obj))
         try:
             transcript_obj["transcript"] = format_transcript(transcript_data.transcript)
         except:
             transcript_obj["transcript"] = ""
-
+        print(transcript_obj)
         transcript_obj['summary'] = transcript_data.summary
 
         # fetch telephony
@@ -918,12 +1122,17 @@ def fetch_call_details(request):
 
         transcript_obj['telephony_name']  = telephony_data
         transcript_obj["transcript_obj_id"] = transcript_data.id
-
+        print("campaign_id", campaign_id)
+        try:
+            transcript_obj['qa_analysis'] = create_html_component_with_div(json.loads(transcript_data.qa_analysis.replace("```json","").replace("```","")))
+        except Exception:
+            transcript_obj['qa_analysis'] = create_html_component_with_div(transcript_data.qa_analysis)
+            print("transcript_obj=================>", transcript_data.qa_analysis)
         return JsonResponse({"error": False, "success":True, "message":"call_details fetched successfully ","data":transcript_obj}, status=200)
 
         
     except Exception as err:
-        print("error in fetch call details: ",err)
+        print("===============================", err)
         return JsonResponse({"error": True, "success":False, "message":"Error fetching call details "}, status=500)
 
 ## functio to format transctipt
@@ -947,6 +1156,43 @@ def format_transcript(transcript):
         formatted_lines.append(line)
     return '\n'.join(formatted_lines)
 
+def create_html_component_with_div(json_list):
+    print("json_list=======", type(json_list))
+    # HTML structure
+    html_content = ""
+    id_count = 1
+    
+    try:
+        if type(json_list) == str:
+            print(json_list)
+            json_list = json.loads(json_list.replace("```json", "").replace("```", "").replace("\n", ""))
+
+        else:
+            pass
+
+        for item in json_list:
+            parameter = item.get('parameter', '')
+            result = item.get('result', '')
+            html_content += "<div>\n"
+            html_content += f"""  <span id="params{id_count}" name="params{id_count}">{parameter}</span>\n"""
+            html_content += """<br>
+            <select id="result{id_count}" name="{parameter}">
+                <option value="met" {met_selected}>Met</option>
+                <option value="not met" {not_met_selected}>Not Met</option>
+            </select>
+            """.format(
+                met_selected="selected" if result == "met" else "",
+                not_met_selected="selected" if result == "not met" else "",
+                id_count=id_count,
+                parameter=parameter
+            )
+            html_content += "</div><br>\n"
+            id_count += 1
+
+        
+    except Exception as e:
+        print("Error========", e)
+    return html_content
 
 def fetch_audio(request):
     try:
@@ -958,12 +1204,11 @@ def fetch_audio(request):
 
         # Twilio account credentials
         account_sid = os.getenv('TWILIO_ACCOUNT_SID') 
-        auth_token =  os.getenv('TWILIO_AUTH_TOKEN')  # Replace with your Twilio Auth Token
-            
+        auth_token =  os.getenv('TWILIO_AUTH_TOKEN')  
         if not call_id:
             return JsonResponse({"error": True, "success":False, "message":"No call_id provided"}, status=400)
         
-        if telephony_name == "twilio" or telephony_name == "telnyx" :  # hardocded for testing
+        if telephony_name == "twillio" :  # hardocded for testing
             # Construct the URL for the Call API
             base_url = 'https://api.twilio.com'
             url= f'{base_url}/2010-04-01/Accounts/{account_sid}/Calls/{call_id}/Recordings.json'
@@ -993,8 +1238,63 @@ def fetch_audio(request):
                     return "Failed to fetch the recording.", 500
             else:
                 print('No recordings found for the call.')
-                return "Failed to fetch the recording.", 500
+                return "Failed to fetch the recording.", 500 
 
+        if telephony_name == "telnyx":
+            # url = f"https://api.telnyx.com/calls/{call_id}/status"
+
+            # payload = {}
+            # print(os.getenv('TELNYX_V1_TOKEN'))
+            # headers = {
+            # 'Accept': 'application/json',
+            # 'Authorization': "Bearer " + os.getenv('TELNYX_V1_TOKEN')
+            # }
+
+            # response = requests.request("GET", url, headers=headers, data=payload)
+            # response = response.json()
+            # print(response)
+            # call_session_id = response["data"]['call_session_id']
+
+            # # fetch the recording url using session id
+
+            # url = f"https://api.telnyx.com/recordings?telnyx_session_uuid={call_session_id}"
+
+            # payload = {}
+            # headers = {
+            #     'Accept': 'application/json',
+            #     'x-api-user': 'prajwal.jumde@aminfoweb.com',
+            #     'x-api-token': os.getenv('TELNYX_V1_TOKEN')
+            # }
+            # print(456)
+            # response = requests.request("GET", url, headers=headers, data=payload)
+            # print(123)
+            # # get the recording URL
+            # response = response.json()
+            # recording_url = response['data'][0]['download_urls']['mp3']
+            s3_client = boto3.client('s3',
+                            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                            region_name=os.getenv('AWS_S3_REGION_NAME') 
+                        )
+            # Generate a presigned URL for the uploaded file
+            bucket_name = 'telnyx-recordings-callbot' 
+            file_name = "recording_"+ sanitize_call_id(call_id)+".mp3"
+            presigned_url = s3_client.generate_presigned_url('get_object',
+                    Params={'Bucket': bucket_name, 'Key': file_name},
+                    ExpiresIn=3600)  # URL valid for 1 hour
+            recording_url = presigned_url
+
+            # Get recording data from recording URL
+            response = requests.get(recording_url)
+            if response.status_code == 200:
+                # audio_stream = io.BytesIO(response.content)
+                # return send_file(audio_stream, mimetype='audio/mpeg', as_attachment=False, download_name=f'{call_id}_audio.mp3')
+                audio_stream = io.BytesIO(response.content)
+                audio_stream.seek(0)  # Reset stream position to the start
+                return FileResponse(audio_stream, as_attachment=False, content_type='audio/mpeg')
+
+            else:
+                return "Failed to fetch the recording.", 500
         # if response.ok:
         #     # Create an in-memory byte-stream for the audio file
         #     audio_stream = BytesIO(response.content)
@@ -1021,10 +1321,12 @@ def edit_summary(request):
         transcript_obj = Transcript.objects.get(id= edit_summary_id)     
         transcript_obj.summary = new_summary
         transcript_obj.save()
+        page = request_body['page']
 
         # Build the URL with query parameters
         url = reverse('list_call_logs')  # Gets the URL path for the 'edit_summary' route
-        query_params = f'?status_filter={status_filter}&campaign_id={campaign_id}'
+        query_params = f'?call_status={status_filter.lower()}&campaign_id={campaign_id}&&page={page}&per_page=10'
+
         
 
         return redirect(f'{url}{query_params}')
@@ -1033,6 +1335,28 @@ def edit_summary(request):
         print(f"Error editing call: {error}")
         return redirect('/')
     
+
+def editQa(request):
+    try:
+        request_body = request.POST.dict()
+        exclude_keys = {'csrfmiddlewaretoken', 'id', 'campaign_id', 'search', 'selected_agent', 'sort_order', 'sort_column', 'page', 'call_status', 'status'}
+        formatted_list = [{'parameter': key, 'result': value} for key, value in request_body.items() if key not in exclude_keys]
+        status_filter = request_body['status']
+        campaign_id = request_body['campaign_id']
+        edit_summary_id = request_body['id']
+        transcript_obj = Transcript.objects.get(id= edit_summary_id)     
+        transcript_obj.qa_analysis = formatted_list
+        transcript_obj.save()
+        page = request_body['page']
+
+        url = reverse('list_call_logs')  
+        query_params = f'?call_status={status_filter.lower()}&campaign_id={campaign_id}&&page={page}&per_page=10'
+        
+
+        return redirect(f'{url}{query_params}')
+
+    except Exception as e:
+        print(e)
 
 def edit_transcript(request):
     try:
@@ -1047,7 +1371,11 @@ def edit_transcript(request):
 
         # Build the URL with query parameters
         url = reverse('list_call_logs')  # Gets the URL path for the 'edit_summary' route
-        query_params = f'?status_filter={status_filter}&campaign_id={campaign_id}'
+        page = request_body['page']
+
+
+        query_params = f'?call_status={status_filter.lower()}&campaign_id={campaign_id}&&page={page}&per_page=10'
+
         print(f"actual - url ==> {url}{query_params}")
         return redirect(f'{url}{query_params}')                
     except Exception as error:
@@ -1065,17 +1393,23 @@ def end_call(request):
         request_body = json.loads(request.body)
         call_id = request_body['call_id']
         campaign_id = request_body['campaign_id'] 
-        # print("Received id: ", id)
         
         # Fetch the CallLog record with the given id
-        call_history_record = CallLogs.objects(campaign_id=int(campaign_id), call_id=int(call_id)).first()
+        call_history_record = CallLogs.objects(campaign_id=int(campaign_id), call_id= call_id).first()
 
         if call_history_record:
             call_id = call_history_record.call_id
             # print("Found call history record with call_id:", call_id)
             
-            # Make the external API request with the fetched call_id
-            api_url = f"{CALL_SERVER_BASE_URL}/end_call"
+            # Make the external API request with the fetched call_id end_call_telnyx
+            campaign_obj = Campaign.objects.get(id=campaign_id)
+            print("campaign_obj.provider", campaign_obj.provider)
+            if campaign_obj.provider.provider_name == 'twillio':
+                print("twilio        ==============")
+                api_url = f"{settings.CALL_SERVER_BASE_URL}/end_call"
+            else:
+                print("telnyx dfknvelkrm")
+                api_url = f"{settings.CALL_SERVER_BASE_URL}/end_call_telnyx"
             
             payload = {"call_id": call_id}
             headers = {
@@ -1085,7 +1419,6 @@ def end_call(request):
             
             response = requests.post(api_url, headers=headers, json=payload)
             response = response.json()
-            
             print("External API response:", response)
             
             ## Update the status in the database
@@ -1104,6 +1437,8 @@ def end_call(request):
         
 ############################################################################################################################################################ 
 ######################################################## Live transcript of the Call #######################################################################
+
+@login_required(login_url="/login_home")
 def live_call_list(request):
     try:
         if request.method == "GET":
@@ -1121,27 +1456,55 @@ def live_call_list(request):
                 total_pages = 0
                 page = 1
                 paginated_logs =[]
+                # Initialize call counts
+                ongoing_count = 0
+                not_started_count = 0
+                completed_count = 0
+                total_count = 0
+
                 if campaign_id:
                     call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-created_at')
+                    active_list = Campaign.objects.get(id=campaign_id).contact_list
+                    contact_list = ContactList.objects.get(id=active_list.id)
+                    count=len(contact_list.contact_list)
+
+                    # contact_list = list(contact_list.contact_list)
+                    # Count calls for each status
+                    ongoing_count = call_logs.filter(call_status="ongoing").count()
+                    not_started_count = call_logs.filter(call_status="not_started").count()
+                    completed_count = call_logs.filter(call_status="completed").count()
+                    total_count = count
+                    # Filter call logs based on the call_status (default "ongoing")
                     if call_status:
                         call_logs = call_logs.filter(call_status="ongoing")
 
                     # Pagination logic
                     page = int(request.GET.get('page', 1))
                     per_page = int(request.GET.get('per_page', 10))
-                    per_page=1
+                
                     paginator = Paginator(call_logs, per_page)
                     paginated_logs = paginator.get_page(page)
                     total_pages = paginator.num_pages
                     print("num pages" ,total_pages)
-                    call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
+                    call_logs_data=[]
+                    for log in paginated_logs:
+                        normal_date = log.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                        current_log = json.loads(log.to_json())
+
+                        # Convert '_id' to string and replace the '_id' field
+                        current_log['_id'] = str(log.id)       
+                                    
+                        current_log['created_at']  = normal_date
+                        call_logs_data.append(
+                            current_log
+                        )
                     
                     # Extract dynamic columns from the first log
                     if call_logs_data:
                         dynamic_columns = list(call_logs_data[0].keys())
 
                 context = {
-                    "breadcrumb": {"title": "View Live Calls", "parent": "Pages", "child": "Call Logs"},
+                    "breadcrumb": {"title": "View Live Calls", "parent": "Pages", "child": "Live Monitoring"},
                     "call_logs_data": call_logs_data,
                     "campaign_list": campaign_list,
                     "call_status":call_status,
@@ -1150,7 +1513,12 @@ def live_call_list(request):
                     "success": True,
                     "page": page,
                     "paginated_logs":paginated_logs,
-                    "campaign_id":str(campaign_id)
+                    "campaign_id":str(campaign_id),
+                    # Pass call counts to the template
+                    "ongoing_count": ongoing_count,
+                    "not_started_count": not_started_count,
+                    "completed_count": completed_count,
+                    "total_count": total_count
                 }
 
                 return render(request, 'pages/campaign/live_calls.html', context)
@@ -1186,24 +1554,89 @@ def schedule_campaign(request):
             schedule_date = data.get('schedule_date')
 
             # Assuming you have a campaign model to validate campaign_id
-
             campaign_obj = Campaign.objects.get(id=campaign_id)
-            if not campaign_obj.is_schedule:
+
+            # Check if the campaign is already scheduled
+            existing_schedule = ScheduleCampaign.objects.filter(campaign_id=campaign_id).first()
+            if existing_schedule:
+                # Update the existing schedule
+                existing_schedule.schedule_note = schedule_note
+                existing_schedule.schedule_date = schedule_date
+                existing_schedule.save()
+
+                return JsonResponse({'message': 'Campaign schedule updated successfully'}, status=200)
+            else:
+                # Create a new schedule if not already scheduled
                 ScheduleCampaign.objects.create(
                     campaign_id=campaign_id,
                     schedule_note=schedule_note,
                     schedule_date=schedule_date
                 )
-
-                # update the campaign is_scheduled to true
                 campaign_obj.is_schedule = True
                 campaign_obj.save()
 
                 return JsonResponse({'message': 'Campaign scheduled successfully'}, status=200)
-            else:
-                return JsonResponse({'message': 'Unable to schedule the Campaign as it is already sheduled'}, status=400)
+
+        except Campaign.DoesNotExist:
+            return JsonResponse({'error': 'Campaign does not exist'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+def update_campaign(request):
+    if request.method == 'GET':
+        campaign_id = request.GET.get('campaign_id')
+        try:
+            schedule = ScheduleCampaign.objects.get(campaign_id=campaign_id)
+            return JsonResponse({
+                'schedule_note': schedule.schedule_note,
+                'schedule_date': schedule.schedule_date
+            }, status=200)
+        except ScheduleCampaign.DoesNotExist:
+            return JsonResponse({'error': 'Schedule not found'}, status=404)
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required(login_url="/login_home")
+def sample_csv(request):
+    # Download a sample CSV for demo call
+    try:
+        # import pdb;pdb.set_trace()
+        campaign_id = request.GET.get("campaign_id")
+        if not campaign_id:
+            return JsonResponse({'message': 'Campaign ID is required'}, status=400)
+
+        # Get the campaign details
+        column_names = get_csv_coulmns(campaign_id)
+        if 'contact_number' not in column_names:
+            column_names.append('contact_number')
+        try:
+            column_names.remove('contact_id')
+        except:
+            pass
+        # Generate the CSV content
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="sample.csv"'
+
+        writer = csv.writer(response)
+        # Writing CSV headers and sample data
+        writer.writerow(column_names)  # Add actual headers here
+        # writer.writerow(['Sample1', 'Sample2', 'Sample3'])  # Add sample data here
+
+        return response
+
+    except Exception as e:
+        print("Error in sample_csv: ",e)
+        return JsonResponse({'message': 'Error generating the CSV: ' + str(e)}, status=500)
+
+def get_csv_coulmns(campaign_id):
+    contact_list=Campaign.objects.get(id=campaign_id).contact_list.contact_list
+    # print(contact_list)
+    unique_keys = []
+    for d in contact_list:
+        for key in d.keys():
+            if key not in unique_keys:
+                unique_keys.append(key)
+    return unique_keys
 ################################################################### END ################################################################################

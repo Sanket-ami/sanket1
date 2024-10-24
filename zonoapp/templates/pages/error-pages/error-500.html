@@ -1,4 +1,11 @@
+
+{% extends 'base.html' %}
 {% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+{% block content %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -358,8 +365,9 @@
             </svg>
           </div>
           <div class="col-md-8 offset-md-2">
-            <h3>Page Not Found</h3>
-            <p class="sub-content">The page you are attempting to reach is currently not available. This may be because the page does not exist or has been moved.</p><a class="btn btn-primary" href="index.html">BACK TO HOME PAGE</a>
+            <h3>Internal Server Error</h3>
+            <h3>{{error}}</h3>
+            <a class="btn btn-primary" href="{% url 'index' %}">BACK TO HOME PAGE</a>
           </div>
         </div>
       </div>
@@ -382,3 +390,5 @@
     <!-- Plugin used-->
   </body>
 </html>
+
+{% endblock %}

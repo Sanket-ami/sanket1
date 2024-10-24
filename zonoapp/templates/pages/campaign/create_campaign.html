@@ -140,18 +140,38 @@
                     </div>
                     <div class="row g-3"  >
 
-                      <div class="col-xxl-4 col-sm-6" style="width: 100%;" > 
+                      <div class="col-xxl-4 col-sm-6" style="width: 100%;"> 
                         <div class="col-sm-6">
-                            <label class="form-label" for="Agents">Agents<span class="txt-danger">*</span></label>
-                            <select class="form-select" id="Agents" required="">
-                              {% for agent in available_agents %}
-                              <!-- dynamically populate Agents options -->
-                              <option selected=""  value="{{agent.id}}">{{agent.agent_name}}</option>
-                              {% endfor %}
-                            </select>
-                            <div class="invalid-feedback">Please select a valid provider.</div>
-                     </div>
-                    <h5 class="f-w-600 mt-4 mb-2">Prompt</h5>
+                          <label class="form-label" for="Agents">Agents<span class="txt-danger">*</span></label>
+                          <select class="form-select" id="Agents" required="">
+                            {% for agent in available_agents %}
+                            <option value="{{ agent.id }}" 
+                                    data-voice-id="{{ agent.voice.id }}" 
+                                    data-voice-name="{{ agent.voice.voice_name }}"
+                                    data-audio-id="{{agent.voice.voice_id}}">{{ agent.agent_name }}</option>
+                            {% endfor %}
+                          </select>
+                          <div class="invalid-feedback">Please select a valid agent.</div>
+                      
+                          <h5 class="f-w-600 mt-4 mb-2">Voice</h5> 
+                          <div class="col-sm-6">
+                            <label class="form-label">Voice<span class="txt-danger">*</span></label>
+                            <input type="hidden" id="actualvoiceid">
+                            <span id="voice" class="form-control-plaintext"></span> <!-- Non-editable span for displaying the voice name -->
+                          </div>
+                        </div>  
+                      
+                        <div class="d-flex justify-content-between mt-3">
+                          <audio id="audio-player" controls="" style="display: none;">
+                            <source id="audio-source-mp3" src="" type="audio/mpeg">
+                            <source id="audio-source-wav" src="" type="audio/wav">
+                            Your browser does not support the audio tag.
+                          </audio>
+                          <button id="play-pause-button" class="btn btn-success" onclick="toggleAudio()">▶ Play</button>
+                        </div>
+                      </div>
+                      
+                      <h5 class="f-w-600 mt-4 mb-2">Prompt</h5>
                       <div class="row shipping-method g-3">
                         <div class="col-12">
                           <label class="form-label" for="agentPrompt">Add variable in the prompt by using {variable_name} syntax.</label>
@@ -162,19 +182,6 @@
                         </div>
                       </div>
                           
-                     <h5 class="f-w-600 mt-4 mb-2">Voice</h5> 
-                      <div class="col-sm-6">
-                        <label class="form-label" for="voice">voice<span class="txt-danger">*</span></label>
-                        <select class="form-select" id="voice" required="">
-                          {% for voice in available_agents %}
-                          <!-- dynamically populate Agents options -->
-                          <option selected="" value="{{voice.voice.id}}">{{voice.voice.voice_name}}</option>
-                          {% endfor %}
-                        </select>
-                        <div class="invalid-feedback">Please select a valid provider.</div>
-                        </div>
-                      </div>  
-
                       <div class="col-12 text-end">
                         <button id="step3btn" type="button" onclick="validateStep3(event)" class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
                       </div>
@@ -185,37 +192,24 @@
                     <h3>Contacts Information</h3>
                     <p class="f-light">Upload a csv file with "contact_number" as a column</p>
                     <div class="payment-info-wrapper">
-                      <div class="row shipping-method g-3">
- 
-                        <div class="col-12">
-                          <div class="card-wrapper border rounded-3 pay-info light-card">
- 
-                            <form class="row g-3 needs-validation" novalidate="">
-                               
-                              <div class="col-12"> 
-                                <label class="form-label" for="formFile3">Upload Contacts</label>
-                                <input class="form-control" id="formFile3" type="file" aria-label="file example" required="">
-                                <div class="invalid-feedback">Invalid form file selected</div>
-                              </div>
-                              <div class="col-12">
-                                <!-- <div class="form-check">
-                                  <input class="form-check-input" id="invalidCheck-c" type="checkbox" value="" required="">
-                                  <label class="form-check-label" for="invalidCheck-c">All the above information is correct</label>
-                                  <div class="invalid-feedback">You must agree before submitting.</div>
-                                </div> -->
-                              </div>
-                            </form>
-                          </div>
+                        <div class="row shipping-method g-3">
+                            <div class="col-12">
+                                <div class="card-wrapper border rounded-3 pay-info light-card">
+                                    <form class="row g-3 needs-validation" id="contactsForm" novalidate="">
+                                        <div class="col-12">
+                                            <label class="form-label" for="formFile3">Upload Contacts</label>
+                                            <input class="form-control" id="formFile3" type="file" aria-label="file example" required="" accept=".csv">
+                                            <div class="invalid-feedback" id="fileError" style="display:none;">Please upload a valid CSV file.</div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button id="step2btn" type="button" onclick="validateStep2(event)" class="btn btn-primary">Proceed to Next <i class="fa fa-arrow-left proceed-next pe-2"></i></button>
+                            </div>
                         </div>
-                        <div class="col-12">
-
-                        </div>
-                        <div class="col-12 text-end">
-                          <button id="step2btn" type="button" onclick="validateStep2(event)" class="btn btn-primary">Proceed to Next<i class="fa fa-arrow-left proceed-next pe-2"></i></button>
-                        </div>
-                      </div>
                     </div>
-                  </div>
+                </div>
                   <div class="tab-pane fade shipping-wizard finish-wizard1" id="finish-wizard" role="tabpanel" aria-labelledby="finish-wizard-tab" disabled>
                     <div class="order-confirm"><img src="{% static 'assets/images/gif/successful.gif' %}" alt="popper">
                       <h5>Confirm the Campaign details before submitting.</h5>
@@ -238,13 +232,43 @@
                   <div class="overflow-auto">
                     <div class="card-body social-list filter-cards-view">
                        
-                      <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/3.jpg">
+                      <div class="d-flex"><div class="stroke-icon-wizard" style="font-size: 18px;
+                        color: var(--white);
+                        width: 40px;
+                        height: 40px;
+                        background-color: #2b5e5e;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        border-radius: 50%;
+                        margin-right: 2%;
+                        transition: all 0.3s ease-in-out"><i class="fa fa-user"></i></div>
                         <div class="flex-grow-1"><span class="d-block">Agent Library</span><a href="{% url 'agent_create' %}">Add or update Agent</a></div>
                       </div>
-                      <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/10.jpg">
-                        <div class="flex-grow-1"><span class="d-block">Voice Library</span><a href=" ">Add or update Voice</a></div>
+                      <div class="d-flex"><div class="stroke-icon-wizard" style="font-size: 18px;
+                        color: var(--white);
+                        width: 40px;
+                        height: 40px;
+                        background-color: #2b5e5e;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        border-radius: 50%;
+                        margin-right: 2%;
+                        transition: all 0.3s ease-in-out"><i class="icofont icofont-megaphone"></i></div>
+                        <div class="flex-grow-1"><span class="d-block">Voice Library</span><a href="{% url 'voice_view' %} ">Add or update Voice</a></div>
                       </div>
-                      <div class="d-flex"><img class="img-50 img-fluid m-r-20 rounded-circle" alt="" src="/zono/zonoapp/static/assets/images/user/11.png">
+                      <div class="d-flex"><div class="stroke-icon-wizard" style="font-size: 18px;
+                        color: var(--white);
+                        width: 40px;
+                        height: 40px;
+                        background-color: #2b5e5e;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        border-radius: 50%;
+                        margin-right: 2%;
+                        transition: all 0.3s ease-in-out"><i class="icofont icofont-chart-pie"></i></div>
                         <div class="flex-grow-1"><span class="d-block">Manage Campaign</span><a href="{% url 'manage_campaign' %}">Update or Schedule Campaign</a></div>
                       </div>
                     </div>
@@ -277,12 +301,32 @@
   // Function to show toast
   function showToast(type, message) {
     Swal.fire({
-                title: 'Alert',
-                text: message, // Dynamic message from Django
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-    }
+      title: 'Alert',
+      text: message,
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+  }
+  function showToastSuccessCampaign(message) {
+    Swal.fire({
+      title: 'Created Campaign',
+      text: message,
+      icon: 'success',  
+      confirmButtonText: 'OK'
+    }).then(() => { window.location.href = "{% url 'manage_campaign' %}"; });
+    ;
+  }
+
+  // Function to show success toast using SweetAlert2
+  function showToastSuccess(message) {
+    Swal.fire({
+      title: 'Contact Uploaded',
+      text: message,
+      icon: 'success',
+      confirmButtonText: 'OK'
+    });
+  }
+
   // Function to validate the prompt
   function validatePrompt() {
     agent_prompt = editor.getValue();
@@ -353,15 +397,38 @@
     // alert("step2 clicked")
     uploadedFile = $("#formFile3");
     
-    if (uploadedFile){
-      // Move to step 2 by enabling the next tab and activating it
-        $("#payment-wizard-tab").removeAttr("disabled");
-        document.getElementById("payment-wizard-tab").click()
-    }else{
-      alert("upload the contact list correctly")
+    // if (uploadedFile){
+    //   // Move to step 2 by enabling the next tab and activating it
+    //     $("#payment-wizard-tab").removeAttr("disabled");
+    //     document.getElementById("payment-wizard-tab").click()
+    // }else{
+    //   alert("upload the contact list correctly")
+    // }
+
+    const fileInput = document.getElementById('formFile3');
+    const filePath = fileInput.value;
+    const allowedExtension = /\.csv$/i;
+    const errorMsg = document.getElementById('fileError');
+
+    if (!uploadedFile) {
+      showToast("error", "Upload the contact list correctly.");
+      return;
     }
-  
-  }
+
+        if (!allowedExtension.exec(filePath)) {
+            // Prevent the form submission or proceeding to the next step
+            event.preventDefault();
+            errorMsg.style.display = 'block';  // Show error message
+            fileInput.classList.add('is-invalid');  // Add invalid class for styling
+        } else {
+            errorMsg.style.display = 'none';  // Hide error message if valid
+            fileInput.classList.remove('is-invalid');
+            // You can proceed to the next step here or allow form submission
+            // alert("File is valid. You can proceed to the next step.");
+            $("#payment-wizard-tab").removeAttr("disabled");
+            document.getElementById("payment-wizard-tab").click()
+        }
+    }
 
   // step3 validataion
   function validateStep3(e){
@@ -374,7 +441,7 @@
     document.getElementById("finish-wizard-tab").click()
 
     } else {
-      console.log("Invalid prompt. Please fix errors.");
+      showToast("error", "Invalid prompt. Please fix errors.");
     }
   }
 
@@ -409,7 +476,7 @@
             // Handle the successful response, maybe show a success message
             console.log("Campaign created successfully");
             // alert("Campaign created successfully!");
-            showToast("success", "Campaign added successfully!");
+            showToastSuccessCampaign("success", "Campaign added successfully!");
         },
         error: function(xhr, status, error) {
             // Handle errors here
@@ -427,7 +494,7 @@
     const file = event.target.files[0];
 
     if (!file) {
-      alert("Please select a file.");
+      showToast("error", "Please select a file.");
       return;
     }
 
@@ -437,7 +504,7 @@
       rows = csvData.split('\n').map(row => row.split(','));
 
       if (rows.length < 1) {
-        alert("The CSV file is empty or invalid.");
+        showToast("error", "The CSV file is empty or invalid.");
         return;
       }
 
@@ -454,7 +521,7 @@
       const phoneNumberIndex = headerRow.indexOf('contact_number');
       console.log(phoneNumberIndex)
       if (phoneNumberIndex === -1) {
-        alert('CSV must contain a "contact_number" column.');
+        showToast("error", 'CSV must contain a "contact_number" column.');
         return;
       }
 
@@ -472,12 +539,12 @@
       });
       console.log(invalidNumbers)
       if (invalidNumbers) {
-        alert('The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.');
+        showToast("error", 'The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.');
         return;
       }
 
       // Store CSV data as JSON array of objects
-      const data = $.map(rows.slice(1), function(row) {
+      contactList = $.map(rows.slice(1), function(row) {
         let obj = {};
         $.each(row, function(i, cell) {
           obj[columnNames[i]] = $.trim(cell);
@@ -485,20 +552,63 @@
         return obj;
       });
 
-      // Enable the proceed button after validation
       $('#proceedButton').prop('disabled', false);
-      contactList = data
       console.log("Column Names: ", columnNames);
-      console.log("File Data: ", data);
-      alert('contacts upload successfull')
+      console.log("File Data: ", contactList);
+      showToastSuccess('Contacts uploaded successfully!');
 
-      // You can store the data in a global variable or handle it as needed
-      window.csvData = data;
+      // Populate available variables textarea
+      $('#availableVariabes').val(columnNames.join(', ')); // Assuming this is your textarea ID for available variables
     };
 
     reader.readAsText(file);
   });
+  $(document).ready(function () {
+  $('#Agents').on('change', function () {
+    // Get the selected agent's voice name and audio ID
+    var selectedVoiceName = $('#Agents option:selected').data('voice-name');
+    var selectedAudioId = $('#Agents option:selected').data('audio-id'); // Get the unique audio ID
+
+    // Set the voice span to the corresponding voice name
+    $('#voice').text(selectedVoiceName);
+    $('#actualvoiceid').val($('#Agents option:selected').data('voice-id')); // Set actual voice ID
+
+    // Update audio sources based on selected agent
+    $('#audio-source-mp3').attr('src', `{% static 'assets/audio/' %}${selectedAudioId}.mp3`);
+    $('#audio-source-wav').attr('src', `{% static 'assets/audio/' %}${selectedVoiceName}.wav`);
+
+    // Load the new audio source
+    $('#audio-player')[0].load();
+  });
+
+  // Trigger change event on page load to set initial voice and audio if needed
+  $('#Agents').trigger('change');
+
+  // Add event listener for audio ended event
+  $('#audio-player').on('ended', function () {
+    var playPauseButton = $('#play-pause-button');
+    playPauseButton.text('▶ Play'); // Change button text to Play when audio ends
+  });
+});
+
+// Play/Pause function for audio
+function toggleAudio() {
+  var audioPlayer = $('#audio-player')[0]; // Access the audio element
+  var playPauseButton = $('#play-pause-button');
+
+  if (audioPlayer.paused) {
+    audioPlayer.play(); // Play the audio
+    playPauseButton.text('❚❚ Pause'); // Change button text to Pause
+  } else {
+    audioPlayer.pause(); // Pause the audio
+    playPauseButton.text('▶ Play'); // Change button text to Play
+  }
+}
+8
+
 </script>
+
+
 
 {% endblock %}
 

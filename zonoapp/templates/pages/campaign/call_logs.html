@@ -10,7 +10,7 @@
     <h3 class="mb-4">Select Campaign</h3>
 
     <!-- Dropdown for selecting campaign -->
-     <div class="mb-3">
+    <div class="mb-3 d-flex justify-content-between" style="align-items: center;">
         <form method="GET" action='{% url "list_call_logs" %}' style=" width: 30%; display: flex; ">
             <select class="form-select" id="campaignSelect" name="campaign_id">
                 <option value="">----</option>
@@ -22,18 +22,25 @@
             </select>
             {% if request.user.role.role != "QA" %}
             <select class="form-select" id="statusSelect" name="call_status">
-                <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>  ongoing </option>
-                <option value="completed" {% if call_status == "completed" %}selected{% endif %}>  completed </option>
-                <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>   not_started </option>
+                <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>ongoing</option>
+                <option value="completed" {% if call_status == "completed" %}selected{% endif %}>completed</option>
+                <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>not_started</option>
+            </select>
             {% endif %}
-            </select>            
             <input type="hidden" name="page" value="{{ page }}">
             <input type="hidden" name="per_page" value="10">&nbsp;
             <input type="submit" class="btn btn-primary" value="Filter">
         </form>
+    
+        <div class="ms-3"> <!-- Add margin on the left for spacing -->
+            <label for="sortSelect" class="form-label">Sort by Created At</label>
+            <select id="sortSelect" class="form-select" onchange="sortTable()" style="width: 100%;"> <!-- Adjust width if needed -->
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
     </div>
-
-    <!-- Bootstrap Table for Call Logs -->
+    
     <table class="table table-inverse table-striped dataTable" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
         <thead>
             <tr>
@@ -41,8 +48,6 @@
                     {% for key in call_logs_data.0.keys %}
                     <th class="">{{ key }}</th>
                     {% endfor %}
-                {% else %}
-                    <th>No Data Available</th>
                 {% endif %}
             </tr>
         </thead>
@@ -183,13 +188,39 @@
                     <input type="hidden" value="" name="selected_agent"> 
                     <input type="hidden" value="asc" name="sort_order" id="sort_order">
                     <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
-                    <input type="hidden" value="" name="page" id="page">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
                     <input type="hidden" value="Completed" name="status" id="status">
                     <input type="hidden" id="editedSummary" name="edited_summary">
 
                     <button style="display: none;" id="edit_Summary_submit" class="btn btn-primary mt-2" type="Save" onclick="submitEditSummaryForm()">Submit</button>
                 </form>
             </div>
+
+
+            <div id="qa_div"> <br>
+                <!-- <span class="h5 fw-bold text-dark">Call Summary</span><br> -->
+                <h4 class="mb-4">Call Qa</h4>
+      
+
+
+                <form id="edit_qa_form" method="post" action="{% url 'edit_qa' %}">
+                    <span id="call_qa" class="f-w-400" style="display: unset;"></span><br>
+                    {% csrf_token %}
+                    <input type="hidden" id="editQaRecordId" value="391" name="id">
+                    <input type="hidden" value="{{campaign_id}}" name="campaign_id">
+                    <input type="hidden" value="{{call_status}}" name="call_status">
+                    <input type="hidden" value="" name="search">
+                    <input type="hidden" value="" name="selected_agent"> 
+                    <input type="hidden" value="asc" name="sort_order" id="sort_order">
+                    <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
+                    <input type="hidden" value="Completed" name="status" id="status">
+                    {% if request.user.is_superuser or request.user.role == 'QA' %}
+                        <button id="edit_qa_submit" class="btn btn-primary mt-2" type="Save">Edit QA</button>
+                    {% endif %}
+                </form>
+            </div>
+
 
             <div id="transcript_div" style="overflow: auto;"> <br>
                 <!-- <span class="h5 fw-bold text-dark"></span><br> -->
@@ -211,7 +242,7 @@
                     <input type="hidden" value="" name="selected_agent"> 
                     <input type="hidden" value="asc" name="sort_order" id="sort_order">
                     <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
-                    <input type="hidden" value="" name="page" id="page">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
                     <input type="hidden" value="Completed" name="status" id="status">
                     <input type="hidden" id="editedTranscript" name="edited_transcript">
 
@@ -232,6 +263,31 @@
 <script src="{% static 'assets/js/jquery.min.js' %}"></script>
 
 <script>
+function sortTable() {
+    const tableBody = document.getElementById("callLogsTable").querySelector("tbody");
+    const rows = Array.from(tableBody.rows);
+    const sortBy = document.getElementById("sortSelect").value;
+
+    // Assuming the created_at date is in the third column (index 2)
+    const dateColumnIndex = 2; // Update this index to the correct column
+
+    rows.sort((a, b) => {
+        const aValue = new Date(a.cells[dateColumnIndex].innerText);
+        const bValue = new Date(b.cells[dateColumnIndex].innerText);
+        
+        // Handle invalid dates
+        if (isNaN(aValue) || isNaN(bValue)) {
+            return 0; // If either value is not a valid date, keep original order
+        }
+
+        return sortBy === 'asc' 
+            ? aValue - bValue // Ascending order
+            : bValue - aValue; // Descending order
+    });
+
+    // Append the sorted rows to the table body
+    rows.forEach(row => tableBody.appendChild(row)); 
+}
 
     // offcanvas details
     // offcanvas details
@@ -258,6 +314,7 @@
                     $("#call_call_id").html(call_id)
                     $("#call_duration").html(log.call_duration)
                     $("#call_summary").text(response.data.summary)
+                    $('#call_qa').html(response.data.qa_analysis)
                     $("#editSummary").html(response.data.summary)
                     $("#call_transcript").html(response.data.transcript)
                     $("#editTranscript").html(response.data.transcript)
@@ -265,6 +322,7 @@
                     $("#payer_contact").val(log.contact_number)
                     $("#editTranscriptRecordId").val(response.data.transcript_obj_id)
                     $("#editSummaryRecordId").val(response.data.transcript_obj_id)
+                    $('#editQaRecordId').val(response.data.transcript_obj_id)
 
                     // fetch the recording using telephony
                     fetchAndPlayAudio(call_id,response.data.telephony_name)
@@ -358,6 +416,9 @@
     }    
 
 
+
+
+
     // submit edited summary
     function submitEditSummaryForm() {
             // Modify hidden input fields before submission
@@ -385,6 +446,17 @@
 
             $("#edit_Summary_submit").css("display", "unset") // unhide submit button
         }    
+    function editQaText(e){
+            console.log("clicked edit summary")
+            var summarySpan = document.getElementById('call_Qa');
+            var textarea = document.getElementById('editQa');
+
+            textarea.style.display = 'block';  // Show the textarea
+
+            summarySpan.style.display = 'none'; // hide transcript
+
+            $("#edit_Qa_submit").css("display", "unset") // unhide submit button
+        } 
 
 
     $(document).ready(function(){

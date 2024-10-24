@@ -1,17 +1,34 @@
 {% load static %}
 {% load sass_tags %}
+<style>
+  .sidebar-wrapper {
+    height: 100vh; /* Full viewport height */
+    overflow-y: auto; /* Enable vertical scrolling */
+  }
 
+  #sidebar-menu {
+    max-height: 100%; /* Ensure the content doesn't exceed the sidebar's height */
+    overflow-y: auto; /* Enable scrolling for the menu */
+  }
+
+  .sidebar-links {
+    padding-bottom: 20px; /* Add some padding at the bottom */
+  }
+  .sidebar-list a {
+    white-space: nowrap; /* Ensure the text doesn't break into multiple lines */
+  }
+</style>
 <!-- Page Sidebar Start-->
 <div class="sidebar-wrapper" data-layout="stroke-svg">
   <div>
-    <div class="logo-wrapper"><a href="/index"> <img class="img-fluid for-light" src="{% static 'assets/images/logo/logo.png' %}" alt=""><img class="img-fluid for-dark" src="{% static 'assets/images/logo/logo_dark.png' %}" alt=""></a>
+    <div class="logo-wrapper" style=" padding: 2%; padding-left: 11%;"><a href="/index"> <img class="img-fluid for-light" src="{% static 'assets/images/logo/logo.png' %}" alt=""><img class="img-fluid for-dark" src="{% static 'assets/images/logo/logo_dark.png' %}" alt=""></a>
       <div class="toggle-sidebar">
         <svg class="sidebar-toggle"> 
           <use href="{% static 'assets/svg/icon-sprite.svg' %}#toggle-icon"></use>
         </svg>
       </div>
     </div>
-    <div class="logo-icon-wrapper"><a href="/index"><img class="img-fluid" src="{% static 'assets/images/logo/logo-icon.png' %}" alt=""></a></div>
+    <div class="logo-icon-wrapper"><a href="/index"><img class="img-fluid for-light" src="{% static 'assets/images/logo/logo3.png' %}" alt=""><img class="img-fluid for-dark" src="{% static 'assets/images/logo/logo-icon.png' %}" alt=""></a></div>
     <nav class="sidebar-main">
       <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
       <div id="sidebar-menu">
@@ -25,71 +42,119 @@
             </div>
           </li>
 
-          <li class="sidebar-main-title">
-            <div>
-              <h6 class="lan-0">Dashboard</h6>
-            </div>
-          </li>   
+        </li>  
+        <li class="sidebar-main-title">
+          <div>
+            <h6 class="lan-0">
+              <a href="{% url 'dashboard' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">Dashboard</a>
+            </h6>
+          </div>
+        </li>   
 
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-0">Outbound</h6>
             </div>
-          </li>   
+          </li> 
+          {% if request.user.role.role != 'Caller' and request.user.role.role != 'QA' %} 
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'create_campaign' %}">
             <svg class="stroke-icon">
-              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-home"></use>
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-email"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-home"></use>
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-email"></use>
             </svg><span class=" ">Create Campaign</span></a>
           </li>
+          {% endif %}
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'list_call_logs' %}">
               <svg class="stroke-icon">
-                <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-home"></use>
+                <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-contact"></use>
               </svg>
               <svg class="fill-icon">
-                <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-home"></use>
+                <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-contact"></use>
               </svg><span class=" ">Call Logs</span></a>  
-          </li>          
+          </li> 
+          {% if request.user.role.role != 'QA' %}        
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'manage_campaign' %}">
             <svg class="stroke-icon">
-              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-home"></use>
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-widget"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-home"></use>
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-widget"></use>
             </svg><span class=" ">Campaign Managent</span></a>
             
-  
-          </li>  
+          </li>
+          {% endif %}
+          {% if request.user.role.role != 'Caller' and request.user.role.role != 'QA'  %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-21">
-                <a href="{% url 'agent_create' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">Agent</a>
-              </h6>
-            </div>
-          </li>   
-
-          <li class="sidebar-main-title">
-            <div>
-              <h6 class="lan-21">
-                <a href="{% url 'list-user' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">User Management</a>
+                Agent
               </h6>
             </div>
           </li>  
-
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'agent_create' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-user"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-user"></use>
+            </svg><span class=" ">Agent Management</span></a>
+          </li>  
+          {% endif %}
+          {% if request.user.role.role != 'Caller' and request.user.role.role != 'QA' %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-21">
-                <a href="{% url 'live_call_list' %}" class="lan-21 no-color-change" style="all: inherit;cursor: pointer;">live Monitoring</a>
+                User
               </h6>
             </div>
+          </li>  
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'list-user' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-user"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-user"></use>
+            </svg><span class=" ">User Management</span></a>
+          </li>
+          {% endif %}
+          {% if request.user.role.role != 'QA' %}
+          <li class="sidebar-main-title">
+            <div>
+              <h6 class="lan-21"> Call Monitoring
+              </h6>
+     
           </li>   
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'live_call_list' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-contact"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-contact"></use>
+            </svg><span class=" ">Live Monitoring</span></a>
+          </li>
+          {% endif %}
+
+
+
+          <li class="sidebar-main-title">
+            <div>
+              <h6 class="lan-21"> Report
+              </h6>
+     
+          </li>   
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'report_download' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-contact"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-contact"></use>
+            </svg><span class=" ">Download Report</span></a>
+          </li>
                       
 
-        </li>  
-
-          <li class="sidebar-main-title">
+          <!-- <li class="sidebar-main-title">
             <div>
               <h6 class="lan-1">General</h6>
             </div>
@@ -123,45 +188,90 @@
               <li><a href="/footer_dark">Footer Dark</a></li>
               <li><a href="/footer_fixed">Footer Fixed</a></li>
             </ul>
-          </li>
+          </li> -->
           <!-- Voice -->
+          {% if request.user.role.role != 'Caller'  and request.user.role.role != 'QA' %}
           <li class="sidebar-main-title">
             <div>
-                <h6 class="lan-21">
+                <h6>Voice</h6>
+
+                <!-- <h6 class="lan-21">
                     <a href="{% url 'voice_view' %}" class="lan-21 no-color-change" style="all: inherit; cursor: pointer;">Voice</a>
-                </h6>
+                </h6> -->
             </div>
           </li>
-          
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="{% url 'voice_view' %}">Voice</a>
-          </li>
+          <!-- <li class="sidebar-list"> <i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-layout"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-layout"></use>
+            </svg><span class="lan-7">                <a href="{% url 'voice_view' %}"  class="lan-21 no-color-change" style="all: inherit; cursor: pointer;"><h6>Voice</h6></a>
+            </span></a>
+        
+        </li> -->
+        <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'voice_view' %}">
+          <svg class="stroke-icon">
+            <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-internationalization"></use>
+          </svg>
+          <svg class="fill-icon">
+            <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-internationalization"></use>
+          </svg><span class=" ">Voice</span></a>
+        </li>
+        {% endif %}
 
           
           <!-- Provider -->
+          {% if request.user.role.role != 'Admin' and request.user.role.role != 'Caller' and request.user.role.role != 'QA' %}
           <li class="sidebar-main-title">
             <div>
               <h6 class="lan-22">
-                <a href="{% url 'provider_view' %}" class="lan-22 no-color-change" style="all: inherit; cursor: pointer;">Provider</a>
+                AI Configuration
               </h6>
             </div>
           </li>
-
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="{% url 'provider_view' %}">Provider</a>
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'provider_view' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-learning"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-learning"></use>
+            </svg><span class=" ">Configuration</span></a>
           </li>
+          {% endif %}
+          {% if request.user.role.role != 'Caller'  %}
+          <li class="sidebar-main-title">
+            <div>
+              <h6 class="lan-22">
+                QA
+              </h6>
+            </div>
+          </li>
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'qa_parameter' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-task"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-task"></use>
+            </svg><span class=" ">QA Parameters</span></a>
+          </li>
+          {% endif %}
 
           <li class="sidebar-main-title">
             <div>
-              <h6 class="lan-23">
-                <a href="{% url 'qa_parameter' %}" class="lan-22 no-color-change" style="all: inherit; cursor: pointer;">QA Parameters</a>
+              <h6 class="lan-22">
+                Contact Sales
               </h6>
             </div>
           </li>
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="{% url 'qa_parameter' %}">QA Parameters</a>
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i><a class="sidebar-link sidebar-title" href="{% url 'contact_sale' %}">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#stroke-task"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg' %}#fill-task"></use>
+            </svg><span class=" ">Contact Sales</span></a>
           </li>
-
 
           
         </ul>

@@ -8,7 +8,19 @@
 
 {% block content %}
 <!-- Add Voice Button -->
-<button class="btn btn-primary-gradien" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Voice</button>
+<div class="d-flex justify-content-between align-items-center" style="margin: 1%;">
+    <!-- Add Voice Button -->
+    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Voice</button>
+
+    <!-- Search Form -->
+    <form method="GET" action="{% url 'voice_view' %}" style="display: flex; flex-direction: row; align-items: center;">
+        <div class="form-group" style="margin-right: 0.5%;">
+            <input type="text" name="search" class="form-control" placeholder="Search Voices" value="{{ search_query }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+</div>
+
 
 <!-- Add Voice Modal -->
 <div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">
@@ -41,7 +53,7 @@
                         <label for="organisationName" class="form-label">Organisation Name</label>
                         <select class="form-select" id="organisationName" name="organisation_name" required>
                             {% for org in org_names %}
-                            <option value="{{ org }}">{{ org }}</option>
+                            <option value="{{ org.organisation_name }}">{{ org.organisation_name }}</option>
                             {% endfor %}
                         </select>
                         <div class="invalid-feedback">Please select a valid organisation name.</div>
@@ -77,49 +89,83 @@
     </div>
 </div>
 
-<!-- List of Existing Voices -->
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-header pb-0">
-            <h4>Voices</h4>
-        </div>
-        <div class="card-body">
-            <div class="row g-sm-4 g-3">
-                {% for voice in voices %}
-                <div class="col-xl-4 col-md-6 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title" style="font-weight: bold;">{{ voice.voice_name }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
-                            <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
-                            <div class="d-flex justify-content-between">
-                                <button class="btn btn-success">▶</button>
-                            </div>
-                        </div>
-                    </div>
+<div class="row">
+    {% for voice in voices %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title" style="font-weight: bold;">{{ voice.voice_name }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
+                <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
+                <div class="d-flex justify-content-between">
+                    <audio id="audio-player-{{ forloop.counter }}" controls="" style="display: none;">
+                        <source src="{% static 'assets/audio/' %}{{ voice.voice_id }}.mp3" type="audio/mpeg">
+                        <source src="{% static 'assets/audio/' %}{{ voice.voice_name }}.wav" type="audio/wav">
+                    </audio>
+                    <button id="play-pause-button-{{ forloop.counter }}" class="btn btn-success" onclick="toggleAudio({{ forloop.counter }})">▶ Play</button>
+                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editVoiceModal" onclick="populateEditModal({{ voice.id }}, '{{ voice.voice_configuration|escapejs }}')">Edit</button>
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>
-    <div class="pagination"></div>
-        <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?search={{ search_query }}&page=1">&laquo; first</a>
-                <a href="?search={{ search_query }}&page={{ page_obj.previous_page_number }}">previous</a>
-            {% endif %}
-    
-            <span class="current">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-            </span>
-    
-            {% if page_obj.has_next %}
-                <a href="?search={{ search_query }}&page={{ page_obj.next_page_number }}">next</a>
-                <a href="?search={{ search_query }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-            {% endif %}
-        </span>
+    {% endfor %}
+</div>
+
+<!-- Edit Voice Modal -->
+<div class="modal fade" id="editVoiceModal" tabindex="-1" aria-labelledby="editVoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editVoiceModalLabel">Edit Voice Configuration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editVoiceForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_voice_id" name="voice_id">
+                    <div class="mb-3">
+                        <label for="edit_voice_config" class="form-label">Voice Configuration</label>
+                        <div id="edit_voice_config" style="height: 200px; width: 100%; border: 1px solid #ced4da;"></div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" type="submit">Update Voice</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
+    <div class="job-pagination">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination pagination-primary">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&q={{ search_query }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
 <!-- Container-fluid Ends-->
 
 <!-- Ace Editor -->
@@ -127,88 +173,173 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const form = document.querySelector(".needs-validation");
-        const submitButton = form.querySelector("button[type='submit']");
-        const providerSelect = document.getElementById("voice_provider");
-        const aceEditorContainer = document.getElementById("jsonEditorContainer");
+function toggleAudio(counter) {
+    // Get the currently playing audio player
+    const currentlyPlaying = document.querySelector('audio.playing');
 
-        // Initialize Ace Code Editor
-        const editor = ace.edit("voice_config");
-        editor.setTheme("ace/theme/monokai");
-        editor.session.setMode("ace/mode/json");
+    // Get the selected audio player
+    var audio = document.getElementById('audio-player-' + counter);
+    var playPauseButton = document.getElementById('play-pause-button-' + counter);
 
-        // Populate JSON editor based on selected provider
-        providerSelect.addEventListener('change', function () {
-            const selectedOption = providerSelect.options[providerSelect.selectedIndex];
-            let configData = selectedOption.getAttribute('data-config');
-
-            if (configData) {
-                configData = configData.replace(/'/g, '"');
-                try {
-                    aceEditorContainer.style.display = 'block';
-                    editor.setValue(JSON.stringify(JSON.parse(configData), null, 2), 1);
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                }
-            } else {
-                aceEditorContainer.style.display = 'none';
-            }
-        });
-
-        // Handle form submission using AJAX
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
-            if (!form.checkValidity()) {
-                form.classList.add("was-validated");
-                return;
-            }
-
-            let formData = {
-                'voice_name': document.getElementById("voice_name").value,
-                'voice_id': document.getElementById("voice_id").value,
-                'organisation_name': document.getElementById("organisationName").value,
-                'voice_provider': document.getElementById("voice_provider").value,
-                'voice_config': editor.getValue()
-            };
-            
-            submitButton.disabled = true;
-
-            // AJAX request
-            fetch("/voice", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                submitButton.disabled = false;
-                console.log("Form submission successful", data);
-                showToast('success', 'Form submitted successfully!');
-            })
-            .catch(error => {
-                console.error("Form submission error", error);
-                showToast('error', 'Form submission failed!');
-            });
-           
-        });
-
-        
-    });
-    function showToast(type, message) {
-        Swal.fire({
-            title: type === 'success' ? 'Success' : 'Error',
-            text: message,
-            icon: type,
-            confirmButtonText: 'OK'
-        }).then(() => { location.reload(); });
+    // Check if another audio is currently playing
+    if (currentlyPlaying && currentlyPlaying !== audio) {
+        // Pause the currently playing audio
+        currentlyPlaying.pause();
+        currentlyPlaying.classList.remove('playing'); // Remove 'playing' class
+        // Update the play button of the paused audio
+        const previousButton = document.getElementById('play-pause-button-' + currentlyPlaying.id.split('-')[2]);
+        previousButton.textContent = '▶ Play'; // Reset button text to "Play"
+        previousButton.classList.remove('btn-danger'); // Reset button style
+        previousButton.classList.add('btn-success'); // Reset button style
     }
-</script>
-{% endblock %}
 
-{% block scriptcontent %}
-<!-- Additional JavaScript for the page can be added here if necessary -->
+    // Toggle the selected audio
+    if (audio.paused) {
+        audio.play();
+        audio.classList.add('playing'); // Mark this audio as playing
+        playPauseButton.textContent = '❚❚ Pause'; // Change button text to "Pause"
+        playPauseButton.classList.remove('btn-success'); // Change button style
+        playPauseButton.classList.add('btn-danger'); // Change button style
+    } else {
+        audio.pause();
+        audio.classList.remove('playing'); // Remove 'playing' class
+        playPauseButton.textContent = '▶ Play'; // Change button text back to "Play"
+        playPauseButton.classList.remove('btn-danger'); // Change button style
+        playPauseButton.classList.add('btn-success'); // Change button style
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector(".needs-validation");
+    const submitButton = form.querySelector("button[type='submit']");
+    const providerSelect = document.getElementById("voice_provider");
+    const aceEditorContainer = document.getElementById("jsonEditorContainer");
+
+    // Initialize Ace Code Editor
+    const editor = ace.edit("voice_config");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/json");
+
+    // Populate JSON editor based on selected provider
+    providerSelect.addEventListener('change', function () {
+        const selectedOption = providerSelect.options[providerSelect.selectedIndex];
+        let configData = selectedOption.getAttribute('data-config');
+
+        if (configData) {
+            configData = configData.replace(/'/g, '"');
+            try {
+                aceEditorContainer.style.display = 'block';
+                editor.setValue(JSON.stringify(JSON.parse(configData), null, 2), 1);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+            }
+        } else {
+            aceEditorContainer.style.display = 'none';
+        }
+    });
+
+    // Handle form submission using AJAX
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
+
+        let formData = {
+            'voice_name': document.getElementById("voice_name").value,
+            'voice_id': document.getElementById("voice_id").value,
+            'organisation_name': document.getElementById("organisationName").value,
+            'voice_provider': document.getElementById("voice_provider").value,
+            'voice_config': editor.getValue()
+        };
+        
+        submitButton.disabled = true;
+
+        // AJAX request
+        fetch("/voice", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            submitButton.disabled = false;
+            console.log("Form submission successful", data);
+            showToast('success', 'Form submitted successfully!');
+        })
+        .catch(error => {
+            console.error("Form submission error", error);
+            showToast('error', 'Form submission failed!');
+        });
+    });
+});
+
+function showToast(type, message) {
+    Swal.fire({
+        title: type.charAt(0).toUpperCase() + type.slice(1),
+        text: message,
+        icon: type,
+        confirmButtonText: 'Ok'
+    }).then(() => {location.reload();});
+}
+function populateEditModal(voiceId, voiceConfig) {
+    document.getElementById("edit_voice_id").value = voiceId;
+
+    // Initialize Ace Code Editor for edit modal
+    const editEditor = ace.edit("edit_voice_config");
+    editEditor.setTheme("ace/theme/monokai");
+    editEditor.session.setMode("ace/mode/json");
+    
+    // Set the current voice configuration in the editor
+    try {
+        editEditor.setValue(JSON.stringify(JSON.parse(voiceConfig), null, 2), 1);
+    } catch (error) {
+        console.error('Error parsing JSON for edit:', error);
+    }
+}
+
+// Handle edit voice form submission using AJAX
+document.getElementById("editVoiceForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const editForm = this;
+    const editSubmitButton = editForm.querySelector("button[type='submit']");
+    
+    if (!editForm.checkValidity()) {
+        editForm.classList.add("was-validated");
+        return;
+    }
+
+    let editFormData = {
+        'voice_id': document.getElementById("edit_voice_id").value,
+        'voice_config': ace.edit("edit_voice_config").getValue()
+    };
+    
+    editSubmitButton.disabled = true;
+
+    // AJAX request to update voice
+    fetch("{% url 'edit_voice' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+        },
+        body: JSON.stringify(editFormData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        editSubmitButton.disabled = false;
+        console.log("Edit submission successful", data);
+        showToast('success', 'Voice updated successfully!');
+    })
+    .catch(error => {
+        console.error("Edit submission error", error);
+        showToast('error', 'Voice update failed!');
+    });
+});
+</script>
 {% endblock %}
