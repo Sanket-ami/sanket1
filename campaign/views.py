@@ -30,6 +30,7 @@ import csv
 from qa_parameters.models import QAParameters
 from zono.settings import CALL_SERVER_BASE_URL
 import boto3
+import pandas as pd 
 
 ## render create campaign page
 @login_required(login_url="/login_home")
@@ -1643,3 +1644,58 @@ def get_csv_coulmns(campaign_id):
                 unique_keys.append(key)
     return unique_keys
 ################################################################### END ################################################################################
+
+"""
+API to verify the csv 
+"""
+def upload_csv(request):
+    if request.method == 'POST':
+        csv_file = request.FILES.get('csv_file')
+
+        if not csv_file:
+            return JsonResponse({'success': False, 'error': 'No file uploaded.'})
+
+        try:
+            # Read the CSV file using pandas
+            df = pd.read_csv(csv_file)
+
+            # Trim spaces in the headers and rows
+            df.columns = df.columns.str.strip()
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+            # Replace NaN with an empty string
+            df = df.fillna('')
+
+            # Check if 'contact_number' exists
+            if 'contact_number' not in df.columns:
+                return JsonResponse({'success': False, 'error': 'CSV must contain a "contact_number" column.'})
+            
+            # Remove rows where contact_number is empty or null
+            df = df[df['contact_number'].notna()]
+
+            # Alternatively, drop any rows where 'contact_number' is an empty string or NaN
+            df = df[df['contact_number'].apply(lambda x: pd.notna(x) and str(x).strip() != '')]
+
+
+            # Validate that contact_number column contains only 10-digit numbers, after converting floats to integers
+            df['contact_number'] = df['contact_number'].apply(lambda x: str(int(x)) if isinstance(x, float) else str(x))
+
+            # Validate that contact_number contains only 10-digit numbers
+            print("df['contact_number'] ",df['contact_number'])
+            invalid_numbers = df['contact_number'].apply(lambda x: not x.isdigit() or len(x) != 10)
+
+            if invalid_numbers.any():
+                return JsonResponse({'success': False, 'error': 'The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.'})
+
+            # Get column names
+            column_names = list(df.columns)
+
+            # Convert CSV to list of dictionaries
+            contact_list = df.to_dict(orient='records')
+
+            return JsonResponse({'success': True, 'column_names': column_names, 'contact_list': contact_list})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})

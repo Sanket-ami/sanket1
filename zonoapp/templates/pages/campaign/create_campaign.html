@@ -337,6 +337,7 @@
 
     while ((match = regex.exec(agent_prompt)) !== null) {
       let variable = match[1]; // Extract the variable name
+      console.log(variable)
       if (!columnNames.includes(variable)) {
         invalidVariables.push(variable); // Collect invalid variables
       }
@@ -489,80 +490,122 @@
       
 
 
-  // file upload validation
+  // // file upload validation
+  // $('#formFile3').on('change', function(event) {
+  //   const file = event.target.files[0];
+
+  //   if (!file) {
+  //     showToast("error", "Please select a file.");
+  //     return;
+  //   }
+
+  //   const reader = new FileReader();
+  //   reader.onload = function(e) {
+  //     csvData = e.target.result;
+  //     rows = csvData.split('\n').map(row => row.split(','));
+
+  //     if (rows.length < 1) {
+  //       showToast("error", "The CSV file is empty or invalid.");
+  //       return;
+  //     }
+
+  //     // Get header row and process column names
+  //     const headerRow = rows[0];
+  //     columnNames = $.map(headerRow, function(col) {
+  //       return col.toLowerCase() ;
+  //     });
+
+  //     // Check for contact_number column
+  //     console.log(columnNames)
+  //     document.getElementById("availableVariabes").value=columnNames.join(' , ') //comma seprated list
+
+  //     const phoneNumberIndex = headerRow.indexOf('contact_number');
+  //     console.log(phoneNumberIndex)
+  //     if (phoneNumberIndex === -1) {
+  //       showToast("error", 'CSV must contain a "contact_number" column.');
+  //       return;
+  //     }
+
+  //     // Validate that contact_number column contains only 10-digit numbers
+  //     const invalidNumbers = rows.slice(1).some(function(row) {
+  //       const contactNumber = row[phoneNumberIndex]; // Get the contact number from the row
+  //       console.log(contactNumber)
+  //       // Check if contactNumber is defined and then trim and validate
+  //       // if (contactNumber === undefined) {
+  //       //   return true; // Treat as invalid if undefined
+  //       // }
+        
+  //       // Trim and validate the contact number
+  //       return !/^\d{10}$/.test(contactNumber.trim());
+  //     });
+  //     console.log(invalidNumbers)
+  //     if (invalidNumbers) {
+  //       showToast("error", 'The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.');
+  //       return;
+  //     }
+
+  //     // Store CSV data as JSON array of objects
+  //     contactList = $.map(rows.slice(1), function(row) {
+  //       let obj = {};
+  //       $.each(row, function(i, cell) {
+  //         obj[columnNames[i]] = $.trim(cell);
+  //       });
+  //       return obj;
+  //     });
+
+  //     $('#proceedButton').prop('disabled', false);
+  //     console.log("Column Names: ", columnNames);
+  //     console.log("File Data: ", contactList);
+  //     showToastSuccess('Contacts uploaded successfully!');
+
+  //     // Populate available variables textarea
+  //     $('#availableVariabes').val(columnNames.join(', ')); // Assuming this is your textarea ID for available variables
+  //   };
+
+  //   reader.readAsText(file);
+  // });
+
   $('#formFile3').on('change', function(event) {
     const file = event.target.files[0];
-
+    
     if (!file) {
-      showToast("error", "Please select a file.");
-      return;
+        showToast("error", "Please select a file.");
+        return;
     }
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      csvData = e.target.result;
-      rows = csvData.split('\n').map(row => row.split(','));
+    const formData = new FormData();
+    formData.append('csv_file', file);
 
-      if (rows.length < 1) {
-        showToast("error", "The CSV file is empty or invalid.");
-        return;
-      }
+    $.ajax({
+        url:  "{% url 'upload_csv' %}", // Your Django URL for processing the file
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+           'X-CSRFToken': '{{ csrf_token }}'
+        },
 
-      // Get header row and process column names
-      const headerRow = rows[0];
-      columnNames = $.map(headerRow, function(col) {
-        return col.toLowerCase() ;
-      });
+        success: function(response) {
+            // Handle success response
+            if (response.success) {
+                $('#availableVariabes').val(response.column_names.join(', '));
+                columnNames = response.column_names
+                contactList = response.contact_list
+                console.log(contactList)
+                showToastSuccess('CSV uploaded and validated successfully!');
+                $('#proceedButton').prop('disabled', false);
+            } else {
+                showToast("error", response.error);
+            }
+        },
+        error: function(xhr, status, error) {
+            // Handle error
+            showToast("error", "An error occurred during file upload.");
+        }
+    });
+ });
 
-      // Check for contact_number column
-      console.log(columnNames)
-      document.getElementById("availableVariabes").value=columnNames.join(' , ') //comma seprated list
-
-      const phoneNumberIndex = headerRow.indexOf('contact_number');
-      console.log(phoneNumberIndex)
-      if (phoneNumberIndex === -1) {
-        showToast("error", 'CSV must contain a "contact_number" column.');
-        return;
-      }
-
-      // Validate that contact_number column contains only 10-digit numbers
-      const invalidNumbers = rows.slice(1).some(function(row) {
-        const contactNumber = row[phoneNumberIndex]; // Get the contact number from the row
-        console.log(contactNumber)
-        // Check if contactNumber is defined and then trim and validate
-        // if (contactNumber === undefined) {
-        //   return true; // Treat as invalid if undefined
-        // }
-        
-        // Trim and validate the contact number
-        return !/^\d{10}$/.test(contactNumber.trim());
-      });
-      console.log(invalidNumbers)
-      if (invalidNumbers) {
-        showToast("error", 'The "contact_number" column contains invalid numbers. All phone numbers must be 10 digits.');
-        return;
-      }
-
-      // Store CSV data as JSON array of objects
-      contactList = $.map(rows.slice(1), function(row) {
-        let obj = {};
-        $.each(row, function(i, cell) {
-          obj[columnNames[i]] = $.trim(cell);
-        });
-        return obj;
-      });
-
-      $('#proceedButton').prop('disabled', false);
-      console.log("Column Names: ", columnNames);
-      console.log("File Data: ", contactList);
-      showToastSuccess('Contacts uploaded successfully!');
-
-      // Populate available variables textarea
-      $('#availableVariabes').val(columnNames.join(', ')); // Assuming this is your textarea ID for available variables
-    };
-
-    reader.readAsText(file);
-  });
   $(document).ready(function () {
   $('#Agents').on('change', function () {
     // Get the selected agent's voice name and audio ID
