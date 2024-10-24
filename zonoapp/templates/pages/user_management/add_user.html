@@ -46,30 +46,30 @@
 
     <!-- User Table (Visible by Default) -->    
     <div id="userTable">
-        <div class="card">
-            <div class="card-header"></div>
-            <div class="card-block row">
-                <div class="col-sm-12 col-lg-12 col-xl-12">
-                    <div class="table-responsive custom-scrollbar">
-                        <table class="table table-inverse table-striped">
-                            <thead>
+        
+            
+            
+                <div class="container-fluid mt-4">
+                    <div class="table-responsive table-striped">
+                        <table class="table">
+                            <thead  class="table-dark" >
                                 <tr>
-                                    <th scope="col">UserName</th>
-                                    <th scope="col">Email</th>
-                                    <th scope="col">Role</th>
-                                    <th scope="col">Organisation</th>
-                                    <th scope="col">Date Joined</th>
-                                    <th scope="col">Action</th>    
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;"> UserName </span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Email</span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Role</span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Organisation</span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Date Joined</span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Action</span></th>    
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for user in users %}
                                 <tr>
-                                    <th scope="row">{{ user.username }}</th>
-                                    <td>{{ user.email }}</td>
-                                    <td>{{ user.role.role }}</td>
-                                    <td>{{ user.organisation_name }}</td>
-                                    <td>{{ user.date_joined }}</td>
+                                    <td><h6>{{ user.username }}</h6></td>
+                                    <td><h6>{{ user.email }}</h6></td>
+                                    <td><h6>{{ user.role.role }}</h6></td>
+                                    <td><h6>{{ user.organisation_name }}</h6></td>
+                                    <td><h6>{{ user.date_joined }}</h6></td>
                                     <td> 
                                         <button class="btn-info edit-agent-button" data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-email="{{ user.email }}" data-role="{{ user.role.role }}" data-organisation="{{ user.organisation_name }}" data-bs-toggle="modal" data-bs-target="#editAgentModal">
                                             <i class="fa fa-edit"></i>
@@ -84,8 +84,8 @@
                         </table>
                     </div>
                 </div>
-            </div>
-        </div>
+            
+        
         <div>
             <div class="job-pagination">
                 <nav aria-label="Page navigation example">
