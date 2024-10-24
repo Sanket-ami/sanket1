@@ -1027,19 +1027,16 @@ def list_call_logs(request):
                 campaign_list = campaign_list.filter(organisation_name=request.user.organisation_name)
 
             campaign_list = list(campaign_list.values("id", "campaign_name"))
-
             campaign_id = request.GET.get('campaign_id',0)
             if  request.user.is_superuser or request.user.role.role == "QA" or request.user.role.role == "Admin":
                 call_status = request.GET.get('call_status',"completed")
             else:
                 call_status = request.GET.get('call_status', "ongoing")
-            print("call_status", call_status)
             call_logs_data = []
             dynamic_columns = []
             total_pages = 0
             page = 1
             paginated_logs =[]
-            
             if campaign_id:
                 call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-id')
                 if call_status:
@@ -1051,7 +1048,6 @@ def list_call_logs(request):
                 paginator = Paginator(call_logs, per_page)
                 paginated_logs = paginator.get_page(page)
                 total_pages = paginator.num_pages
-                print("num pages" ,total_pages)
                 #call_logs_data = [json.loads(log.to_json()) for log in paginated_logs]
                 call_logs_data=[]
                 for log in paginated_logs:
@@ -1062,6 +1058,14 @@ def list_call_logs(request):
                     current_log['_id'] = str(log.id)       
                                  
                     current_log['created_at']  = normal_date
+                    try:
+                        if 'start_time' in current_log:
+                                current_log['start_time'] = log.start_time.strftime('%Y-%m-%d %H:%M:%S')
+                        if 'end_time' in current_log:
+                                current_log['end_time'] = log.end_time.strftime('%Y-%m-%d %H:%M:%S')
+                    except Exception as er:
+                        print("error converting mongo time: ", er)
+                        pass
                     call_logs_data.append(
                         current_log
                     )
@@ -1081,7 +1085,6 @@ def list_call_logs(request):
                 "paginated_logs":paginated_logs,
                 "campaign_id":str(campaign_id)
             }
-
             return render(request, 'pages/campaign/call_logs.html', context)
 
         except Exception as error :
@@ -1108,7 +1111,7 @@ def fetch_call_details(request):
         # fetch transcript and summary
         transcript_data =Transcript.objects.get(call_logs=call_id,campaign_id= campaign_id) 
         transcript_obj = {}
-        print(print(transcript_obj))
+        # print(print(transcript_obj))
         try:
             transcript_obj["transcript"] = format_transcript(transcript_data.transcript)
         except:
