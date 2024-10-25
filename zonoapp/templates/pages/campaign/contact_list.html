@@ -273,7 +273,14 @@
         $("#callSelectedContacts").on('click', function() {
             console.log("selected contacts")
             console.log(selectedContacts)
-            startCampaign("{{ campaign_id }}", selectedContacts)
+            {% if is_active %}
+                startCampaign("{{ campaign_id }}", selectedContacts)
+            {% else %}
+                Swal.fire({
+                            icon: 'warning',
+                            text: 'The contact list is not active, activate it before starting the call!',
+                        });
+            {% endif %}
         });
 
         // When the user checks/unchecks the checkbox
