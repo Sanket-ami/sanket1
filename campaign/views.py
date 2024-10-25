@@ -358,6 +358,15 @@ def start_campaign(request):
             # Iterate over the data
             contact_list = campaign_obj.contact_list.contact_list
             #selec
+
+            if not contact_list:
+                return JsonResponse({'message': 'No valid contacts selected for this campaign', "success": False, "error": True}, status=200)
+            
+            if 'selected_contact_list' in request_body and request_body['selected_contact_list']:
+                selected_contact_ids = request_body['selected_contact_list']
+                # Filter contact_list to include only selected contacts
+                contact_list = [contact for contact in contact_list if contact['contact_id'] in selected_contact_ids]
+
             voice_config = campaign_obj.agent.voice.voice_configuration
             qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
 
