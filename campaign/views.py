@@ -456,7 +456,8 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
 
     except Exception as error:
         print("error updating scheduled: ",error) 
-    print(contact_list  )
+    # print(contact_list  )
+    counter = 0
     for call_details in contact_list:
         try:
             raw_text = prompt
@@ -525,6 +526,15 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             # monitoring the call status
             monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"], organisation_name, provider))
             monitor_thread.start()
+            # Increment the counter and add delay after each call
+            counter += 1
+            time.sleep(wait_time_after_call * 60)
+
+            # Add additional delay after every 5 calls
+            if counter % 5 == 0:
+                print(f"Waiting for {wait_time_after_5_calls} minutes after 5 calls.")
+                time.sleep(wait_time_after_5_calls * 60)
+                            
         except Exception as err:
             print(f"error while calling: {call_details['contact_number']} error- {err}")
 
