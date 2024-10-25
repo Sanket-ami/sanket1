@@ -21,9 +21,11 @@
             </form>
         </div>
 
+        
         <!-- Second Column: Search field and button (right-aligned, next to Upload Contact List) -->
         <div class="col-auto ms-auto d-flex align-items-center">
             <form method="GET" action="{% url 'contact_list' campaign_id %}" class="d-flex align-items-center me-2">
+                <button type="button" class="btn btn-secondary" id="callSelectedContacts"> Call Selected Contacts </button>&nbsp;
                 <div class="form-outline me-1" style="width: 10rem;">
                     <input type="text" name="patient_name" id="patient_name" value="{{ patient_name }}" class="form-control" placeholder="Enter Patient Name"/>
                 </div>
@@ -86,18 +88,18 @@
 </div>
 
 <div class="container-fluid mt-4">
-
-    <table id="contactTable" class="table table-inverse table-striped dataTable" style="margin-left: 0px;">
-        <thead>
+<div class="table-responsive table-striped">
+    <table id="contactTable" class="table" >
+        <thead class="table-dark">
             <tr>
-                <th class="">
+                <th class="" >
                     <button class="btn btn-pill btn-primary btn-air-primary" id="deleteSelected" type="button">
                         <i class="icofont icofont-ui-delete"></i>
                     </button>
                 </th>
                 {% if contact_list %}
                     {% for key in contact_list.0.keys %}
-                        <th class="sorting_asc">{{ key }}</th>
+                        <th class="sorting_asc"> <span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
                     {% endfor %}
                 {% endif %}
             </tr>
@@ -110,18 +112,19 @@
                     <input class="form-switch contact-checkbox" data-contact-id="{{ contact.contact_id }}" type="checkbox">
                 </td>
                 {% for value in contact.values %}
-                    <td>{{ value }}</td>
+                    <td><h6>{{ value }}</h6></td>
                 {% endfor %}
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
     <div class="job-pagination">
         <nav aria-label="Page navigation example">
             <ul class="pagination pagination-primary">
                 {% if contact_list.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ contact_list.previous_page_number }}&patient_name={{ patient_name }}">Previous</a>
+                    <a class="page-link" href="?page={{ contact_list.previous_page_number }}&patient_name={{ patient_name }}&selected_contact_list={{ selected_contact_list }}">Previous</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
@@ -131,14 +134,14 @@
 
                 {% for num in contact_list.paginator.page_range %}
                 <li class="page-item {% if contact_list.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}&patient_name={{ patient_name }}">{{ num }}</a>
+                    <a class="page-link" href="?page={{ num }}&patient_name={{ patient_name }}&selected_contact_list={{ selected_contact_list }}">{{ num }}</a>
                 </li>
                 {% endfor %}
 
                 {% if contact_list.has_next %}
                 
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ contact_list.next_page_number }}&patient_name={{ patient_name }}">Next</a>
+                    <a class="page-link" href="?page={{ contact_list.next_page_number }}&patient_name={{ patient_name }}&selected_contact_list={{ selected_contact_list }}">Next</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
@@ -148,6 +151,7 @@
             </ul>
         </nav>
     </div>
+</div>
 </div>
 
 <!-- Include jQuery and DataTables JS and CSS files from CDN -->
@@ -265,6 +269,20 @@
         /// Handling contact deletion
         let selectedContacts = [];
 
+        // Call only selected contacts
+        $("#callSelectedContacts").on('click', function() {
+            console.log("selected contacts")
+            console.log(selectedContacts)
+            {% if is_active %}
+                startCampaign("{{ campaign_id }}", selectedContacts)
+            {% else %}
+                Swal.fire({
+                            icon: 'warning',
+                            text: 'The contact list is not active, activate it before starting the call!',
+                        });
+            {% endif %}
+        });
+
         // When the user checks/unchecks the checkbox
         $(document).on('change', '.contact-checkbox', function() {
             console.log('Checkbox clicked!');
@@ -295,7 +313,7 @@
                 }
 
                 // Confirm deletion using SweetAlert2
-                        Swal.fire({
+                Swal.fire({
                             title: 'Are you sure?',
                             text: 'You won\'t be able to revert this!',
                             icon: 'warning',
@@ -335,5 +353,40 @@
                     });
 
                 });
+
+function startCampaign(campaign_id, selected_contact_list) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'Do you really want call the selected contacts ' ,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{% url 'start_campaign' %}",  // Django URL for starting the campaign
+                method: "POST",
+                data: JSON.stringify({ campaign_id: campaign_id,selected_contact_list:selected_contact_list }),
+                contentType: "application/json",
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        text: response.message
+                    });
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'Failed to start campaign: ' + error
+                    });
+                }
+            });
+        }
+    });
+}
 </script>
 {% endblock %}

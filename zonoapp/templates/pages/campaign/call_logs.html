@@ -40,13 +40,13 @@
             </select>
         </div>
     </div>
-    
-    <table class="table table-inverse table-striped dataTable" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
-        <thead>
+    <div class="table-responsive table-striped">
+    <table class="table"  id="callLogsTable">
+        <thead class="table-dark">
             <tr>
                 {% if call_logs_data %}
                     {% for key in call_logs_data.0.keys %}
-                    <th class="">{{ key }}</th>
+                    <th class=""><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
                     {% endfor %}
                 {% endif %}
             </tr>
@@ -56,7 +56,7 @@
                 {% for log in call_logs_data %}
                 <tr onclick="showDetails({{log}})" id="trigger-btn" data-bs-toggle="modal" data-bs-target="#myModal">
                     {% for value in log.values %}
-                    <td>{{ value }}</td>
+                    <td><h6>{{ value }}</h6></td>
                     {% endfor %}
                 </tr>
                 {% endfor %}
@@ -96,7 +96,7 @@
             {% endif %}
         </ul>
     </nav>
-
+    </div>
 </div>
 <!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
     Open modal

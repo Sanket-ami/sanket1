@@ -84,7 +84,6 @@ def voice_view(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-@login_required(login_url="/login_home")
 def get_voice(voice_id):
     try:
         url = f"https://api.elevenlabs.io/v1/voices/{voice_id}"
@@ -117,7 +116,6 @@ def get_voice(voice_id):
         print(f"An unexpected error occurred: {e}")
 
 
-@login_required(login_url="/login_home")
 def get_voice_cartesia(voice, json_file):
     try:
         with open(json_file, 'r') as file:

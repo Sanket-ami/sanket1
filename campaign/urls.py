@@ -23,5 +23,7 @@ urlpatterns = [
         path('schedule_campaign/', views.schedule_campaign, name='schedule_campaign'),
         path('/sample_csv', views.sample_csv, name='sample_csv'),
         path('update_campaign/', views.update_campaign, name='update_campaign'),
+        path('api/upload-csv/', views.upload_csv, name='upload_csv'),
+
 
 ]
