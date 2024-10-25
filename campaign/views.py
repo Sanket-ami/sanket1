@@ -234,7 +234,6 @@ def contact_list(request, campaign_id):
             # Fetch the contact list based on the campaign_id
             campaign = Campaign.objects.get(id=campaign_id)
             all_contact_list_names = ContactList.objects.filter(is_deleted = False, campaign=campaign).values_list('list_name','id')
-
             # import pdb;pdb.set_trace()
             contact_list = ContactList.objects.filter(is_deleted = False, campaign=campaign)
             # select the specfic list from a campaign
@@ -258,13 +257,15 @@ def contact_list(request, campaign_id):
                     contact_list = list(contact_list[0].contact_list)
             if search :
                 contact_list = [patient for patient in contact_list if  patient['patient_name'].lower().startswith(search.lower()) ]
-            print("final_conact_list_b4 uload + ",contact_list)
+
+            # print("final_conact_list_b4 uload + ",contact_list)
+
             paginator = Paginator(contact_list, 10)  # Show 10 campaigns per page
-            page_number = request.GET.get('page')
-            contact_list = paginator.get_page(page_number)
+            page = request.GET.get('page')
+            contact_list = paginator.get_page(page)
             context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Contact List"},"contact_list": contact_list,"campaign_id":campaign_id,
                         "all_contact_list_names":all_contact_list_names, "selected_contact_list":selected_list,"contact_list_id":contact_list_id,
-                        "is_active":is_active , "patient_name":search
+                        "is_active":is_active , "patient_name":search,"page":page
                     }
             
             return render(request, 'pages/campaign/contact_list.html', context)
@@ -534,7 +535,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             if counter % 5 == 0:
                 print(f"Waiting for {wait_time_after_5_calls} minutes after 5 calls.")
                 time.sleep(wait_time_after_5_calls * 60)
-                            
+
         except Exception as err:
             print(f"error while calling: {call_details['contact_number']} error- {err}")
 
