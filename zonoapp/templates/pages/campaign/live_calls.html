@@ -75,6 +75,25 @@
         </tbody>
     </table>
     
+    <!-- Modal Structure -->
+    <div class="modal fade" id="transcriptModal" tabindex="-1" aria-labelledby="transcriptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title" id="transcriptModalLabel"><strong>Live Transcript</strong></h4> 
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <!-- The live transcript content will be loaded here -->
+              <div id="transcriptContent" style="min-height: 200px;">Loading transcript...</div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
     <!-- Pagination -->
     <br>
@@ -131,19 +150,47 @@
    
 
     // >>>>>>>>>> Trascript Start<<<<<<<<<<<<
-    function viewTranscriptLive(callId) {
+    // function viewTranscriptLive(callId) {
 
+    //     const campaign_id = "{{ campaign_id }}";
+    //     const call_id = callId;
+    //     console.log(callId)
+
+    //     // Construct the URL with campaign_id and call_id as query parameters
+    //     const base_url = '{% url "live_transcript" %}'
+    //     const url = base_url+`?campaign_id=${campaign_id}&call_id=${call_id}`;
+    //     console.log(url)
+    //     // Open the URL in a new tab
+    //     window.open(url, '_blank');        
+    // }    
+
+    // >>>>>>>>>> Trascript Start<<<<<<<<<<<<
+    // View Live Transcript inside modal
+    function viewTranscriptLive(callId) {
         const campaign_id = "{{ campaign_id }}";
         const call_id = callId;
-        console.log(callId)
 
         // Construct the URL with campaign_id and call_id as query parameters
-        const base_url = '{% url "live_transcript" %}'
-        const url = base_url+`?campaign_id=${campaign_id}&call_id=${call_id}`;
-        console.log(url)
-        // Open the URL in a new tab
-        window.open(url, '_blank');        
-    }    
+        const url = `{% url "live_transcript" %}?campaign_id=${campaign_id}&call_id=${call_id}`;
+
+        // Show the modal
+        const transcriptModal = new bootstrap.Modal(document.getElementById('transcriptModal'));
+        transcriptModal.show();
+
+        // Load content via AJAX
+        $.ajax({
+                url: url,
+                method: 'GET',
+                success: function(data) {
+                    // Populate the modal with the response content
+                    $('#transcriptContent').html(data);
+                },
+                error: function(xhr, status, error) {
+                    // Handle error
+                    $('#transcriptContent').html('<p class="text-danger">Failed to load transcript. Please try again later.</p>');
+                }
+        });
+    }
 
 
     // >>>>>>>>>> End Call  Start<<<<<<<<<<<<
