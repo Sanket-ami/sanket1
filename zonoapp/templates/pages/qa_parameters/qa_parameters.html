@@ -111,36 +111,42 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {% if qa_parameters %}
                         <!-- Loop through organisations and their parameters -->
-                        {% for organisation in qa_parameters %}
-                        <tr>
-                            <td>{{ organisation.organisation_name }}</td>
-                            <td>{{ organisation.parameters_name }}</td>
-                            <!-- Loop through key-value pairs for each organisation -->
+                            {% for organisation in qa_parameters %}
+                            <tr>
+                                <td>{{ organisation.organisation_name }}</td>
+                                <td>{{ organisation.parameters_name }}</td>
+                                <!-- Loop through key-value pairs for each organisation -->
 
-                                <td></td> <!-- Empty cell to skip repeated organisation name -->
-                                <!-- <td>{{ key }}</td>
-                                <td>{{ value }}</td> -->
-                                <!-- <td>
-                                    Edit Button
-                                    <button class="btn-info edit-parameter-button" 
-                                            data-organisation-id="{{ organisation.id }}" 
-                                            data-parameter-name="{{ organisation.parameters_name }}" 
-                                            data-key="{{ key }}" 
-                                            data-value="{{ value }}" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#editParameterModal" onclick=openEditModal(this)>
-                                        <i class="fa fa-edit"></i>
-                                    </button>
-                                </td> -->
-                                <td>
-                                    <!-- Delete Button -->
-                                    <button class="btn-danger" onclick=deleteParameter("{{ organisation.id }}")>
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </td>
+                                    <td></td> <!-- Empty cell to skip repeated organisation name -->
+                                    <!-- <td>{{ key }}</td>
+                                    <td>{{ value }}</td> -->
+                                    <!-- <td>
+                                        Edit Button
+                                        <button class="btn-info edit-parameter-button" 
+                                                data-organisation-id="{{ organisation.id }}" 
+                                                data-parameter-name="{{ organisation.parameters_name }}" 
+                                                data-key="{{ key }}" 
+                                                data-value="{{ value }}" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editParameterModal" onclick=openEditModal(this)>
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                    </td> -->
+                                    <td>
+                                        <!-- Delete Button -->
+                                        <button class="btn-danger" onclick=deleteParameter("{{ organisation.id }}")>
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="4"><h6>No logs available</h6></td>
                         </tr>
-                        {% endfor %}
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
