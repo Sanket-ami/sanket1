@@ -15,13 +15,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('zonoapp.urls')),
+    path('dashboard/', include('dashboard.urls')),
     path('provider/', include('provider.urls')),
-    path('voice', include('provider.urls')),
+    path('voice', include('voice.urls')),
     path('content',include('campaign.urls')),
-    path('agent/',include('agent.urls'))
+    path('agent/',include('agent.urls')),
+    path('qa_parameters', include('qa_parameters.urls')),
+    path('reporting/', include('reporting.urls')),
 ]

@@ -1,0 +1,371 @@
+
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<!-- Add Parameter Button -->
+<button class="btn btn-primary" style="margin: 1%;" type="button" id="addParameterButton">Add Parameter</button>
+
+<!-- Edit Parameter Modal -->
+<div class="modal fade" id="editParameterModal" tabindex="-1" aria-labelledby="editParameterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editParameterModalLabel">Edit Parameter</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editParameterForm" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_organisation_id" name="organisation_id" required>
+                    
+                    <div class="mb-3">
+                        <label for="edit_parameter_key" class="form-label">Parameter Key</label>
+                        <input type="text" class="form-control" id="edit_parameter_key" name="parameter_key" required>
+                        <div class="invalid-feedback">Please provide a valid parameter key.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_parameter_value" class="form-label">Parameter Value</label>
+                        <input type="text" class="form-control" id="edit_parameter_value" name="parameter_value" required>
+                        <div class="invalid-feedback">Please provide a valid parameter value.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" type="submit">Update Parameter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Parameter Form: Initially Hidden -->
+<div class="card-body custom-input addAgentModal d-none" id="addAgentModal">
+    <div class="modal-body">
+        <form class="needs-validation" method="post" id="qaForm" novalidate>
+            {% csrf_token %}
+            <!-- <div class="mb-3">
+                <label for="organisation_name" class="form-label">Organisation Name</label>
+                <input type="text" class="form-control" id="organisation_name" name="organisation_name" required>
+                <div class="invalid-feedback">Please provide a valid organisation name.</div>
+            </div> -->
+            <div class="col-sm-6">
+                <label class="form-label" for="organisation_name">Organisation Name<span class="txt-danger">*</span></label>
+                <select class="form-select" id="organisation_name" required="">
+                  {<!-- dynamically populate provider options -->}
+                  {% for org in org_names %}
+                     <option value="{{ org }}">{{ org }}</option>
+                  {% endfor %}
+                </select>
+                <div class="valid-feedback">Looks good!</div>
+              </div>
+
+            <!-- Parameter Name -->
+            <div class="mb-3">
+                <label for="parameter_name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="parameter_name" name="parameter_name" required>
+                <div class="invalid-feedback">Please provide a valid parameter name.</div>
+            </div>
+
+            <!-- Button to Add Key-Value Inputs -->
+            <div class="mb-3">
+                <button type="button" class="btn btn-secondary" id="addFieldsButton">Add parameters</button>
+            </div>
+
+            <!-- Container for Dynamic Key-Value Input Fields -->
+            <div id="keyValueContainer"></div>
+
+            <!-- Submit Button -->
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary" type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Organisation and Parameters Table -->
+<div class="card" id="organisationParametersTable">
+    <div class="card-header">
+        <h4>Organisation and Parameters Table</h4>
+        <span>This table displays the organisation name along with its associated parameters and values.</span>
+    </div>
+    <div class="card-block row">
+        <div class="col-sm-12 col-lg-12 col-xl-12">
+            <div class="table-responsive custom-scrollbar">
+                <table class="table table-inverse table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Organisation Name</th>
+                            <th scope="col">Name</th>
+                            <th></th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loop through organisations and their parameters -->
+                        {% for organisation in qa_parameters %}
+                        <tr>
+                            <td>{{ organisation.organisation_name }}</td>
+                            <td>{{ organisation.parameters_name }}</td>
+                            <!-- Loop through key-value pairs for each organisation -->
+
+                                <td></td> <!-- Empty cell to skip repeated organisation name -->
+                                <!-- <td>{{ key }}</td>
+                                <td>{{ value }}</td> -->
+                                <!-- <td>
+                                    Edit Button
+                                    <button class="btn-info edit-parameter-button" 
+                                            data-organisation-id="{{ organisation.id }}" 
+                                            data-parameter-name="{{ organisation.parameters_name }}" 
+                                            data-key="{{ key }}" 
+                                            data-value="{{ value }}" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editParameterModal" onclick=openEditModal(this)>
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                </td> -->
+                                <td>
+                                    <!-- Delete Button -->
+                                    <button class="btn-danger" onclick=deleteParameter("{{ organisation.id }}")>
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Toggle visibility of the parameter form
+    document.getElementById('addParameterButton').addEventListener('click', function () {
+        const addAgentModal = document.getElementById('addAgentModal');
+        addAgentModal.classList.toggle('d-none'); // Toggle visibility
+    });
+
+    // Function to dynamically add Key-Value fields
+    document.getElementById('addFieldsButton').addEventListener('click', function () {
+        const newRow = document.createElement('div');
+        newRow.classList.add('row', 'align-items-center', 'mb-3');
+
+        // Create a column for the Key input field
+        const keyCol = document.createElement('div');
+        keyCol.classList.add('col-md-5');
+        const keyInput = document.createElement('input');
+        keyInput.type = 'text';
+        keyInput.classList.add('form-control');
+        keyInput.name = 'key[]'; // Use name[] to handle multiple values in Django
+        keyInput.placeholder = 'Enter Parameters';
+        keyInput.required = true;
+        keyCol.appendChild(keyInput);
+
+        // Create a column for the Value input field
+        const valueCol = document.createElement('div');
+        valueCol.classList.add('col-md-5');
+        const valueInput = document.createElement('input');
+        valueInput.type = 'text';
+        valueInput.classList.add('form-control');
+        valueInput.name = 'value[]';
+        valueInput.placeholder = 'Enter Description';
+        valueInput.required = true;
+        valueCol.appendChild(valueInput);
+
+        // Create a column for the remove button
+        const removeButtonCol = document.createElement('div');
+        removeButtonCol.classList.add('col-md-2');
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.classList.add('btn', 'btn-danger');
+        removeButton.textContent = 'Remove';
+        removeButton.addEventListener('click', function () {
+            newRow.remove();
+        });
+        removeButtonCol.appendChild(removeButton);
+
+        // Append all columns to the new row
+        newRow.appendChild(keyCol);
+        newRow.appendChild(valueCol);
+        newRow.appendChild(removeButtonCol);
+
+        // Append the new row to the keyValueContainer
+        document.getElementById('keyValueContainer').appendChild(newRow);
+    });
+
+    // Event listener for AJAX form submission
+    document.getElementById('qaForm').addEventListener('submit', function (event) {
+        event.preventDefault(); // Prevent the default form submission
+        // Serialize form data into JSON format
+        const formData = new FormData(event.target);
+        const jsonData = {};
+
+        // Add static organisation name and parameter name to JSON
+        jsonData['organisation_name'] = document.getElementById("organisation_name").value
+        jsonData['parameter_name'] = formData.get('parameter_name');
+
+        // Create an object for the key-value pairs
+        const keyValueObject = {};
+        
+        // Collect keys and values as individual key-value pairs in the JSON
+        const keys = formData.getAll('key[]');
+        const values = formData.getAll('value[]');
+
+        // Populate the keyValueObject with the collected keys and values
+        keys.forEach((key, index) => {
+            const value = values[index] || ''; // Use an empty string if value is missing
+            keyValueObject[key] = value; // Map each key directly to its corresponding value
+        });
+
+        // Add the keyValueObject directly to the jsonData
+        jsonData['qa_parameter'] = keyValueObject;
+
+        // Include CSRF token if needed (for Django)
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Send data using Fetch API
+        fetch('{% url "qa_parameter" %}', { // Replace with your Django URL name
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken // Include CSRF token for security
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .then(data => {
+            // Handle the response data
+            //alert('Form submitted successfully!');
+            showToast('success', 'Form submitted successfully!');
+            console.log(data);
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+        });
+    });
+    function deleteParameter(organisationId) {
+        // Show a confirmation toast
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you really want to delete the parameter " for this organisation?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'No, cancel!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // If confirmed, proceed with deletion
+
+                // Include CSRF token for security (required by Django)
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                // Prepare the URL for the delete request (update the URL to your Django delete endpoint)
+                const deleteUrl = `{% url 'qa_parameter' %}`;  // Use your URL name or replace with the actual URL
+
+                // Create the data object to be sent in the request
+                const data = {
+                    'id': organisationId,
+                  
+                };
+
+                // Send the DELETE request using the Fetch API
+                fetch('/qa_parameters', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken // Include CSRF token for security
+                    },
+                    body: JSON.stringify(data) // Send the organisation ID and parameter key
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json(); // Parse the JSON response if successful
+                    } else {
+                        throw new Error('Failed to delete the parameter.');
+                    }
+                })
+                .then(data => {
+                    // Successfully deleted parameter
+                    showToast('success', 'Parameter deleted successfully!');
+
+                    // Remove the corresponding row from the table (optional)
+                    const parameterRow = document.querySelector(`[data-organisation-id="${organisationId}"][data-key="${parameterKey}"]`).closest('tr');
+                    if (parameterRow) {
+                        parameterRow.remove();
+                    }
+                })
+                .catch(error => {
+                    console.error('There was a problem with the delete operation:', error);
+                    showToast('error', 'Failed to delete the parameter.');
+                });
+            }
+        });
+    }
+
+    function showToast(type, message) {
+        Swal.fire({
+            title: type === 'success' ? 'Success' : 'Error',
+            text: message,
+            icon: type,
+            confirmButtonText: 'OK',
+            timer: 3000,  // Optional: Automatically close the toast after 3 seconds
+            timerProgressBar: true,
+        }).then(() => { 
+            location.reload(); 
+        });
+    }
+
+    function openEditModal(button) {
+        console.log(button.getAttribute('data-organisation-id'))
+    // Extract data attributes from the clicked button
+    const organisationId = button.getAttribute('data-parameter-name');
+    const parameterKey = button.getAttribute('data-key');
+    const parameterValue = button.getAttribute('data-value');
+
+    // Populate the modal's hidden fields and input
+    document.getElementById('edit_organisation_id').value = organisationId;
+    document.getElementById('edit_parameter_key').value = organisationId;
+    document.getElementById('edit_parameter_value').value = parameterValue;
+
+    // Show the modal
+    const editModal = new bootstrap.Modal(document.getElementById('editParameterModal'));
+    editModal.show();
+}
+
+
+
+
+
+
+
+
+
+
+</script>
+        
+{% endblock %}
+
+{% block scriptcontent %}
+{% endblock %}
+
+
+        
+

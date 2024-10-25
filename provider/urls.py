@@ -1,10 +1,10 @@
-
-from django.contrib import admin
-from django.urls import path,include
-from provider.views import provider_view, provider_delete
+from django.urls import path
+from provider.views import provider_view, provider_delete, provider_form , edit_provider
 
 urlpatterns = [
-    path('get_provider', provider_view, name='provider_view'),
-    path('delete/<int:provider_id>/', provider_delete, name='delete_provider')
+    path('provider/', provider_view, name='provider_view'),  # Provider table page
+    path('provider/add/', provider_form, name='provider_form'),  # Provider form page
+    path('provider/delete/', provider_delete, name='delete_provider'),  
+    path('edit_provider/', edit_provider, name='edit_provider'),
+
 ]
-# delete/<int:provider_id>/

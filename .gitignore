@@ -5,10 +5,11 @@
 __pycache__
 db.sqlite3
 media
-.zono/
+.zono/settings
+zono/settings.py
 # Backup files # 
 *.bak 
-
+./callbot
 # If you are using PyCharm # 
 # User-specific stuff
 .idea/**/workspace.xml
@@ -136,3 +137,4 @@ GitHub.sublime-settings
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+zono/settings.py

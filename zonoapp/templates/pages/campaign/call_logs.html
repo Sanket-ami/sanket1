@@ -1,0 +1,467 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% block content %}
+
+<div class="container-fluid mt-4" style="overflow-x: auto;">
+    <h3 class="mb-4">Select Campaign</h3>
+
+    <!-- Dropdown for selecting campaign -->
+    <div class="mb-3 d-flex justify-content-between" style="align-items: center;">
+        <form method="GET" action='{% url "list_call_logs" %}' style=" width: 30%; display: flex; ">
+            <select class="form-select" id="campaignSelect" name="campaign_id">
+                <option value="">----</option>
+                {% for campaign in campaign_list %}
+                <option value="{{ campaign.id }}" {% if campaign.id|stringformat:"s" == campaign_id|stringformat:"s" %}selected{% endif %}>
+                    {{ campaign.campaign_name }}
+                </option>
+                {% endfor %}
+            </select>
+            {% if request.user.role.role != "QA" %}
+            <select class="form-select" id="statusSelect" name="call_status">
+                <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>ongoing</option>
+                <option value="completed" {% if call_status == "completed" %}selected{% endif %}>completed</option>
+                <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>not_started</option>
+            </select>
+            {% endif %}
+            <input type="hidden" name="page" value="{{ page }}">
+            <input type="hidden" name="per_page" value="10">&nbsp;
+            <input type="submit" class="btn btn-primary" value="Filter">
+        </form>
+    
+        <div class="ms-3"> <!-- Add margin on the left for spacing -->
+            <label for="sortSelect" class="form-label">Sort by Created At</label>
+            <select id="sortSelect" class="form-select" onchange="sortTable()" style="width: 100%;"> <!-- Adjust width if needed -->
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive table-striped">
+    <table class="table"  id="callLogsTable">
+        <thead class="table-dark">
+            <tr>
+                {% if call_logs_data %}
+                    {% for key in call_logs_data.0.keys %}
+                    <th class=""><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
+                    {% endfor %}
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% if call_logs_data %}
+                {% for log in call_logs_data %}
+                <tr onclick="showDetails({{log}})" id="trigger-btn" data-bs-toggle="modal" data-bs-target="#myModal">
+                    {% for value in log.values %}
+                    <td><h6>{{ value }}</h6></td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="{{ call_logs_data.0.keys|length }}">No logs available</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <br>
+    <nav>
+        
+        <ul class="pagination pagination-primary pagin-border-primary">
+            {% if paginated_logs.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ paginated_logs.previous_page_number }}&per_page=10&call_status={{ call_status }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+    
+            {% for i in paginated_logs.paginator.page_range %}
+            <li class="page-item {% if i == paginated_logs.number %}active{% endif %}">
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ i }}&per_page=10&call_status={{ call_status }}">{{ i }}</a>
+            </li>
+            {% endfor %}
+    
+            {% if paginated_logs.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ paginated_logs.next_page_number }}&per_page=10&call_status={{ call_status }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    </div>
+</div>
+<!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+    Open modal
+  </button> -->
+<!-- Script -->
+<!-- The Modal -->
+<div class="modal" id="myModal" >
+    <div class="modal-dialog modal-fullscreen" style="width: 40%; float:right;">
+      <div class="modal-content">
+  
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Call Details</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+  
+        <!-- Modal body -->
+        <div class="modal-body position-relative">
+
+            <button id="callDetailsDrawerHideBtn" type="button" data-drawer-hide="drawer-right-example" aria-controls="drawer-right-example" class="btn btn-link text-gray-400 position-absolute top-0 end-0 p-2">
+                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"></path>
+                </svg>
+                <span class="visually-hidden">Close menu</span>
+            </button>
+
+            <div id="call_id_div">
+                <h4 class="mb-4">Call ID</h4>
+                <span id="call_call_id" class="form-control text-left border-0"></span>
+            </div>
+
+            <div id="duration_div"><br>
+                <!-- <span class="h5 fw-bold text-dark">Call Duration</span><br> -->
+                <h4 class="mb-4">Call Duration</h4>
+                <span id="call_duration" class="form-control text-left border-0"></span><br>
+            </div>
+
+            <div id="number_div"><br>
+                <!-- <span class="h5 fw-bold text-dark">Contact Number</span><br> -->
+                <h4 class="mb-4">Contact Number</h4>
+                <form id="payer_contact_form" class="d-flex flex-column align-items-center">
+                    <input type="text" id="payer_contact" class="form-control text-left border-0" placeholder="Enter contact information" required>
+                    <input type="hidden" id="editNumberId" name="id" value="391"><br>
+                    <!-- <button type="submit" class="btn btn-primary mt-2">Edit Number</button> -->
+                </form><br>
+            </div>
+
+            <div id="audio_player_div">
+                <!-- <span class="h5 fw-bold text-dark">Call Recording</span><br> -->
+                <h4 class="mb-4">Call Recording</h4>
+                <div id="loader" class="d-none">
+                    <br>
+                    <span class="p-4 text-muted text-center">Loading... <img src="{% static 'assets/images/ajax-loader.gif' %}" alt="Loading" class="inline-block"></span>
+                </div><br>
+                <audio id="call_recording_audio" controls src="blob:http://192.168.13.117:5000/6af63435-b177-4806-a351-abe685c37e40">
+                    Your browser does not support the audio element.
+                </audio><br>
+                <span id="no_recording" class="text-muted text-center d-none">
+                    No recording available for this call.
+                </span><br>
+            </div>
+
+            <div id="loader" class="d-none d-flex justify-content-center align-items-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                    <h4 class="mb-4">Call Recording</h4>
+                </div>
+                <span class="ms-2">Loading...</span>
+            </div>
+
+            <div id="summary_div"> <br>
+                <!-- <span class="h5 fw-bold text-dark">Call Summary</span><br> -->
+                <h4 class="mb-4">Call Summary</h4>
+                {% if request.user.is_superuser %}
+                {% if request.user.role.role != "QA" %}
+                    <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editSummaryText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
+                {% endif %}
+                {% endif %}
+                    <span id="call_summary" class="f-w-400  ">Call Not started</span><br>
+
+                <textarea id="editSummary" style="display:none; " rows="10" cols="50"></textarea>
+
+                <form id="edit_summary_form" method="post" action="{% url 'edit_summary' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="editSummaryRecordId" value="391" name="id">
+                    <input type="hidden" value="{{campaign_id}}" name="campaign_id">
+                    <input type="hidden" value="{{call_status}}" name="call_status">
+                    <input type="hidden" value="" name="search">
+                    <input type="hidden" value="" name="selected_agent"> 
+                    <input type="hidden" value="asc" name="sort_order" id="sort_order">
+                    <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
+                    <input type="hidden" value="Completed" name="status" id="status">
+                    <input type="hidden" id="editedSummary" name="edited_summary">
+
+                    <button style="display: none;" id="edit_Summary_submit" class="btn btn-primary mt-2" type="Save" onclick="submitEditSummaryForm()">Submit</button>
+                </form>
+            </div>
+
+
+            <div id="qa_div"> <br>
+                <!-- <span class="h5 fw-bold text-dark">Call Summary</span><br> -->
+                <h4 class="mb-4">Call Qa</h4>
+      
+
+
+                <form id="edit_qa_form" method="post" action="{% url 'edit_qa' %}">
+                    <span id="call_qa" class="f-w-400" style="display: unset;"></span><br>
+                    {% csrf_token %}
+                    <input type="hidden" id="editQaRecordId" value="391" name="id">
+                    <input type="hidden" value="{{campaign_id}}" name="campaign_id">
+                    <input type="hidden" value="{{call_status}}" name="call_status">
+                    <input type="hidden" value="" name="search">
+                    <input type="hidden" value="" name="selected_agent"> 
+                    <input type="hidden" value="asc" name="sort_order" id="sort_order">
+                    <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
+                    <input type="hidden" value="Completed" name="status" id="status">
+                    {% if request.user.is_superuser or request.user.role == 'QA' %}
+                        <button id="edit_qa_submit" class="btn btn-primary mt-2" type="Save">Edit QA</button>
+                    {% endif %}
+                </form>
+            </div>
+
+
+            <div id="transcript_div" style="overflow: auto;"> <br>
+                <!-- <span class="h5 fw-bold text-dark"></span><br> -->
+
+                <h4 class="mb-4">Call Transcript</h4>
+                {% if request.user.role.role != "QA" %}
+
+                <button id="ediTranscriptBtn" class="btn btn-primary mt-2" onclick="editTranscriptText()" style="border: 1px solid; padding: 1%;"> <i class="fa fa-edit" aria-hidden="true"> Edit </i></button><br>
+                {% endif %}
+                <span id="call_transcript" class="f-w-400" style="display: unset;"> </span><br>  
+                <textarea id="editTranscript" style="display:none; " rows="10" cols="50"> </textarea>
+
+                <form id="edit_transcript_form" method="post" action="{% url 'edit_transcript' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="editTranscriptRecordId" value="391" name="id">
+                    <input type="hidden" value="{{campaign_id}}" name="campaign_id">
+                    <input type="hidden" value="{{call_status}}" name="call_status">
+                    <input type="hidden" value="" name="search">
+                    <input type="hidden" value="" name="selected_agent"> 
+                    <input type="hidden" value="asc" name="sort_order" id="sort_order">
+                    <input type="hidden" value="modified_at" name="sort_column" id="sort_column">
+                    <input type="hidden" value="{{ page }}" name="page" id="page">
+                    <input type="hidden" value="Completed" name="status" id="status">
+                    <input type="hidden" id="editedTranscript" name="edited_transcript">
+
+                    <button style="display: none;" id="edit_Transcript_submit" class="btn btn-primary mt-2" type="Save" onclick="submitEditTranscriptForm()">Submit Transcript</button>
+                </form>
+            </div>
+
+        </div>
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+<!-- latest jquery-->
+<script src="{% static 'assets/js/jquery.min.js' %}"></script>
+
+<script>
+function sortTable() {
+    const tableBody = document.getElementById("callLogsTable").querySelector("tbody");
+    const rows = Array.from(tableBody.rows);
+    const sortBy = document.getElementById("sortSelect").value;
+
+    // Assuming the created_at date is in the third column (index 2)
+    const dateColumnIndex = 2; // Update this index to the correct column
+
+    rows.sort((a, b) => {
+        const aValue = new Date(a.cells[dateColumnIndex].innerText);
+        const bValue = new Date(b.cells[dateColumnIndex].innerText);
+        
+        // Handle invalid dates
+        if (isNaN(aValue) || isNaN(bValue)) {
+            return 0; // If either value is not a valid date, keep original order
+        }
+
+        return sortBy === 'asc' 
+            ? aValue - bValue // Ascending order
+            : bValue - aValue; // Descending order
+    });
+
+    // Append the sorted rows to the table body
+    rows.forEach(row => tableBody.appendChild(row)); 
+}
+
+    // offcanvas details
+    // offcanvas details
+    function showDetails(log) {
+        console.log(log.call_id);
+
+        // hit api to fetch call details
+        let mongo_id = log._id;
+        let campaign_id = '{{campaign_id}}'
+        let call_id = log.call_id;
+
+        $.ajax({
+                url: "{% url 'fetch_call_details' %}", // Django URL
+                method: "POST",
+                data: JSON.stringify({ "mongo_id": mongo_id, "campaign_id": campaign_id ,"call_id":call_id}),
+                contentType: "application/json",
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                },
+                success: function(response) {
+ 
+                    console.log(response)
+                    // set the drawer values
+                    $("#call_call_id").html(call_id)
+                    $("#call_duration").html(log.call_duration)
+                    $("#call_summary").text(response.data.summary)
+                    $('#call_qa').html(response.data.qa_analysis)
+                    $("#editSummary").html(response.data.summary)
+                    $("#call_transcript").html(response.data.transcript)
+                    $("#editTranscript").html(response.data.transcript)
+                    $("#editNumberId").val(response.data.call_id)
+                    $("#payer_contact").val(log.contact_number)
+                    $("#editTranscriptRecordId").val(response.data.transcript_obj_id)
+                    $("#editSummaryRecordId").val(response.data.transcript_obj_id)
+                    $('#editQaRecordId').val(response.data.transcript_obj_id)
+
+                    // fetch the recording using telephony
+                    fetchAndPlayAudio(call_id,response.data.telephony_name)
+                },
+                error: function(xhr, status, error) {
+                    // Show error message using SweetAlert2
+                    console.log("error")
+                    // Swal.fire({
+                    //     icon: 'error',
+                    //     text: 'Failed to delete contacts: ' + error
+                    // });
+                    // showToast("error", "Failed to delete contact! " + error);
+                }
+            });
+        
+        
+    }
+
+
+    // function to fetch and play recording
+    function fetchAndPlayAudio(callId, telephony_name) {
+        const audioPlayer = document.getElementById("call_recording_audio");
+        const noRecordingMessage = document.getElementById("no_recording");
+        const loader = document.getElementById("loader");
+
+        // Show the loader and hide the audio player and no recording message
+        loader.classList.remove("d-none");
+        audioPlayer.style.display = 'none';
+        noRecordingMessage.style.display = 'none';
+
+        fetch( "{% url 'fetch_audio' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'X-CSRFToken': '{{ csrf_token }}' 
+            },
+            body: JSON.stringify({ call_id: callId, telephony_name: telephony_name }) // Sending the call_id to the server
+        }).then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .then(blob => {
+            const audioUrl = URL.createObjectURL(blob);
+            audioPlayer.src = audioUrl;
+            audioPlayer.style.display = 'block';
+            loader.classList.add("d-none");
+        })
+        .catch(error => {
+            console.error('There has been a problem with your fetch operation:', error);
+            audioPlayer.style.display = 'none';
+            loader.classList.add("d-none");
+            noRecordingMessage.style.display = 'block';
+        });
+    }
+    
+    // submit edited transcript
+    function submitEditTranscriptForm() {
+        // Modify hidden input fields before submission
+        var transcriptText = $('#editTranscript').val(); // Update transcript
+        document.getElementById('editedTranscript').value = transcriptText;
+        
+        // Update other hidden fields if necessary
+        
+        // Submit the form programmatically
+        document.getElementById('edit_transcript_form').submit();
+    }
+    
+    // edit transcript
+    // format text area
+    function editTranscriptText( ){
+        console.log("clicked edit transcript")
+        var transcriptSpan = document.getElementById('call_transcript');
+        var textarea = document.getElementById('editTranscript');
+
+        // Get the transcript content as plain text
+        var transcriptText = transcriptSpan.innerHTML
+            .replace(/<br\s*\/?>/gi, '\n') // Replace <br> with newlines
+            .replace(/<[^>]+>/g, '');      // Remove all HTML tags
+
+        // Populate the textarea and make it visible
+        textarea.value = transcriptText;
+        textarea.style.display = 'block';  // Show the textarea
+
+        transcriptSpan.style.display = 'none'; // hide transcript
+
+        $("#edit_Transcript_submit").css("display", "block") // unhide submit button
+    }    
+
+
+
+
+
+    // submit edited summary
+    function submitEditSummaryForm() {
+            // Modify hidden input fields before submission
+            var summaryText = $('#editSummary').val(); // Update Summary
+            document.getElementById('editedSummary').value = summaryText;
+            console.log(summaryText)
+            console.log(document.getElementById('editedSummary').value)
+
+            // Update other hidden fields if necessary
+
+            // Submit the form programmatically
+            document.getElementById('edit_summary_form').submit();
+        }
+        
+
+    // format text area
+    function editSummaryText(e){
+            console.log("clicked edit summary")
+            var summarySpan = document.getElementById('call_summary');
+            var textarea = document.getElementById('editSummary');
+
+            textarea.style.display = 'block';  // Show the textarea
+
+            summarySpan.style.display = 'none'; // hide transcript
+
+            $("#edit_Summary_submit").css("display", "unset") // unhide submit button
+        }    
+    function editQaText(e){
+            console.log("clicked edit summary")
+            var summarySpan = document.getElementById('call_Qa');
+            var textarea = document.getElementById('editQa');
+
+            textarea.style.display = 'block';  // Show the textarea
+
+            summarySpan.style.display = 'none'; // hide transcript
+
+            $("#edit_Qa_submit").css("display", "unset") // unhide submit button
+        } 
+
+
+    $(document).ready(function(){
+    
+
+    });
+</script>
+{% endblock %}

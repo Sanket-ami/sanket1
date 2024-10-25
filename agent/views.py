@@ -18,24 +18,25 @@ def agent_create(request):
 
         llm_providers_list =  Provider.objects.filter(provider_type="llm")
         if request.user.is_superuser:
-            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True)
+            org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
         else:
-            org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True)
+            org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
             
         # voices list
         voices = Voice.objects.filter(is_delete=False)
+        print(voices)
 
         print('org_names ',org_names)
         search_query = request.GET.get('search', '')
-        agents = Agent.objects.filter( is_deleted=False).order_by('-modified_at')
+        agents = Agent.objects.filter( is_deleted=False, organisation_name__in=org_names).order_by('-modified_at')
         if search_query:
-            agents.filter(agent_name__icontains=search_query)
+            agents = agents.filter(agent_name__icontains=search_query)
 
         # Pagination: show 10 agents per page
         paginator = Paginator(agents, 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        context = {"breadcrumb":{"title":"Create Agent","parent":"Pages", "child":"Sample Page"},"llm_providers_list":llm_providers_list,"org_names":org_names,'page_obj': page_obj, 'search_query': search_query,'voices':voices}   
+        context = {"breadcrumb":{"title":"Create Agent","parent":"Pages", "child":"Agent Management "},"llm_providers_list":llm_providers_list,"org_names":org_names,'page_obj': page_obj, 'search_query': search_query,'voices':voices}   
         
         return render(request,'pages/agent/agent_list.html',context)
     elif request.method == "POST":

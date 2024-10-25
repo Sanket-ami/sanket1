@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% block content %}
+
+<div class="container-fluid mt-4" style="overflow-x: auto;">
+    <h3 class="mb-4">Select Campaign</h3>
+
+    <!-- Dropdown for selecting campaign -->
+     <div class="mb-3">
+        <form method="GET" action='{% url "live_call_list" %}' style=" width: 30%; display: flex; ">
+            <select class="form-select" id="campaignSelect" name="campaign_id">
+                <option value="">----</option>
+                {% for campaign in campaign_list %}
+                <option value="{{ campaign.id }}" {% if campaign.id|stringformat:"s" == campaign_id|stringformat:"s" %}selected{% endif %}>
+                    {{ campaign.campaign_name }}
+                </option>
+                {% endfor %}
+            </select>
+            <select class="form-select" id="statusSelect" name="call_status" readonly>
+                 <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>  ongoing </option>
+            </select>            
+            <input type="hidden" name="page" value="{{ page }}">
+            <input type="hidden" name="per_page" value="10">&nbsp;
+            <input type="submit" class="btn btn-primary" value="Filter">
+        </form>
+    </div>
+    <!-- Display call counts next to the filter button -->
+    <div class="d-flex align-items-center" style="margin-left: 20px;">
+        <p><h3><strong>Call Counts: </strong></h3></p>
+        <span class="badge bg-primary mx-2">Ongoing: {{ ongoing_count }}</span>
+        <span class="badge bg-warning mx-2">Not Started: {{ not_started_count }}</span>
+        <span class="badge bg-success mx-2">Completed: {{ completed_count }}</span>
+        <span class="badge bg-success mx-2">Total: {{ total_count }}</span>
+    </div>
+    
+
+
+    <!-- Bootstrap Table for Call Logs -->
+    <table class="table table-inverse table-striped dataTable" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
+
+        <thead>
+            <tr>
+                <th>Call ID</th>
+                <th>Created At</th>
+                <th>Call Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if call_logs_data %}
+                {% for log in call_logs_data %}
+                <tr id="trigger-btn"  >
+                    <td>{{ log.call_id }}</td>
+                    <td>{{ log.created_at }}</td>
+                    <td>{{ log.call_status }}</td>
+                    <td>
+                        <button class="btn btn-primary " title="Live Transcript" onclick="viewTranscriptLive('{{ log.call_id }}')">
+                            <i class="fa fa-file-audio-o"></i> Live
+                        </button>
+                        <button class="btn btn-danger " title="End Call" onclick="endCall('{{ log.call_id }}','{{ campaign_id }}' )">
+                            <i class="fa fa-power-off"></i> End Call
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4">No logs available</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    
+
+    <!-- Pagination -->
+    <br>
+    <nav>
+        
+        <ul class="pagination pagination-primary pagin-border-primary">
+            {% if paginated_logs.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ paginated_logs.previous_page_number }}&per_page=10&call_status={{ call_status }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+    
+            {% for i in paginated_logs.paginator.page_range %}
+            <li class="page-item {% if i == paginated_logs.number %}active{% endif %}">
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ i }}&per_page=10&call_status={{ call_status }}">{{ i }}</a>
+            </li>
+            {% endfor %}
+    
+            {% if paginated_logs.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?campaign_id={{ campaign_id }}&page={{ paginated_logs.next_page_number }}&per_page=10&call_status={{ call_status }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+</div>
+
+<!-- Script -->
+<!-- The Modal -->
+ 
+<!-- latest jquery-->
+<script src="{% static 'assets/js/jquery.min.js' %}"></script>
+<!-- Script block -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+
+    // toast
+    function showToast(type, message) {
+        Swal.fire({
+                    title: 'Alert',
+                    text: message, // Dynamic message from Django
+                    icon: type,
+                    confirmButtonText: 'OK'
+                } 
+            ).then(() => { location.reload(); });
+        }
+
+   
+
+    // >>>>>>>>>> Trascript Start<<<<<<<<<<<<
+    function viewTranscriptLive(callId) {
+
+        const campaign_id = "{{ campaign_id }}";
+        const call_id = callId;
+        console.log(callId)
+
+        // Construct the URL with campaign_id and call_id as query parameters
+        const base_url = '{% url "live_transcript" %}'
+        const url = base_url+`?campaign_id=${campaign_id}&call_id=${call_id}`;
+        console.log(url)
+        // Open the URL in a new tab
+        window.open(url, '_blank');        
+    }    
+
+
+    // >>>>>>>>>> End Call  Start<<<<<<<<<<<<
+    function endCall(callId, campaignId) {
+        // alert(`Call having ID ${callId} is ended`);
+
+        // Confirm deletion using SweetAlert2
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you really want to end this call ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, End the call!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+        $.ajax({
+            url:"{% url 'end_call' %}",
+            method: 'POST',
+            data: JSON.stringify({ "call_id": callId, "campaign_id": campaignId  }),
+            contentType:"application/json",
+            headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        console.log(response)
+                        //var response = response.json();
+                        console.log(response)
+                        if (response.success) {
+                            // alert("Call ended successfully.")
+                            // Show success message using SweetAlert2
+      
+                            showToast("success", response.message);
+                        } else {
+                            error_message = response.message;
+                            // alert(error_message)
+                            showToast("error", "Failed to end call! " + error_message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                    // Show error message using SweetAlert2
+                    console.log("error")
+                    }
+                    
+            })
+        });
+            
+    }
+
+    $(document).ready(function(){
+
+    });
+</script>
+{% endblock %}

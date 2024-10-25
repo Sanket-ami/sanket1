@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block content %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<main>
+        <h5 class="" style="margin-top: 2%;margin-left: 2%;" >Campaign Name: {{ campaign_name }} </h$> <br>
+        <!-- <h3 class="text-xl font-extrabold dark:text-white" style="margin-left: 2%;">Process: {{ process }} </h3> -->
+  <!-- Container for iframe and button -->
+  <div class="container fluid ">
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-4 bg-blue-500 text-white text-center font-bold">
+            Embedded Content
+        </div>
+
+        <!-- Flexbox to place iframe and button side by side -->
+        <div style="display: flex;height: 63vh;">
+            <!-- Iframe (60% width) -->
+            <iframe style="width:60% ;height: 1000px; "
+                src="{{transcript_server_url}}?call_id={{ call_id }}"
+                class="border-none"
+                title="Iframe Example">
+            </iframe>
+
+            <!-- Button (40% width) -->
+            <div class="" style="width:40% ;">
+                <!-- <button class="btn btn-danger">
+                    End Call
+                </button> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+</main>
+
+
+{% endblock content %}

@@ -1,0 +1,922 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+<style>
+  h4{
+    color:white;
+  }
+  
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+
+{% load static %}
+
+<!-- Container-fluid starts-->
+
+<div class="container-fluid ecommerce-dashboard">
+  <div class="row">
+    <div class="card border rounded-3 checkbox-checked" style="padding:1%;">
+      <div class="dropdown-form" style="display: flex; flex-direction: column; justify-content: flex-end; ">
+        <h4 class="sub-title" style="width: 190px; padding-bottom: 0px; font-weight: bold; padding-left: 4px;">Select Organisation:</h4>
+        <select class="form-select" style="width: 200px;" name="organisation" id="organisationName" required onchange="onOrganisationChange()">
+         {% for org in organisation_list %}
+         <option value="{{ org.organisation_name }}" {{ org.organisation_name }} {% if org.organisation_name == organisation %} selected {% endif %}>{{ org.organisation_name }}</option>
+          {% endfor %}
+          <!-- Options will be dynamically populated by JavaScript -->
+        </select>
+      </div>
+    </div>
+  </div>
+    <div class="row">
+
+      <div class="col-xxl-8 proorder-xl-1 box-col-6">
+        <div class="card">     
+          <div class="card-header">
+            <h4>Average Handling Time</h4>
+          </div>  
+          <div class="card-body"> 
+                <div aria-labelledby="durationOptions">
+                  <ul class="nav nav-pills" role="tablist">
+                    <li class="nav-item">
+                        <button type="button" class="nav-link avg active" role="tab" onclick="updateAverageHandlingTimeChart('daily', this)"><h6>Daily</h6></button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('weekly', this)"><h6>Weekly</h6></button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('monthly', this)"><h6>Monthly</h6></button>
+                    </li>
+                  </ul>
+                <canvas id="callDurationChart" height="100"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xxl-4 proorder-xl-1 box-col-6">
+        <div class="card">
+          
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4 class="fw-bold">Failed Calls</h4>
+            </div>
+          </div>
+          <div class="card-body">
+              <div aria-labelledby="durationOptions">
+                <ul class="nav nav-pills" role="tablist">
+                  <li class="nav-item">
+                      <button type="button" class="nav-link active failed" role="tab" onclick="failedCallsCart('daily', this)"><h6>Daily</h6></button>
+                  </li>
+                  <li class="nav-item">
+                      <button type="button" class="nav-link failed" role="tab" onclick="failedCallsCart('weekly', this)"><h6>Weekly</h6></button>
+                  </li>
+                  <li class="nav-item">
+                      <button type="button" class="nav-link failed" role="tab" onclick="failedCallsCart('monthly', this)"><h6>Monthly</h6></button>
+                  </li>
+                </ul>
+                  </div>
+            </div>      
+          
+          <div class="card-body" style="display: flex;
+          justify-content: center;
+          height: 400px;">
+          <button class="btn p-0" type="button" id="durationOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="bx bx-dots-vertical-rounded bx-lg text-muted"></i>
+        </button>
+       
+
+            <div class="table-responsive custom-scrollbar">
+
+            </div>
+             <canvas id="callFailureChart" ></canvas>
+          </div>
+        </div>
+        </div>
+
+
+
+      <div class="row">
+      <div class="col-xxl-6 col-lg-6 proorder-xl-5 box-col-6">
+        <div class="card">
+          
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4 class="fw-bold">Calls Durations</h4>
+            </div>
+          </div>
+            
+          <div class="card-body">
+            <div class="table-responsive custom-scrollbar">
+              <ul class="nav nav-pills" role="tablist">
+                <li class="nav-item">
+                    <button type="button" class="nav-link active update" role="tab" onclick="updateCallDistributionChart('daily', this)"><h6>Daily</h6></button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('weekly', this)"><h6>Weekly</h6></button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('monthly', this)"><h6>Monthly</h6></button>
+                </li>
+              </ul>
+            </div>
+            <canvas id="callDistributionChart" height="90"></canvas>
+          </div>
+
+        </div>
+      </div>
+
+
+
+      <div class="col-xxl-6 col-lg-6 proorder-xl-5 box-col-6">
+        <div class="card">
+          
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4 class="fw-bold">Calls Overview</h4>
+            </div>
+          </div>
+            
+          <div class="card-body">
+            <div class="table-responsive custom-scrollbar">
+              <ul class="nav nav-pills" role="tablist">
+                <li class="nav-item">
+                    <button type="button" class="nav-link active overview" role="tab" onclick="CallOverviewChart('daily', this)"><h6>Daily</h6></button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link update overview" role="tab" onclick="CallOverviewChart('weekly', this)"><h6>Weekly</h6></button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link update overview" role="tab" onclick="CallOverviewChart('monthly', this)"><h6>Monthly</h6></button>
+                </li>
+              </ul>
+            </div>
+            <canvas id="callsChart" height="90"></canvas>
+          </div>
+
+        </div>
+      </div>
+
+    <div class="row">
+      
+      <div class="col-xxl-4 col-md-6 proorder-xl-7 box-col-12">
+        <div class="card">
+          <div class="card-header"> 
+            <div class="header-top">
+              <h4>Recent QA Analysis </h4>
+
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userdropdown34">
+                  <a class="dropdown-item" href="#">Weekly</a><a class="dropdown-item" href="#">Monthly </a><a class="dropdown-item" href="#">Yearly</a>
+                </div>
+            </div>
+            </div>
+       
+          <div class="card">
+           
+          <div class="card-body pt-0"> 
+              <div id="salesStatsRadialChart"></div>
+              <div class="text-center mt-3" id="newSalesLabel"><h5 id="qachartlegend">Calls: 2.9k</h5></div>
+          </div>
+          </div>
+        </div>
+    </div>
+      <div class="col-xxl-8 col-lg-6 proorder-xl-5 box-col-6">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="header-top">
+              <h4 class="fw-bold">QA Analysis of recent calls</h4>
+             
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="user-activity">
+              <div class="card">
+                <canvas id="qaChart" height="400"></canvas>
+            </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+      
+      </div>
+    </div>
+  </div>
+  <!-- Container-fluid Ends -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+     var x = localStorage.getItem("primary");
+     var y = localStorage.getItem("secondary");   
+     console.log(x, y)
+    const ctxqa = document.getElementById('qaChart').getContext('2d');
+    
+    
+     
+      const h6Element = document.querySelector('h6');
+
+// Get the computed style of the element
+      const style = window.getComputedStyle(h6Element);
+
+      // Get the color property
+      const color = style.color;
+    
+      // const nav = document.getElementById('nav-link');
+      // nav.style.color = x;
+      // cons
+
+      
+
+      // Fetch Data for Average Handling Time
+      const fetchData = async (timeFrame) => {
+          try {
+              const org = document.getElementById('organisationName').value;
+              const response = await fetch(`/dashboard/?event=${timeFrame}&org=${org}`);
+              if (!response.ok) throw new Error('Network response was not ok');
+              return await response.json(); // Return parsed data
+          } catch (error) {
+              console.error('Error fetching data:', error);
+              return {
+                  dates: [],
+                  avg_handling_time: [],
+                  number_of_calls: [],
+                  number_of_calls_labels: []
+              }; // Return empty data in case of error
+          }
+      };
+  
+
+      const qaChart = new Chart(ctxqa, {
+        type: 'line',
+        data: {
+            labels: ['Call 1', 'Call 2', 'Call 3', 'Call 4', 'Call 5', 'Call 6', 'Call 7', 'Call 8', 'Call 9', 'Call 10'], // X-axis: Call Numbers
+            datasets: [
+                {
+                    label: 'Met',
+                    data: [3, 4, 2, 1, 4, 3, 2, 1, 3, 2], // Sample data for parameters met
+                    backgroundColor: x, // Fill color
+                    borderColor: x,
+                    borderWidth: 3,
+                    fill: false, // No fill, just a line with points
+                    pointStyle: 'circle',
+                    pointRadius: 5,
+                    grid: false,
+                    pointBorderColor: x,
+                    tension: 0 // Smoothens the line
+                    
+                },
+                {
+                    label: 'Not Met',
+                    data: [7, 6, 8, 9, 6, 7, 8, 9, 7, 8], // Sample data for parameters not met
+                    backgroundColor: y,
+                    borderColor: y,
+                    borderWidth: 2,
+                    pointStyle: false,
+                    fill: true, // This will fill the area under the line
+                    tension: 0// Smoothens the line
+                    
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true, // Ensures the chart starts from 0 on the y-axis
+                    title: {
+                        display: true,
+                        text: 'Number of Calls'
+                    },
+                    grid: {
+                        display: false // Removes grid lines on the x-axis
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Calls'
+                    },
+                    grid: {
+                        display: false // Removes grid lines on the x-axis
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    enabled: true,
+                }
+            }
+        }
+    });
+
+      // Initial chart setup for Average Handling Time
+      const ctx = document.getElementById('callDurationChart').getContext('2d');
+      const callDurationChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+              labels: [],
+              datasets: [{
+                  label: 'Average Handling Time (Minutes)',
+                  data: [],
+                  backgroundColor: x,
+                  borderColor: x,
+                  borderWidth: 1
+              }]
+          },
+          options: {
+            legend: {
+                labels: {
+                  frontColor: "red"
+                }
+            },
+              responsive: true,
+              scales: {
+                  x: {
+                      title: {
+                          display: true,
+                          text: 'Date',
+                          labelFontColor:"red"
+
+                      }
+                  },
+                  y: {
+                      beginAtZero: true,
+                      title: {
+                          display: true,
+                          text: 'Average Handling Time (seconds)',
+                          labelFontColor:"red"
+                      }
+                  }
+              },
+              plugins: {
+                  legend: {
+                      display: true,
+                      position: 'top'
+                  }
+              }
+          }
+      });
+  
+            
+      
+      
+      const updateCallDistributionChart = async (timeFrame, button) => {
+          const { number_of_calls, number_of_calls_labels } = await fetchData(timeFrame);
+          setActiveTab(button, ".update");
+          callDistributionChart.data.labels = number_of_calls_labels;
+          callDistributionChart.data.datasets[0].data = number_of_calls;
+          callDistributionChart.update();
+      };
+
+      const CallOverviewChart = async (timeFrame, button) => {
+        const {total_calls, failed_calls, call_overview} = await fetchData(timeFrame);
+        setActiveTab(button, ".overview");
+        callsChart.data.labels = call_overview
+        callsChart.data.datasets[0].data = total_calls;
+        callsChart.data.datasets[1].data = failed_calls;
+        callsChart.update()
+
+      } 
+      const callFailureChart = new Chart(document.getElementById('callFailureChart').getContext('2d'), {
+      type: 'pie',
+      data: {
+          labels: ['Compromised Calls', 'Failed Calls'],
+          datasets: [{
+              data: [0, 0], // Initialize with zero values
+              backgroundColor: [x, y], // Use defined color values
+              borderColor: [x, y],
+              borderWidth: 2
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  display: true,
+                  position: 'top'
+              },
+              tooltip: {
+                  callbacks: {
+                      label: function(tooltipItem) {
+                          return `${tooltipItem.label}: ${tooltipItem.raw}`; // Custom label format
+                      }
+                  }
+              }
+          }
+      }
+});
+
+const failedCallsCart = async (timeFrame, button) => {
+    const { totalDialedCalls, compromised_call, failed_call } = await fetchData(timeFrame);
+    setActiveTab(button, ".failed");
+    callFailureChart.data.datasets[0].data[0] = compromised_call;
+    callFailureChart.data.datasets[0].data[1] = failed_call;
+    callFailureChart.update();
+};
+
+      
+      const updateAverageHandlingTimeChart = async (timeFrame, button) => {
+          const { dates, avg_handling_time } = await fetchData(timeFrame);
+          setActiveTab(button, ".avg");
+          callDurationChart.data.labels = dates; // Use dates for x-axis labels
+          callDurationChart.data.datasets[0].data = avg_handling_time; // Use avg_handling_time for y-axis data
+          callDurationChart.update(); // Update the chart with new data
+      };
+      // Initial chart setup for Call Distribution
+      const ctxDistribution = document.getElementById('callDistributionChart').getContext('2d');
+      const callDistributionChart = new Chart(ctxDistribution, {
+          type: 'bar',
+          data: {
+              labels: [],
+              datasets: [{
+                  label: 'Number of Calls',
+                  data: [],
+                  backgroundColor: x,
+                  borderColor: x,
+                  borderWidth: 3,
+                  fill: true,
+                  tension: 0.6
+              }]
+          },
+          options: {
+              responsive: true,
+              scales: {
+                  x: {
+                      title: {
+                          display: true,
+                          text: 'Duration (Minutes)'
+                          
+                      }
+                  },
+                  y: {
+                      beginAtZero: true,
+                      title: {
+                          display: true,
+                          text: 'Number of Calls',
+                          fontColor: "#eb832d"
+                      }
+                  }
+              },
+              plugins: {
+                  legend: {
+                      display: true,
+                      position: 'top'
+                  }
+              }
+          }
+      });
+  
+      // Data and Chart setup for Call Failure Ratio
+   
+
+
+
+      const weeklyTotalCalls = [120, 150, 170, 130, 160, 140, 160];
+        const weeklyFailedCalls = [100, 150, 180, 110, 180, 130, 140]; // Adjusted values to create intersections
+
+        const ctxCalls = document.getElementById('callsChart').getContext('2d');
+        const callsChart = new Chart(ctxCalls, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Total Calls',
+                    data: [],
+                    borderColor: x,
+                    backgroundColor: x,
+                    fill: false,
+                    tension: 0,
+                }, {
+                    label: 'Failed Calls',
+                    data: [],
+                    borderColor: y,
+                    backgroundColor: y,
+                    fill: false,
+                    tension: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Days/Months' }},
+                    y: { beginAtZero: false, title: { display: true, text: 'Number of Calls' }}
+                },
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                }
+            }
+        });
+
+        const refreshCallsChart = (timeFrame) => {
+            let labels, totalData, failedData;
+
+            if (timeFrame === 'weekly') {
+                labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                totalData = weeklyTotalCalls;
+                failedData = weeklyFailedCalls;
+            } else {
+                // Placeholder for other time frames
+                labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+                totalData = [700, 900, 850, 950, 1050, 1150, 1200]; // Example data
+                failedData = [150, 120, 130, 140, 100, 90, 80]; // Example data
+            }
+
+            callsChart.update();
+        };
+
+        refreshCallsChart('weekly');
+  
+      updateAverageHandlingTimeChart('daily', document.querySelector('.avg'));
+      updateCallDistributionChart('daily', document.querySelector('.update'));
+      CallOverviewChart('daily', document.querySelector('.overview'))
+      failedCallsCart('daily', document.querySelector('.failed'))
+  
+      function setActiveTab(activeButton, tab) {
+          const tabs = document.querySelectorAll(tab);
+          tabs.forEach(tab => tab.classList.remove('active'));
+          activeButton.classList.add('active');
+          console.log(tab)
+      }
+    //   document.addEventListener("DOMContentLoaded", function() {
+    //     const salesStatsOption = {
+    //         series: [80], // Change this to your desired value
+    //         chart: {
+    //             height: 370,
+    //             type: 'radialBar',
+    //             offsetY: 0,
+    //         },
+    //         stroke: {
+    //             dashArray: 25,
+    //             curve: 'smooth',
+    //             lineCap: 'round',
+    //         },
+    //         grid: {
+    //             padding: {
+    //                 top: 0,
+    //                 left: 0,
+    //                 right: 0,
+    //                 bottom: 0,
+    //             },
+    //         },
+    //         plotOptions: {
+    //             radialBar: {
+    //                 startAngle: -135,
+    //                 endAngle: 135,
+    //                 hollow: {
+    //                     size: '75%',
+    //                     // Adjust the image path as needed
+    //                     image: '../assets/images/apexchart/radial-image.png', // Ensure this image path is correct
+    //                     imageWidth: 140,
+    //                     imageHeight: 140,
+    //                     imageClipped: false,
+    //                 },
+    //                 track: {
+    //                     show: true,
+    //                     background: 'rgba(43, 94, 94, 0.1)',
+    //                     strokeWidth: '97%',
+    //                     opacity: 0.4,
+    //                 },
+    //                 dataLabels: {
+    //                     show: true,
+    //                     name: {
+    //                         show: true,
+    //                         fontSize: '16px',
+    //                         fontWeight: 600,
+    //                     },
+    //                     value: {
+    //                         show: true,
+    //                         colors: x,
+    //                         fontFamily: '"Nunito Sans", sans-serif',
+    //                         fontWeight: 600,
+    //                         fontSize: '20px',
+    //                         color: x,
+    //                         offsetY: 6,
+    //                         formatter: function (val) {
+    //                             return val + '%';
+    //                         },
+    //                     },
+    //                 },
+    //             },
+    //         },
+    //         labels: ['New: 2.9k', 'Returning: 3.2k'],
+    //         colors: [x, 'rgba(43, 94, 94, 0.1)'], // Change colors as needed
+    //         legend: {
+    //             show: true,
+    //             position: 'bottom',
+    //             colors: x,
+    //             fontSize: '14px',
+    //             fontFamily: '"Nunito Sans", sans-serif',
+    //             fontWeight: 600,
+    //             markers: {
+    //                 width: 18,
+    //                 height: 18,
+    //                 strokeWidth: 5,
+    //                 colors: '#fff',
+    //                 strokeColors: 'rgba(43, 95, 96, 0.03)',
+    //                 radius: 20,
+    //             },
+    //         },
+    //         responsive: [
+    //             {
+    //                 breakpoint: 1600,
+    //                 options: {
+    //                     chart: {
+    //                         height: 600,
+    //                     },
+    //                     plotOptions: {
+    //                         radialBar: {
+    //                             hollow: {
+    //                                 size: '70%',
+    //                                 imageWidth: 110,
+    //                                 imageHeight: 110,
+    //                             },
+    //                         },
+    //                     },
+    //                 },
+    //             },
+    //             {
+    //                 breakpoint: 676,
+    //                 options: {
+    //                     chart: {
+    //                         height: 350,
+    //                     },
+    //                     plotOptions: {
+    //                         radialBar: {
+    //                             hollow: {
+    //                                 size: '68%',
+    //                             },
+    //                         },
+    //                     },
+    //                 },
+    //             },
+    //             {
+    //                 breakpoint: 576,
+    //                 options: {
+    //                     chart: {
+    //                         height: 320,
+    //                     },
+    //                     plotOptions: {
+    //                         radialBar: {
+    //                             hollow: {
+    //                                 size: '70%',
+    //                                 imageWidth: 120,
+    //                                 imageHeight: 120,
+    //                             },
+    //                         },
+    //                     },
+    //                 },
+    //             },
+    //             {
+    //                 breakpoint: 531,
+    //                 options: {
+    //                     chart: {
+    //                         height: 300,
+    //                     },
+    //                     plotOptions: {
+    //                         radialBar: {
+    //                             hollow: {
+    //                                 size: '70%',
+    //                                 imageWidth: 100,
+    //                                 imageHeight: 100,
+    //                             },
+    //                         },
+    //                     },
+    //                 },
+    //             },
+    //             {
+    //                 breakpoint: 426,
+    //                 options: {
+    //                     chart: {
+    //                         height: 280,
+    //                     },
+    //                     plotOptions: {
+    //                         radialBar: {
+    //                             hollow: {
+    //                                 size: '70%',
+    //                                 imageWidth: 100,
+    //                                 imageHeight: 100,
+    //                             },
+    //                         },
+    //                     },
+    //                 },
+    //             },
+    //         ],
+    //     };
+
+    //     const salesStatsChartEl = new ApexCharts(document.querySelector('#salesStatsRadialChart'), salesStatsOption);
+    //     salesStatsChartEl.render();
+    // });
+
+    const SalesStatsChart = async () => {
+        const { met_percent, met_sum, not_met_sum } = await fetchData("daily");
+        x = document.getElementById("qachartlegend");
+        // x.value = 23;
+const salesStatsChartEl = new ApexCharts(document.querySelector('#salesStatsRadialChart'), {
+    series: [met_percent], // Change this to your desired value
+    chart: {
+        height: 370,
+        type: 'radialBar',
+        offsetY: 0,
+    },
+    stroke: {
+        dashArray: 25,
+        curve: 'smooth',
+        lineCap: 'round',
+    },
+    grid: {
+        padding: {
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+        },
+    },
+    plotOptions: {
+        radialBar: {
+            startAngle: -135,
+            endAngle: 135,
+            hollow: {
+                size: '75%',
+                // Adjust the image path as needed
+                image: '../assets/images/apexchart/radial-image.png', // Ensure this image path is correct
+                imageWidth: 140,
+                imageHeight: 140,
+                imageClipped: false,
+            },
+            track: {
+                show: true,
+                background: 'rgba(43, 94, 94, 0.1)',
+                strokeWidth: '97%',
+                opacity: 0.4,
+            },
+            dataLabels: {
+                show: true,
+                name: {
+                    show: true,
+                    fontSize: '16px',
+                    fontWeight: 600,
+                },
+                value: {
+                    show: true,
+                    colors: x,
+                    fontFamily: '"Nunito Sans", sans-serif',
+                    fontWeight: 600,
+                    fontSize: '20px',
+                    color: x,
+                    offsetY: 6,
+                    formatter: function (val) {
+                        return val + '%';
+                    },
+                },
+            },
+        },
+    },
+    labels: ['Met: ' + met_sum, 'Total QA: ' + not_met_sum],
+    colors: [x, 'rgba(43, 94, 94, 0.1)'], // Change colors as needed
+    legend: {
+        show: true,
+        position: 'bottom',
+        colors: x,
+        fontSize: '14px',
+        fontFamily: '"Nunito Sans", sans-serif',
+        fontWeight: 600,
+        markers: {
+            width: 18,
+            height: 18,
+            strokeWidth: 5,
+            colors: '#fff',
+            strokeColors: 'rgba(43, 95, 96, 0.03)',
+            radius: 20,
+        },
+    },
+    responsive: [
+        {
+            breakpoint: 1600,
+            options: {
+                chart: {
+                    height: 600,
+                },
+                plotOptions: {
+                    radialBar: {
+                        hollow: {
+                            size: '70%',
+                            imageWidth: 110,
+                            imageHeight: 110,
+                        },
+                    },
+                },
+            },
+        },
+        {
+            breakpoint: 676,
+            options: {
+                chart: {
+                    height: 350,
+                },
+                plotOptions: {
+                    radialBar: {
+                        hollow: {
+                            size: '68%',
+                        },
+                    },
+                },
+            },
+        },
+        {
+            breakpoint: 576,
+            options: {
+                chart: {
+                    height: 320,
+                },
+                plotOptions: {
+                    radialBar: {
+                        hollow: {
+                            size: '70%',
+                            imageWidth: 120,
+                            imageHeight: 120,
+                        },
+                    },
+                },
+            },
+        },
+        {
+            breakpoint: 531,
+            options: {
+                chart: {
+                    height: 300,
+                },
+                plotOptions: {
+                    radialBar: {
+                        hollow: {
+                            size: '70%',
+                            imageWidth: 100,
+                            imageHeight: 100,
+                        },
+                    },
+                },
+            },
+        },
+        {
+            breakpoint: 426,
+            options: {
+                chart: {
+                    height: 280,
+                },
+                plotOptions: {
+                    radialBar: {
+                        hollow: {
+                            size: '70%',
+                            imageWidth: 100,
+                            imageHeight: 100,
+                        },
+                    },
+                },
+            },
+        },
+    ],
+});
+salesStatsChartEl.render();
+
+    };
+    SalesStatsChart();
+// salesStatsChartEl.series = [20];
+// salesStatsChartEl.update();
+
+    const QAChart = async (timeFrame, button) => {
+          const { met, not_met, total_qa_calls} = await fetchData(timeFrame);
+          qaChart.data.datasets[0].data = met;
+          console.log(total_qa_calls)
+          qaChart.data.labels = total_qa_calls
+          qaChart.data.datasets[1].data = not_met;
+          qaChart.update();
+
+      };
+      QAChart('daily', document.querySelector('.failed'))
+
+  function onOrganisationChange() {
+        const selectElement = document.getElementById("organisationName");
+        const selectedValue = selectElement.value;    
+        console.log("Selected Organisation:", selectedValue);
+
+        window.location.href = `?organisation=${selectedValue}`;    
+    }
+        
+  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+
+{% endblock %}
+
+{% block scriptcontent %}
+{% endblock %}

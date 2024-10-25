@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="provider",
             name="is_delete",
-            field=models.CharField(default=False),
+            field=models.CharField(default=False,max_length=255),
         ),
         migrations.AlterField(
             model_name="provider",

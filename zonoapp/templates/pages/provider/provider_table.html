@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;  /* Slightly below the modal z-index */
+        }
+
+    .swal-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        background: #333;
+        padding: 20px;
+        border-radius: 8px;
+        width: 400px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+    }
+
+    .swal-icon {
+        margin: 20px 0;
+    }
+
+    .swal-icon--warning {
+        width: 60px;
+        height: 60px;
+        background: #f8bb86;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .swal-title {
+        font-size: 24px;
+        margin: 10px 0;
+    }
+
+    .swal-text {
+        margin-bottom: 20px;
+    }
+
+    .swal-footer {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .swal-button {
+        padding: 10px 20px;
+        background: #444;
+        border: 1px solid #888;
+        color: white;
+        cursor: pointer;
+    }
+
+    .swal-button--danger {
+        background: #d33;
+    }
+
+    .swal-button--cancel {
+        background: #777;
+    }
+
+    .table-responsive {
+        margin-top: 20px;
+    }
+
+    .table th, .table td {
+        padding: 15px;
+        text-align: left;
+    }
+
+    .action li {
+        display: inline-block;
+        margin: 0 5px;
+    }
+</style>
+
+<div class="card-header pb-0 card-no-border">
+    <a href="{% url 'provider_form' %}" class="btn btn-primary">Add Configuration</a>
+</div>
+<div class="col-sm-12">
+    <div class="card-body">
+        <div id="basic-1_wrapper" class="dataTables_wrapper no-footer">
+            <div class="row mt-4">
+                {% for provider in providers %}
+                    <div class="col-xxl-6 col-xl-6 col-lg-6 col-md-6 col-sm-12 mb-4">
+                        <div class="card">
+                            <div class="job-search">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <img class="img-40 img-fluid m-r-20" src="{% static 'assets/images/customizer/4.png' %}" alt="campaign image">
+                                        <div class="flex-grow-1">
+                                            <h4>{{ provider.provider_name }}</h4>
+                                            <p class="mt-1 f-m-light">{{ provider.provider_type }}</p>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-danger" onclick="deleteProvider({{ provider.id }}, '{{ provider.provider_name|escapejs }}')">
+                                                🗑️
+                                            </button>
+                                            <button class="btn btn-warning" 
+                                                data-provider-id="{{ provider.id }}" 
+                                                data-provider-name="{{ provider.provider_name|escapejs }}" 
+                                                data-provider-type="{{ provider.provider_type|escapejs }}" 
+                                                data-provider-config="{{ provider.provider_config|escapejs }}" 
+                                                onclick="openEditProviderModal(this)">
+                                                ✏️
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- <p class="mb-0">{{ provider.provider_config|safe }}</p> -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p>No Provider found.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Edit Provider Modal -->
+            <div class="modal fade" id="editProviderModal" tabindex="-1" role="dialog" aria-labelledby="editProviderModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editProviderModalLabel">Edit Provider</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editProviderForm">
+                                <input type="hidden" id="editProviderId">
+                                <div class="form-group">
+                                    <label for="editProviderName">Configuration Name</label>
+                                    <input type="text" class="form-control" id="editProviderName" required>
+                                </div>
+                                <!-- <div class="form-group">
+                                    <label for="editProviderType">Configuration Type</label>
+                                    <select class="form-control" id="editProviderType" required>
+                                        <option value="" disabled>Select Configuration Type</option>
+                                        {% for provider_type in provider_types %}
+                                            <option value="{{ provider_type }}">{{ provider_type }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div> -->
+                                <br>    
+                                <div id="provider_config" style="height: 300px; width: 100%;"></div>
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dataTables_paginate paging_simple_numbers" id="basic-1_paginate">
+                {% if providers.has_previous %}
+                    <a class="paginate_button previous" href="?page={{ providers.previous_page_number }}" aria-controls="basic-1">Previous</a>
+                {% else %}
+                    <a class="paginate_button previous disabled" aria-controls="basic-1">Previous</a>
+                {% endif %}
+                
+                <span>
+                    {% for page in providers.paginator.page_range %}
+                        {% if page == providers.number %}
+                            <a class="paginate_button current" href="#">{{ page }}</a>
+                        {% else %}
+                            <a class="paginate_button" href="?page={{ page }}">{{ page }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                
+                {% if providers.has_next %}
+                    <a class="paginate_button next" href="?page={{ providers.next_page_number }}" aria-controls="basic-1">Next</a>
+                {% else %}
+                    <a class="paginate_button next disabled" aria-controls="basic-1">Next</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+
+<script>
+    function showToast(type, message, title) {
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: type,
+            confirmButtonText: 'OK'
+        }).then(() => { location.reload(); });
+    }
+
+    function deleteProvider(providerId, providerName) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `You won't be able to revert this! Provider: ${providerName}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{% url 'delete_provider' %}",
+                    type: 'POST',
+                    data: JSON.stringify({ "provider_id": providerId }),
+                    contentType: "application/json",
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        showToast("success", response.message, "Delete Provider");
+                    },
+                    error: function(xhr, status, error) {
+                        showToast("error", "Failed to delete provider! " + error, "Delete Provider");
+                    }
+                });
+            }
+        });
+    }
+
+    function openEditProviderModal(button) {
+    // Get data from the clicked button
+    const providerId = $(button).data('provider-id');
+    const providerName = $(button).data('provider-name');
+    const providerType = $(button).data('provider-type');
+    const providerConfig = $(button).data('provider-config');
+
+    // Populate the modal fields with the retrieved data
+    $('#editProviderId').val(providerId);
+    $('#editProviderName').val(providerName);
+    $('#editProviderType').val(providerType);
+
+    // Initialize Ace Editor
+    let editor = ace.edit("provider_config");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/json");
+
+    // Debug: Log providerConfig to check its value
+    console.log('Provider Config:', providerConfig);
+
+    // Sanitize the JSON config string
+    try {
+        // Convert single quotes to double quotes and remove escape sequences
+        let sanitizedConfig = providerConfig.replace(/'/g, '"').replace(/\\u0027/g, '"');
+        editor.setValue(JSON.stringify(JSON.parse(sanitizedConfig), null, 2), -1);
+    } catch (error) {
+        console.error('Error parsing JSON:', error);
+        console.error('Invalid provider config:', providerConfig);
+        editor.setValue('// Invalid JSON format. Please correct.', -1);
+    }
+
+    // Show the modal
+    $('#editProviderModal').modal('show');
+}
+
+    $('#editProviderForm').on('submit', function(e) {
+        e.preventDefault(); // Prevent form submission
+
+        const providerId = $('#editProviderId').val();
+        const providerName = $('#editProviderName').val();
+        const providerType = $('#editProviderType').val();
+        const providerConfig = ace.edit("provider_config").getValue();
+
+        // Submit the edited provider data via AJAX
+        $.ajax({
+            url: "{% url 'edit_provider' %}",
+            type: 'POST',
+            data: JSON.stringify({ 
+                "provider_id": providerId,
+                "provider_name": providerName,
+                "provider_type": providerType,
+                "provider_config": providerConfig,
+            }),
+            contentType: "application/json",
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            success: function(response) {
+                showToast("success", response.message, "Edit Provider");
+            },
+            error: function(xhr, status, error) {
+                showToast("error", "Failed to edit provider! " + error, "Edit Provider");
+            }
+        });
+    });
+</script>
+
+{% endblock %}
+
+
+
+
+
+
+
+

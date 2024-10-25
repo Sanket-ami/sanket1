@@ -18,7 +18,7 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div class="ttl-info text-start">
-                      <h6><i class="fa fa-envelope"></i>  Email</h6><span>Marekjecno@yahoo.com</span>
+                      <h6><i class="fa fa-envelope"></i>  Email</h6><span>{{request.user.email}}</span>
                     </div>
                   </div>
                   <div class="col-md-6">
@@ -30,8 +30,8 @@
               </div>
               <div class="col-sm-12 col-lg-4 order-sm-0 order-xl-1">
                 <div class="user-designation">
-                  <div class="title"><a target="_blank" href="">Mark jecno</a></div>
-                  <div class="desc">designer</div>
+                  <div class="title"><a target="_blank" href="">{{request.user.first_name}}  {{request.user.last_name}}</a></div>
+                  <div class="desc">{{request.user.role.role}}</div>
                 </div>
               </div>
               <div class="col-sm-6 col-lg-4 order-sm-2 order-xl-2">

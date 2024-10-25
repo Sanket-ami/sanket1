@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load sass_tags %}
+{% block css %}
+{% endblock %}
+{% block content %}
+    <button class="btn btn-primary" style="margin: 1%;" type="button" id="addUserButton">Add user</button>
+    <!-- Modal Structure -->
+    <div class="modal fade" id="editAgentModal" tabindex="-1" aria-labelledby="editAgentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editAgentModalLabel">Edit Agent</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="edit-agent-form needs-validation" method="post" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" id="editAgentId" name="agent_id">
+                        <!-- Agent Name -->
+                        <div class="mb-3">
+                            <label for="editAgentName" class="form-label">Email</label>
+                            <input type="text" class="form-control" id="editAgentName" name="agent_name" required>
+                            <div class="invalid-feedback">Please provide a valid Email.</div>
+                        </div>
+                        <!-- Organisation Name -->
+                        <div class="mb-3">
+                            <label for="editOrganisationName" class="form-label">Role</label>
+                            <select class="form-select" id="editOrganisationName" name="organisation_name" required>
+                                {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.role }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please provide a valid organisation name.</div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" type="button" onclick="edit_user('{{ agent_id }}')">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Table (Visible by Default) -->    
+    <div id="userTable">
+        
+            
+            
+                <div class="container-fluid mt-4">
+                    <div class="table-responsive table-striped">
+                        <table class="table">
+                            <thead  class="table-dark" >
+                                <tr>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;"> UserName </span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Email</span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Role</span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Organisation</span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Date Joined</span></th>
+                                    <th scope="col"><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Action</span></th>    
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td><h6>{{ user.username }}</h6></td>
+                                    <td><h6>{{ user.email }}</h6></td>
+                                    <td><h6>{{ user.role.role }}</h6></td>
+                                    <td><h6>{{ user.organisation_name }}</h6></td>
+                                    <td><h6>{{ user.date_joined }}</h6></td>
+                                    <td> 
+                                        <button class="btn-info edit-agent-button" data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-email="{{ user.email }}" data-role="{{ user.role.role }}" data-organisation="{{ user.organisation_name }}" data-bs-toggle="modal" data-bs-target="#editAgentModal">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                        <button class="btn-danger" onclick="deleteAgent('{{ user.id }}')">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>              
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            
+        
+        <div>
+            <div class="job-pagination">
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination pagination-primary">
+                        {% if users.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ users.previous_page_number }}&q={{ search_query }}">Previous</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link">Previous</a>
+                        </li>
+                        {% endif %}
+                        {% for num in users.paginator.page_range %}
+                        <li class="page-item {% if users.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}&q={{ search_query }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        {% if users.has_next %}            
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ users.next_page_number }}&q={{ search_query }}">Next</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Form (Hidden Initially) -->
+    <div class="card-body custom-input addAgentModal d-none" id="addAgentModal">
+        <form class="row g-3 needs-validation" novalidate>
+            {% csrf_token %}
+            <div class="col-12">
+                <label class="form-label" for="user-name">UserName</label>
+                <input class="form-control" id="user-name" type="text" placeholder="user name" aria-label="user name" required="">
+                <div id="invalid-user-name" style="display:none; color: red;">Username must not contain spaces or special characters.</div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="first-name">First name</label>
+                <input class="form-control" id="first-name" type="text" placeholder="First name" aria-label="First name" required="">
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="last-name">Last name</label>
+                <input class="form-control" id="last-name" type="text" placeholder="last name" aria-label="Last name" required="">
+            </div>
+            <div class="col-12">
+                <label class="col-sm-12 col-form-label" for="exampleFormControlInput1">Email address</label>
+                <input class="form-control" id="exampleFormControlInput1" type="email" required="">
+                <div id="invalid-user-email"style="display:none; color: red;">Please provide a valid email address.</div>
+            </div>
+            <div class="col-12">
+                <label class="col-sm-12 col-form-label" for="inputPassword1">Password</label>
+                <input class="form-control" id="inputPassword1" type="password" required="">
+                <div id="invalid-user-pass"style="display:none; color: red;">Password must be at least 8 characters long and include one uppercase letter and one special character.</div>
+            </div>
+            <div class="col-12">
+                <label class="col-sm-12 col-form-label" for="inputPassword2">Confirm Password</label>
+                <input class="form-control" id="inputPassword2" type="password" required="">
+            </div>
+            <div class="col-12">
+                <div class="card-wrapper border rounded-3 checkbox-checked">
+                    <h6 class="sub-title">Select Organisation</h6>
+                    <div class="dropdown-form">
+                        <select class="form-select" name="organisation" id="organisationName" required>
+                            <option value="" disabled selected>Select Organisation</option>
+                            {% for user in organisation_list %}
+                                <option value="{{ user.organisation_name }}">{{ user.organisation_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>          
+            <div class="col-12">
+                <div class="card-wrapper border rounded-3 checkbox-checked">
+                    <h6 class="sub-title">Select Role</h6>
+                    <div class="dropdown-form">
+                        <select class="form-select" name="role" id="roleName" required>
+                            <option value="" disabled selected>Select Role</option>
+                            {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.role }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" id="flexSwitchCheckDefault" type="checkbox" role="switch" required="">
+                    <label class="form-check-label" for="flexSwitchCheckDefault">Are you sure the above information is true</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary" id="submitAdd" type="button" disabled>Submit</button>
+            </div>
+        </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const editButtons = document.querySelectorAll(".edit-agent-button");
+            const editModal = document.getElementById("editAgentModal");
+            const editAgentIdField = document.getElementById("editAgentId");
+            const editAgentNameField = document.getElementById("editAgentName");
+            // const editEmailField = document.getElementById("edit-email");
+            const editOrganisationField = document.getElementById("editOrganisationName");
+            const editRoleRadios = document.getElementsByName("editRole");
+        
+            // Event Listener for Edit Buttons
+            editButtons.forEach(button => {
+                button.addEventListener("click", function () {
+                    const userId = button.getAttribute("data-user-id");
+                    const username = button.getAttribute("data-username");
+                    const email = button.getAttribute("data-email");
+                    const organisation = button.getAttribute("data-organisation");
+                    const role = button.getAttribute("data-role");
+        
+                    // Populate the fields in the edit modal
+                    editAgentIdField.value = userId;
+                    editAgentNameField.value = email;
+                    // editEmailField.value = email;
+                    editOrganisationField.value = organisation;
+        
+                    // Check the role radio button corresponding to the user's role
+                    for (let radio of editRoleRadios) {
+                        radio.checked = (radio.nextElementSibling.innerText.trim() === role);
+                    }
+        
+                    // Optionally, open the modal if it's not already open
+                    new bootstrap.Modal(editModal).show();
+                });
+            });
+        });
+        function edit_user(user_id,agent_name){
+                role = document.getElementById("editOrganisationName").value;
+                console.log("role: ", role)
+                email = document.getElementById("editAgentName").value;
+                user_id = document.getElementById("editAgentId").value;
+                Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'You won\'t be able to revert this!',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Change it!',
+                        cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                            // Proceed with the deletion via AJAX
+                            $.ajax({
+                                url: "{% url 'list-user' %}", // Django URL
+                                method: "PUT",
+                                data: JSON.stringify({ "user_id": user_id, "role": role, "email": email }),
+                                contentType: "application/json",
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                                },
+                
+                                success: function(response) {
+                                    // Show success message using SweetAlert2
+         
+                                    showToast("success", "User updated");
+                                },
+                                error: function(xhr, status, error) {
+                                    // Show error message using SweetAlert2
+                                    showToast("error", "Failed to delete contact! " + error,"Delete User");
+                                }
+                            });
+                        }
+                    });
+        
+            }
+         function deleteAgent(user_id,agent_name){
+                Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'You won\'t be able to revert this!',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                            // Proceed with the deletion via AJAX
+                            $.ajax({
+                                url: "{% url 'list-user' %}", // Django URL
+                                method: "DELETE",
+                                data: JSON.stringify({ "user_id": user_id }),
+                                contentType: "application/json",
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                                },
+                
+                                success: function(response) {
+                                    // Show success message using SweetAlert2
+         
+                                    showToast("success", "Delete User");
+                                },
+                                error: function(xhr, status, error) {
+                                    // Show error message using SweetAlert2
+                                    showToast("error", "Failed to delete contact! " + error,"Delete User");
+                                }
+                            });
+                        }
+                    });
+        
+            }
+            const editForm = document.querySelector(".edit-agent-form");
+        editForm.addEventListener("sdadsasad", function (event) {
+            event.preventDefault();
+        
+            // Collect the form data
+            const formData = {
+                'user_id': editAgentIdField.value,
+                'email': editAgentNameField.value,
+                // 'email': editEmailField.value,
+                'organisation_name': editOrganisationField.value,
+                'role': document.querySelector("input[name='editRole']:checked").value
+            };
+        
+            // Make an AJAX request to update the user
+            fetch(`/update_user/${formData.user_id}/`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("User updated successfully", data);
+                showToast('success', 'User updated successfully!');
+                // Close modal and refresh the table or reload the page as needed
+                new bootstrap.Modal(editModal).hide();
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error updating user", error);
+                showToast('error', 'User update failed!');
+            });
+        });
+        
+                function deleteAgent(user_id,agent_name){
+                Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'You won\'t be able to revert this!',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                            // Proceed with the deletion via AJAX
+                            $.ajax({
+                                url: "{% url 'list-user' %}", // Django URL
+                                method: "DELETE",
+                                data: JSON.stringify({ "user_id": user_id }),
+                                contentType: "application/json",
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                                },
+                
+                                success: function(response) {
+                                    // Show success message using SweetAlert2
+         
+                                    showToast("success", "Delete User");
+                                },
+                                error: function(xhr, status, error) {
+                                    // Show error message using SweetAlert2
+                                    showToast("error", "Failed to delete contact! " + error,"Delete User");
+                                }
+                            });
+                        }
+                    });
+        
+            }
+        
+                document.addEventListener("DOMContentLoaded", function () {
+                    const form = document.querySelector(".needs-validation");
+                    const addUserButton = document.getElementById("addUserButton");
+                    const modal = document.getElementById("addAgentModal");
+                    const userTable = document.getElementById("userTable");
+                    const editModal = document.getElementById("editAgentModal");
+        
+        
+                    // Show form and hide table when the "Add user" button is clicked
+                    addUserButton.addEventListener("click", function () {
+                        modal.classList.remove("d-none");
+                        userTable.classList.add("d-none");
+                    });
+                    editModal.addEventListener("click", function () {
+                        editModal.classList.remove("d-none");
+                        // userTable.classList.add("d-none");
+                    });
+        
+        
+                    $("#submitAdd").on("click", function(event) {
+                        event.preventDefault();
+        
+                        let formData = {
+                            'username': document.getElementById("user-name").value,
+                            'first_name': document.getElementById("first-name").value,
+                            'last_name': document.getElementById("last-name").value,
+                            'email': document.getElementById("exampleFormControlInput1").value,
+                            'password': document.getElementById("inputPassword1").value,
+                            'confirm_password': document.getElementById("inputPassword2").value,
+                            'role': document.getElementById("roleName").value,
+                            'organisation_name':  document.getElementById("organisationName").value
+                        };
+                        console.log(formData);
+                        if (formData.password !== formData.confirm_password) {
+                            showToast('error', 'Passwords do not match!');
+                            return; // Stop form submission if passwords don't match
+                        }
+                        // AJAX request to submit form data
+                        fetch("/user_list", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                            },
+                            body: JSON.stringify(formData)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Form submission successful", data);
+                            if (data['status_code']==400 && data['status']=='email'){
+                                showToast('error', ' email already Present !');   
+                            }
+                            else if(data['status_code'] == 400 && data['status'] == 'username'){
+                                showToast('error', ' Username already Present !');   
+                            }else{
+                            showToast('success', 'Form submitted successfully!');
+                            // Hide form and show table after successful submission
+                            }
+                            // Hide form and show table after successful submission
+                            modal.classList.add("d-none");
+                            userTable.classList.remove("d-none");
+                        })
+                        .catch(error => {
+                            console.error("Form submission error", error);
+                            showToast('error', 'Form submission failed!');
+                        });
+                    });
+                });
+        
+                function showToast(type, message) {
+                    Swal.fire({
+                        title: type === 'success' ? 'Success' : 'Error',
+                        text: message,
+                        icon: type,
+                        confirmButtonText: 'OK'
+                    }).then(() => { location.reload(); });
+                }
+        
+                document.querySelector('.btn-close').addEventListener('click', function() {
+            // Hide the modal
+            var myModal = new bootstrap.Modal(document.getElementById('editAgentModal'));
+            myModal.hide();
+            
+            // Remove the backdrop if it still exists
+            let modalBackdrop = document.querySelector('.modal-backdrop');
+            if (modalBackdrop) {
+                modalBackdrop.remove();
+            }
+            
+            // Remove the 'modal-open' class from the body
+            document.body.classList.remove('modal-open');
+            document.body.style = ""; // Reset body styles to default
+        });
+        
+        const usernameInput = document.getElementById('user-name');
+                    const emailInput = document.getElementById('exampleFormControlInput1');
+                    const passwordInput = document.getElementById('inputPassword1');
+                    const submitButton = document.getElementById('submitAdd');
+        
+                    // Enable/Disable submit button based on input validity
+                    function checkValidity() {
+                        const isUsernameValid = validateUsername(usernameInput.value);
+                        const isEmailValid = validateEmail(emailInput.value);
+                        const isPasswordValid = validatePassword(passwordInput.value);
+                        submitButton.disabled = !(isUsernameValid && isEmailValid && isPasswordValid);
+                    }
+        
+                    // Add event listeners for input validation
+                    usernameInput.addEventListener('input', checkValidity);
+                    emailInput.addEventListener('input', checkValidity);
+                    passwordInput.addEventListener('input', checkValidity);
+        
+                    // Username validation
+                    function validateUsername(username) {
+                        const usernameRegex = /^[a-zA-Z0-9]+$/; 
+                        var valid = usernameRegex.test(username);
+                        const invalidMessage = document.getElementById('invalid-user-name'); 
+        
+                        if (!valid) {
+                            invalidMessage.style.display = 'block'; 
+                            return false; 
+                        } else {
+                            invalidMessage.style.display = 'none'; 
+                        }
+                        return true; 
+                    }
+        
+                    // Email validation
+                    function validateEmail(email) {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
+                        var valid = emailRegex.test(email);
+                        const invalidMessage = document.getElementById('invalid-user-email'); 
+                        if (!valid) {
+                            invalidMessage.style.display = 'block'; 
+                            return false; 
+                        } else {
+                            invalidMessage.style.display = 'none'; 
+                        }
+                        return true; 
+                    }
+        
+                    // Password validation
+                    function validatePassword(password) {
+                        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/; // At least 8 chars, 1 uppercase, 1 special
+                        var valid = passwordRegex.test(password);
+                        const invalidMessage = document.getElementById('invalid-user-pass'); 
+                        if (!valid) {
+                            invalidMessage.style.display = 'block'; 
+                            return false; 
+                        } else {
+                            invalidMessage.style.display = 'none'; 
+                        }
+                        return true; 
+                    }
+        
+                    document.getElementById('submitAdd').addEventListener('click', function() {
+                        const username = document.getElementById('user-name').value;
+                        const email = document.getElementById('exampleFormControlInput1').value;
+                        const password = document.getElementById('inputPassword1').value;
+        
+                        if (!validateUsername(username)) {
+                            return;
+                        }
+        
+                        if (!validateEmail(email)) {
+                            return;
+                        }
+        
+                        if (!validatePassword(password)) {
+                            return;
+                        }
+        
+                        // Proceed with form submission
+                        const formData = new FormData(document.querySelector('#addAgentModal form'));
+                        fetch('/path/to/add/user', { method: 'POST', body: formData })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire('Success', 'User added successfully!', 'success');
+                                    // Optionally reset the form
+                                    document.querySelector('#addAgentModal form').reset();
+                                    submitButton.disabled = true; // Disable the button again
+                                } else {
+                                    Swal.fire('Error', data.message, 'error');
+                                }
+                            });
+                    });
+        
+        
+            </script>
+        
+
+
+{% endblock %}

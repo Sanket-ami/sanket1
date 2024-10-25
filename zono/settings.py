@@ -15,12 +15,14 @@ from django.contrib import messages
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+from dotenv import load_dotenv
 
+load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-f7$wb+d842u9h#k7-=fnfe%uk31im2dy*pn8h1e$!z7r7xiccy'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -45,6 +47,9 @@ INSTALLED_APPS = [
     'agent',
     'sass_processor',
     'widget_tweaks',
+    'qa_parameters',
+    'reporting'
+
 
 
 ]
@@ -86,13 +91,15 @@ WSGI_APPLICATION = 'zono.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.' + os.getenv('DB_ENGINE', 'postgresql'),  # Append the correct backend prefix
+
+  'ENGINE': 'django.db.backends.' + os.getenv('DB_ENGINE', 'postgresql'),  # Append the correct backend prefix
         'NAME': os.getenv('DB_NAME', 'callbotics2'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'PORT': os.getenv('DB_PORT', '5432'),                 # Default PostgreSQL port
 
+        
     }
 }
 
@@ -159,3 +166,13 @@ MESSAGE_TAGS = {
     messages.ERROR: 'alert-danger',
 }   
 AUTH_USER_MODEL = 'zonoapp.User'
+
+TRANSCRIPT_SERVER_URL = "https://3eeb-136-232-53-94.ngrok-free.app"
+# email configs
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = str(os.getenv('EMAIL_HOST_USER'))
+EMAIL_HOST_PASSWORD = str(os.getenv('EMAIL_HOST_PASSWORD'))
+PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)

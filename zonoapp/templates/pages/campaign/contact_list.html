@@ -2,19 +2,102 @@
 {% load static %}
 
 {% block content %}
+<div class="container-fluid" id="filterList">
+    <div class="row align-items-center">
+        <!-- First Column: Label above, Filter, and Contact List in line with others -->
+        <div class="col-auto">
+            <!-- Label above the dropdown and filter button -->
+            <div class="mb-1">
+                <label for="selectedContactList" class="form-label">Select Contact list</label>
+            </div>
+            <!-- Dropdown and Filter in line with others -->
+            <form method="GET" action="{% url 'contact_list' campaign_id %}" id="filterForm" class="d-flex align-items-center">
+                <select class="form-select me-2" aria-label=" " name="selected_contact_list" id="selectedContactList">
+                    {% for contact in all_contact_list_names %}
+                    <option value="{{ contact.1 }}" {% if contact.1|stringformat:"s" == selected_contact_list %}selected{% endif %}>{{ contact.0 }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Filter</button>
+            </form>
+        </div>
+
+        <!-- Second Column: Search field and button (right-aligned, next to Upload Contact List) -->
+        <div class="col-auto ms-auto d-flex align-items-center">
+            <form method="GET" action="{% url 'contact_list' campaign_id %}" class="d-flex align-items-center me-2">
+                <div class="form-outline me-1" style="width: 10rem;">
+                    <input type="text" name="patient_name" id="patient_name" value="{{ patient_name }}" class="form-control" placeholder="Enter Patient Name"/>
+                </div>
+                <button type="submit" class="btn btn-primary d-flex align-items-center">
+                    🔍 Search
+                </button>
+            </form>
+
+            <!-- Upload Contact List button (right-aligned) -->
+            <button type="button" id="uploadContactList" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload Contact List</button>
+        </div>
+
+        <!-- Third Column: Active Button (right-aligned) -->
+        <div class="col-auto text-end">
+            {% if is_active %}
+            <button type="button" class="btn btn-secondary" disabled>Active</button>
+            {% else %}
+            <button type="button" id="markListActive" class="btn btn-info">Make Active</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="mt-2" style="margin-left: 1%;">
+    <div class="quick-box">
+       <a href="{% url 'sample_csv' %}?campaign_id={{ campaign_id }}"> <i class="fa fa-download font-primary"></i>
+         Download Sample CSV
+        </a>
+    </div>
+</div>
+
+
+<!-- Bootstrap Modal for Uploading CSV -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">Upload Contact List</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fileName" class="form-label">Enter List Name</label>
+                        <input type="text" name="list_name" id="fileName" class="form-control" placeholder="List Name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="csvFile" class="form-label">Upload CSV file</label>
+                        <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv" required>
+                    </div>
+                    <div id="uploadErrors" class="text-danger"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitUpload">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid mt-4">
-    <h2>Contact List</h2>
-    <table id="contactTable" class="table table-inverse table-striped dataTable" style="margin-left: 0px;">
-        <thead>
+<div class="table-responsive table-striped">
+    <table id="contactTable" class="table" >
+        <thead class="table-dark">
             <tr>
-                <th class="">
+                <th class="" >
                     <button class="btn btn-pill btn-primary btn-air-primary" id="deleteSelected" type="button">
                         <i class="icofont icofont-ui-delete"></i>
                     </button>
                 </th>
                 {% if contact_list %}
                     {% for key in contact_list.0.keys %}
-                        <th class="sorting_asc">{{ key }}</th>
+                        <th class="sorting_asc"> <span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
                     {% endfor %}
                 {% endif %}
             </tr>
@@ -27,18 +110,52 @@
                     <input class="form-switch contact-checkbox" data-contact-id="{{ contact.contact_id }}" type="checkbox">
                 </td>
                 {% for value in contact.values %}
-                    <td>{{ value }}</td>
+                    <td><h6>{{ value }}</h6></td>
                 {% endfor %}
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
+    <div class="job-pagination">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination pagination-primary">
+                {% if contact_list.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ contact_list.previous_page_number }}&patient_name={{ patient_name }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in contact_list.paginator.page_range %}
+                <li class="page-item {% if contact_list.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&patient_name={{ patient_name }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if contact_list.has_next %}
+                
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ contact_list.next_page_number }}&patient_name={{ patient_name }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
 </div>
 
 <!-- Include jQuery and DataTables JS and CSS files from CDN -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+<!-- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"> -->
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<!-- <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script> -->
 <!-- Script block -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -65,19 +182,87 @@
                     showCancelButton: true,
                     confirmButtonText: 'Yes'
                 } 
-            ).then((result) => { if (result.isConfirmed) { console.log('confirmed')} });;
+            ).then((result) => { if (result.isConfirmed) { console.log('confirmed')} });
         }
 
-        // Initialize DataTables
-        new DataTable('#contactTable', {
-            paging: true,
-            responsive: true,
-            scroller: {
-                loadingIndicator: true
-            },
-            searching: true,
-            ordering: true
+
+        // MARK as active api 
+        $("#markListActive").on('click', function() {
+            Swal.fire({
+                text: 'Are you sure you want to mark this contact list as active?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, mark as active'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let contactListId = "{{ contact_list_id }}";  // Get the current contact list id dynamically
+                    let campaignId = "{{ campaign_id }}";  // Get the current campaign id dynamically
+
+                    // Make an AJAX POST request to mark the contact list as active
+                    $.ajax({
+                        type: 'POST',
+                        url: "{% url 'contact_list' campaign_id=campaign_id %}",
+                        data: JSON.stringify({
+                            'campaign_id': campaignId,
+                            'contact_list_id': contactListId
+                        }),
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                        },
+                        contentType: 'application/json',
+                        success: function(response) {
+                            Swal.fire('Success', response.message, 'success').then(() => {
+                                location.reload();  // Reload the page to reflect changes
+                            });
+                        },
+                        error: function(xhr) {
+                            Swal.fire('Error', xhr.responseJSON.message, 'error');
+                        }
+                    });
+                }
+            });
         });
+
+
+        // upload new contact list
+        $('#submitUpload').on('click', function() {
+            let formData = new FormData($('#uploadForm')[0]);
+
+            $.ajax({
+                url: "{% url 'upload_contact_list' campaign_id=campaign_id %}",
+                type: 'POST',
+                headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                        },                
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.status === 'success') {
+                        Swal.fire('Success', response.message, 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        $('#uploadErrors').text(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    $('#uploadErrors').text('An error occurred while uploading the file.');
+                }
+            });
+        });
+
+
+        // Initialize DataTables
+        // new DataTable('#contactTable', {
+        //     paging: true,
+        //     responsive: true,
+        //     scroller: {
+        //         loadingIndicator: true
+        //     },
+        //     searching: true,
+        //     ordering: true
+        // });
 
         /// Handling contact deletion
         let selectedContacts = [];
@@ -99,87 +284,58 @@
             console.log('Selected Contacts:', selectedContacts);
         });
 
+
         // When the delete button is clicked
-        // $('#deleteSelected').on('click', function() {
-        //     if (selectedContacts.length === 0) {
-        //         alert("No contacts selected for deletion.");
-        //         return;
-        //     }
 
-        //     // Confirm deletion
-        //     if (confirm("Are you sure you want to delete the selected contacts?")) {
-        //         $.ajax({
-        //             url: "{% url 'delete_contacts' campaign_id %}",   // Update this URL with your Django view URL
-        //             method: "POST",
-        //             data: JSON.stringify({ contact_ids: selectedContacts, "campaign_id": {{ campaign_id }} }),
-        //             contentType: "application/json",
-        //             headers: {
-        //                 'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
-        //             },
-        //             success: function(response) {
-        //                 // Handle success, such as reloading the page or updating the UI
-        //                 // alert(response.message);
-        //                  showToast("success", response.message);
-        //              },
-        //             error: function(xhr, status, error) {
-        //                 // Handle error
-        //                 // alert("An error occurred: " + error);
-        //                 showToast("error", "Failed to delete contact! "+ error);
-        //              }
-        //         });
-        //     }
-        // });
-
-// When the delete button is clicked
-$('#deleteSelected').on('click', function() {
-    if (selectedContacts.length === 0) {
-        Swal.fire({
-            icon: 'warning',
-            text: 'No contacts selected for deletion.',
-        });
-        return;
-    }
-
-    // Confirm deletion using SweetAlert2
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'You won\'t be able to revert this!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, delete them!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Proceed with the deletion via AJAX
-                    $.ajax({
-                        url: "{% url 'delete_contacts' campaign_id %}", // Django URL
-                        method: "POST",
-                        data: JSON.stringify({ contact_ids: selectedContacts, "campaign_id": {{ campaign_id }} }),
-                        contentType: "application/json",
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
-                        },
-                        success: function(response) {
-                            // Show success message using SweetAlert2
-                            Swal.fire({
-                                icon: 'success',
-                                text: response.message
-                            });
-                            showToast("success", response.message);
-                        },
-                        error: function(xhr, status, error) {
-                            // Show error message using SweetAlert2
-                            Swal.fire({
-                                icon: 'error',
-                                text: 'Failed to delete contacts: ' + error
-                            });
-                            showToast("error", "Failed to delete contact! " + error);
-                        }
+        $('#deleteSelected').on('click', function() {
+                if (selectedContacts.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        text: 'No contacts selected for deletion.',
                     });
+                    return;
                 }
-            });
-        });
 
-    });
+                // Confirm deletion using SweetAlert2
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: 'You won\'t be able to revert this!',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, delete them!',
+                            cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Proceed with the deletion via AJAX
+                                $.ajax({
+                                    url: "{% url 'delete_contacts' campaign_id %}", // Django URL
+                                    method: "POST",
+                                    data: JSON.stringify({ contact_ids: selectedContacts, "campaign_id": {{ campaign_id }} }),
+                                    contentType: "application/json",
+                                    headers: {
+                                        'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                                    },
+                                    success: function(response) {
+                                        // Show success message using SweetAlert2
+                                        Swal.fire({
+                                            icon: 'success',
+                                            text: response.message
+                                        });
+                                        showToast("success", response.message);
+                                    },
+                                    error: function(xhr, status, error) {
+                                        // Show error message using SweetAlert2
+                                        Swal.fire({
+                                            icon: 'error',
+                                            text: 'Failed to delete contacts: ' + error
+                                        });
+                                        showToast("error", "Failed to delete contact! " + error);
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                });
 </script>
 {% endblock %}
