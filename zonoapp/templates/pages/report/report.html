@@ -21,13 +21,16 @@
         <div class="col-md-4 mt-4">
             <button type="button" class="btn btn-primary" id="submitForm">Submit</button>
         </div>
-      </div>
-
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Set max attribute to today's date
+    const today = new Date().toISOString().split('T')[0];
+    $('#start_date, #end_date').attr('max', today);
+
     $('#submitForm').click(function() {
         const startDate = $('#start_date').val();
         const endDate = $('#end_date').val();
@@ -71,7 +74,5 @@ $(document).ready(function() {
     });
 });
 </script>
-
-    
 
 {% endblock %}
