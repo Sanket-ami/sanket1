@@ -288,6 +288,11 @@ def contact_list(request, campaign_id):
             contact_list = ContactList.objects.get(id=contact_list_id)
             contact_list.is_active = True
             contact_list.save()
+            
+            # link the contact list in the campaign 
+            campaign_obj = Campaign.objects.get(id=campaign_id)
+            campaign_obj.contact_list_id = contact_list_id
+            campaign_obj.save()
 
             return JsonResponse({'status': 'success', 'message': 'Contact list marked as active.'})
         else:
@@ -352,6 +357,7 @@ def start_campaign(request):
             provider = campaign_obj.provider
             # Iterate over the data
             contact_list = campaign_obj.contact_list.contact_list
+            #selec
             voice_config = campaign_obj.agent.voice.voice_configuration
             qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
 
