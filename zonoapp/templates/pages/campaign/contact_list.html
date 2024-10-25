@@ -99,7 +99,7 @@
                 </th>
                 {% if contact_list %}
                     {% for key in contact_list.0.keys %}
-                        <th class="sorting_asc"> <span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
+                        <th class="sorting_asc"> <span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
                     {% endfor %}
                 {% endif %}
             </tr>
@@ -124,7 +124,7 @@
             <ul class="pagination pagination-primary">
                 {% if contact_list.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ contact_list.previous_page_number }}&patient_name={{ patient_name }}">Previous</a>
+                    <a class="page-link" href="?page={{ contact_list.previous_page_number }}&patient_name={{ patient_name }}&selected_contact_list={{ selected_contact_list }}">Previous</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
@@ -134,14 +134,14 @@
 
                 {% for num in contact_list.paginator.page_range %}
                 <li class="page-item {% if contact_list.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}&patient_name={{ patient_name }}">{{ num }}</a>
+                    <a class="page-link" href="?page={{ num }}&patient_name={{ patient_name }}&selected_contact_list={{ selected_contact_list }}">{{ num }}</a>
                 </li>
                 {% endfor %}
 
                 {% if contact_list.has_next %}
                 
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ contact_list.next_page_number }}&patient_name={{ patient_name }}">Next</a>
+                    <a class="page-link" href="?page={{ contact_list.next_page_number }}&patient_name={{ patient_name }}&selected_contact_list={{ selected_contact_list }}">Next</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
