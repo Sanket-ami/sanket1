@@ -21,9 +21,11 @@
             </form>
         </div>
 
+        
         <!-- Second Column: Search field and button (right-aligned, next to Upload Contact List) -->
         <div class="col-auto ms-auto d-flex align-items-center">
             <form method="GET" action="{% url 'contact_list' campaign_id %}" class="d-flex align-items-center me-2">
+                <button type="button" class="btn btn-secondary" id="callSelectedContacts"> Call Selected Contacts </button>&nbsp;
                 <div class="form-outline me-1" style="width: 10rem;">
                     <input type="text" name="patient_name" id="patient_name" value="{{ patient_name }}" class="form-control" placeholder="Enter Patient Name"/>
                 </div>
@@ -267,6 +269,13 @@
         /// Handling contact deletion
         let selectedContacts = [];
 
+        // Call only selected contacts
+        $("#callSelectedContacts").on('click', function() {
+            console.log("selected contacts")
+            console.log(selectedContacts)
+            startCampaign("{{ campaign_id }}", selectedContacts)
+        });
+
         // When the user checks/unchecks the checkbox
         $(document).on('change', '.contact-checkbox', function() {
             console.log('Checkbox clicked!');
@@ -297,7 +306,7 @@
                 }
 
                 // Confirm deletion using SweetAlert2
-                        Swal.fire({
+                Swal.fire({
                             title: 'Are you sure?',
                             text: 'You won\'t be able to revert this!',
                             icon: 'warning',
@@ -337,5 +346,40 @@
                     });
 
                 });
+
+function startCampaign(campaign_id, selected_contact_list) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'Do you really want call the selected contacts ' ,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{% url 'start_campaign' %}",  // Django URL for starting the campaign
+                method: "POST",
+                data: JSON.stringify({ campaign_id: campaign_id,selected_contact_list:selected_contact_list }),
+                contentType: "application/json",
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        text: response.message
+                    });
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'Failed to start campaign: ' + error
+                    });
+                }
+            });
+        }
+    });
+}
 </script>
 {% endblock %}
