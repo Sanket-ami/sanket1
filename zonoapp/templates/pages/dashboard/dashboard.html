@@ -44,13 +44,13 @@
                 <div aria-labelledby="durationOptions">
                   <ul class="nav nav-pills" role="tablist">
                     <li class="nav-item">
-                        <button type="button" class="nav-link avg active" role="tab" onclick="updateAverageHandlingTimeChart('daily', this)"><h6>Daily</h6></button>
+                        <button type="button" class="nav-link avg active" role="tab" onclick="updateAverageHandlingTimeChart('daily', this)">Daily</button>
                     </li>
                     <li class="nav-item">
-                        <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('weekly', this)"><h6>Weekly</h6></button>
+                        <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('weekly', this)">Weekly</button>
                     </li>
                     <li class="nav-item">
-                        <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('monthly', this)"><h6>Monthly</h6></button>
+                        <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('monthly', this)">Monthly</button>
                     </li>
                   </ul>
                 <canvas id="callDurationChart" height="100"></canvas>
@@ -71,13 +71,13 @@
               <div aria-labelledby="durationOptions">
                 <ul class="nav nav-pills" role="tablist">
                   <li class="nav-item">
-                      <button type="button" class="nav-link active failed" role="tab" onclick="failedCallsCart('daily', this)"><h6>Daily</h6></button>
+                      <button type="button" class="nav-link active failed" role="tab" onclick="failedCallsCart('daily', this)">Daily</button>
                   </li>
                   <li class="nav-item">
-                      <button type="button" class="nav-link failed" role="tab" onclick="failedCallsCart('weekly', this)"><h6>Weekly</h6></button>
+                      <button type="button" class="nav-link failed" role="tab" onclick="failedCallsCart('weekly', this)">Weekly</button>
                   </li>
                   <li class="nav-item">
-                      <button type="button" class="nav-link failed" role="tab" onclick="failedCallsCart('monthly', this)"><h6>Monthly</h6></button>
+                      <button type="button" class="nav-link failed" role="tab" onclick="failedCallsCart('monthly', this)">Monthly</button>
                   </li>
                 </ul>
                   </div>
@@ -115,13 +115,13 @@
             <div class="table-responsive custom-scrollbar">
               <ul class="nav nav-pills" role="tablist">
                 <li class="nav-item">
-                    <button type="button" class="nav-link active update" role="tab" onclick="updateCallDistributionChart('daily', this)"><h6>Daily</h6></button>
+                    <button type="button" class="nav-link active update" role="tab" onclick="updateCallDistributionChart('daily', this)">Daily</button>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('weekly', this)"><h6>Weekly</h6></button>
+                    <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('weekly', this)">Weekly</button>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('monthly', this)"><h6>Monthly</h6></button>
+                    <button type="button" class="nav-link update" role="tab" onclick="updateCallDistributionChart('monthly', this)">Monthly</button>
                 </li>
               </ul>
             </div>
@@ -146,13 +146,13 @@
             <div class="table-responsive custom-scrollbar">
               <ul class="nav nav-pills" role="tablist">
                 <li class="nav-item">
-                    <button type="button" class="nav-link active overview" role="tab" onclick="CallOverviewChart('daily', this)"><h6>Daily</h6></button>
+                    <button type="button" class="nav-link active overview" role="tab" onclick="CallOverviewChart('daily', this)">Daily</button>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="nav-link update overview" role="tab" onclick="CallOverviewChart('weekly', this)"><h6>Weekly</h6></button>
+                    <button type="button" class="nav-link update overview" role="tab" onclick="CallOverviewChart('weekly', this)">Weekly</button>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="nav-link update overview" role="tab" onclick="CallOverviewChart('monthly', this)"><h6>Monthly</h6></button>
+                    <button type="button" class="nav-link update overview" role="tab" onclick="CallOverviewChart('monthly', this)">Monthly</button>
                 </li>
               </ul>
             </div>
@@ -185,29 +185,17 @@
           </div>
         </div>
     </div>
-      <div class="col-xxl-8 col-lg-6 proorder-xl-5 box-col-6">
-        <div class="card">
-          <div class="card-header pb-0">
-            <div class="header-top">
-              <h4 class="fw-bold">QA Analysis of recent calls</h4>
-             
+    <div class="col-xxl-8 col-lg-6 proorder-xl-5 box-col-6">
+        <div class="card" style="width: 100%!important;height: 95%;">
+            <div class="card-header">
+                <h4 class="fw-bold">QA Analysis of Recent Calls</h4>
             </div>
-          </div>
-          <div class="card-body">
-            <div class="user-activity">
-              <div class="card">
-                <canvas id="qaChart" height="400"></canvas>
+            <div class="card-body d-flex justify-content-center align-items-center" style="height: 300px; padding: 18px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; ">
+                <canvas id="qaChart" style="width: 80%; height: 80%;"></canvas>
             </div>
-            </div>
-          </div>
         </div>
-
-      </div>
-
     </div>
-      
-      </div>
-    </div>
+    
   </div>
   <!-- Container-fluid Ends -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -255,70 +243,69 @@
       };
   
 
-      const qaChart = new Chart(ctxqa, {
-        type: 'line',
-        data: {
-            labels: ['Call 1', 'Call 2', 'Call 3', 'Call 4', 'Call 5', 'Call 6', 'Call 7', 'Call 8', 'Call 9', 'Call 10'], // X-axis: Call Numbers
-            datasets: [
-                {
-                    label: 'Met',
-                    data: [3, 4, 2, 1, 4, 3, 2, 1, 3, 2], // Sample data for parameters met
-                    backgroundColor: x, // Fill color
-                    borderColor: x,
-                    borderWidth: 3,
-                    fill: false, // No fill, just a line with points
-                    pointStyle: 'circle',
-                    pointRadius: 5,
-                    grid: false,
-                    pointBorderColor: x,
-                    tension: 0 // Smoothens the line
-                    
-                },
-                {
-                    label: 'Not Met',
-                    data: [7, 6, 8, 9, 6, 7, 8, 9, 7, 8], // Sample data for parameters not met
-                    backgroundColor: y,
-                    borderColor: y,
-                    borderWidth: 2,
-                    pointStyle: false,
-                    fill: true, // This will fill the area under the line
-                    tension: 0// Smoothens the line
-                    
-                }
-            ]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true, // Ensures the chart starts from 0 on the y-axis
-                    title: {
-                        display: true,
-                        text: 'Number of Calls'
-                    },
-                    grid: {
-                        display: false // Removes grid lines on the x-axis
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Calls'
-                    },
-                    grid: {
-                        display: false // Removes grid lines on the x-axis
-                    }
-                }
+const qaChart = new Chart(ctxqa, {
+    type: 'bar',
+    data: {
+        labels: ['Call 1', 'Call 2', 'Call 3', 'Call 4', 'Call 5', 'Call 6', 'Call 7', 'Call 8', 'Call 9', 'Call 10'], // X-axis: Call Numbers
+        datasets: [
+            {
+                label: 'Met',
+                data: [3, 4, 2, 1, 4, 3, 2, 1, 3, 2], // Sample data for parameters met
+                backgroundColor: x, // Example fill color
+                borderColor: x,
+                borderWidth: 3,
+                fill: false,
+                pointStyle: 'circle',
+                pointRadius: 5,
+                pointBorderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0 // Smoothens the line
             },
-            plugins: {
-                legend: {
-                    position: 'top',
+            {
+                label: 'Not Met',
+                data: [7, 6, 8, 9, 6, 7, 8, 9, 7, 8], // Sample data for parameters not met
+                backgroundColor: y, // Example fill color
+                borderColor: y,
+                borderWidth: 2,
+                pointStyle: false,
+                fill: true,
+                tension: 0 // Smoothens the line
+            }
+        ]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Calls'
                 },
-                tooltip: {
-                    enabled: true,
-                }
+                grid: {
+                    display: false
+                },
+                stacked: true
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Calls'
+                },
+                grid: {
+                    display: true
+                },
+                stacked: true
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                enabled: true,
             }
         }
-    });
+    }
+});
 
       // Initial chart setup for Average Handling Time
       const ctx = document.getElementById('callDurationChart').getContext('2d');
@@ -718,7 +705,7 @@ const failedCallsCart = async (timeFrame, button) => {
     //     salesStatsChartEl.render();
     // });
     document.addEventListener("DOMContentLoaded", async function() {
-    const { met_percent, met_sum, not_met_sum } = await fetchData("daily");
+    const { met_percent, met_sum, not_met_sum } = await fetchData("monthly");
 
     //const x = '#2b5e5e'; // Define 'x' or replace with your desired color
 
@@ -728,6 +715,9 @@ const failedCallsCart = async (timeFrame, button) => {
             height: 370,
             type: 'radialBar',
             offsetY: 0,
+            events: {
+            dataPointSelection: null, // Ensures no click events are active
+        }
         },
         stroke: {
             dashArray: 25,
@@ -780,7 +770,7 @@ const failedCallsCart = async (timeFrame, button) => {
                 },
             },
         },
-        labels: ['Meet Count: ' + met_percent, 'Total QA: ' +  (Number(met_sum) + Number(not_met_sum)).toString()],
+        labels: ['Met Count: ' + met_sum, 'Total QA: ' +  (Number(met_sum) + Number(not_met_sum)).toString()],
         colors: [x, 'rgba(43, 94, 94, 0.1)'], // Set colors as needed
         legend: {
             show: true,
@@ -1063,16 +1053,20 @@ const failedCallsCart = async (timeFrame, button) => {
 // salesStatsChartEl.series = [20];
 // salesStatsChartEl.update();
 
-    const QAChart = async (timeFrame, button) => {
-          const { met, not_met, total_qa_calls} = await fetchData(timeFrame);
-          qaChart.data.datasets[0].data = met;
-          console.log(total_qa_calls)
-          qaChart.data.labels = total_qa_calls
-          qaChart.data.datasets[1].data = not_met;
-          qaChart.update();
+const updateQAChart = async (timeFrame) => {
+    try {
+        const { met, not_met, total_qa_calls } = await fetchData(timeFrame);
+        qaChart.data.labels = total_qa_calls; // Update the x-axis labels with total QA calls
+        qaChart.data.datasets[0].data = met; // Update 'Met' dataset
+        qaChart.data.datasets[1].data = not_met; // Update 'Not Met' dataset
+        qaChart.update(); // Refresh the chart
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+};
 
-      };
-      QAChart('daily', document.querySelector('.failed'))
+// Example of calling the update function
+updateQAChart('daily'); // Call with your desired timeframe
 
   function onOrganisationChange() {
         const selectElement = document.getElementById("organisationName");
