@@ -27,9 +27,15 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
-    // Set max attribute to today's date
+    // Set max attribute to today's date for both start and end dates
     const today = new Date().toISOString().split('T')[0];
     $('#start_date, #end_date').attr('max', today);
+
+    // Update the minimum end date based on selected start date
+    $('#start_date').change(function() {
+        const startDate = $(this).val();
+        $('#end_date').attr('min', startDate);  // Set min for end_date
+    });
 
     $('#submitForm').click(function() {
         const startDate = $('#start_date').val();
@@ -38,6 +44,10 @@ $(document).ready(function() {
         // Validate input
         if (!startDate || !endDate) {
             alert('Please select both start and end dates.');
+            return;
+        }
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('End date cannot be earlier than start date.');
             return;
         }
 
