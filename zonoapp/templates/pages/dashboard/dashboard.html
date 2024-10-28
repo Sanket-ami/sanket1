@@ -180,7 +180,7 @@
            
           <div class="card-body pt-0"> 
               <div id="salesStatsRadialChart"></div>
-              <div class="text-center mt-3" id="newSalesLabel"><h5 id="qachartlegend">Calls: 2.9k</h5></div>
+              <div class="text-center mt-3" id="newSalesLabel"><h5 id="qachartlegend"></h5></div>
           </div>
           </div>
         </div>
@@ -717,179 +717,349 @@ const failedCallsCart = async (timeFrame, button) => {
     //     const salesStatsChartEl = new ApexCharts(document.querySelector('#salesStatsRadialChart'), salesStatsOption);
     //     salesStatsChartEl.render();
     // });
+    document.addEventListener("DOMContentLoaded", async function() {
+    const { met_percent, met_sum, not_met_sum } = await fetchData("daily");
 
-    const SalesStatsChart = async () => {
-        const { met_percent, met_sum, not_met_sum } = await fetchData("daily");
-        x = document.getElementById("qachartlegend");
-        // x.value = 23;
-const salesStatsChartEl = new ApexCharts(document.querySelector('#salesStatsRadialChart'), {
-    series: [met_percent], // Change this to your desired value
-    chart: {
-        height: 370,
-        type: 'radialBar',
-        offsetY: 0,
-    },
-    stroke: {
-        dashArray: 25,
-        curve: 'smooth',
-        lineCap: 'round',
-    },
-    grid: {
-        padding: {
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-        },
-    },
-    plotOptions: {
-        radialBar: {
-            startAngle: -135,
-            endAngle: 135,
-            hollow: {
-                size: '75%',
-                // Adjust the image path as needed
-                image: '../assets/images/apexchart/radial-image.png', // Ensure this image path is correct
-                imageWidth: 140,
-                imageHeight: 140,
-                imageClipped: false,
-            },
-            track: {
-                show: true,
-                background: 'rgba(43, 94, 94, 0.1)',
-                strokeWidth: '97%',
-                opacity: 0.4,
-            },
-            dataLabels: {
-                show: true,
-                name: {
-                    show: true,
-                    fontSize: '16px',
-                    fontWeight: 600,
-                },
-                value: {
-                    show: true,
-                    colors: x,
-                    fontFamily: '"Nunito Sans", sans-serif',
-                    fontWeight: 600,
-                    fontSize: '20px',
-                    color: x,
-                    offsetY: 6,
-                    formatter: function (val) {
-                        return val + '%';
-                    },
-                },
-            },
-        },
-    },
-    labels: ['Met: ' + met_sum, 'Total QA: ' + not_met_sum],
-    colors: [x, 'rgba(43, 94, 94, 0.1)'], // Change colors as needed
-    legend: {
-        show: true,
-        position: 'bottom',
-        colors: x,
-        fontSize: '14px',
-        fontFamily: '"Nunito Sans", sans-serif',
-        fontWeight: 600,
-        markers: {
-            width: 18,
-            height: 18,
-            strokeWidth: 5,
-            colors: '#fff',
-            strokeColors: 'rgba(43, 95, 96, 0.03)',
-            radius: 20,
-        },
-    },
-    responsive: [
-        {
-            breakpoint: 1600,
-            options: {
-                chart: {
-                    height: 600,
-                },
-                plotOptions: {
-                    radialBar: {
-                        hollow: {
-                            size: '70%',
-                            imageWidth: 110,
-                            imageHeight: 110,
-                        },
-                    },
-                },
-            },
-        },
-        {
-            breakpoint: 676,
-            options: {
-                chart: {
-                    height: 350,
-                },
-                plotOptions: {
-                    radialBar: {
-                        hollow: {
-                            size: '68%',
-                        },
-                    },
-                },
-            },
-        },
-        {
-            breakpoint: 576,
-            options: {
-                chart: {
-                    height: 320,
-                },
-                plotOptions: {
-                    radialBar: {
-                        hollow: {
-                            size: '70%',
-                            imageWidth: 120,
-                            imageHeight: 120,
-                        },
-                    },
-                },
-            },
-        },
-        {
-            breakpoint: 531,
-            options: {
-                chart: {
-                    height: 300,
-                },
-                plotOptions: {
-                    radialBar: {
-                        hollow: {
-                            size: '70%',
-                            imageWidth: 100,
-                            imageHeight: 100,
-                        },
-                    },
-                },
-            },
-        },
-        {
-            breakpoint: 426,
-            options: {
-                chart: {
-                    height: 280,
-                },
-                plotOptions: {
-                    radialBar: {
-                        hollow: {
-                            size: '70%',
-                            imageWidth: 100,
-                            imageHeight: 100,
-                        },
-                    },
-                },
-            },
-        },
-    ],
-});
-salesStatsChartEl.render();
+    //const x = '#2b5e5e'; // Define 'x' or replace with your desired color
 
+    const salesStatsOption = {
+        series: [met_percent], // Set with the data fetched
+        chart: {
+            height: 370,
+            type: 'radialBar',
+            offsetY: 0,
+        },
+        stroke: {
+            dashArray: 25,
+            curve: 'smooth',
+            lineCap: 'round',
+        },
+        grid: {
+            padding: {
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+            },
+        },
+        plotOptions: {
+            radialBar: {
+                startAngle: -135,
+                endAngle: 135,
+                hollow: {
+                    size: '75%',
+                    image: '../assets/images/apexchart/radial-image.png',
+                    imageWidth: 140,
+                    imageHeight: 140,
+                    imageClipped: false,
+                },
+                track: {
+                    show: true,
+                    background: 'rgba(43, 94, 94, 0.1)',
+                    strokeWidth: '97%',
+                    opacity: 0.4,
+                },
+                dataLabels: {
+                    show: true,
+                    name: {
+                        show: true,
+                        fontSize: '16px',
+                        fontWeight: 600,
+                    },
+                    value: {
+                        show: true,
+                        fontFamily: '"Nunito Sans", sans-serif',
+                        fontWeight: 600,
+                        fontSize: '20px',
+                        color: x,
+                        offsetY: 6,
+                        formatter: function (val) {
+                            return val + '%';
+                        },
+                    },
+                },
+            },
+        },
+        labels: ['Meet Count: ' + met_percent, 'Total QA: ' +  (Number(met_sum) + Number(not_met_sum)).toString()],
+        colors: [x, 'rgba(43, 94, 94, 0.1)'], // Set colors as needed
+        legend: {
+            show: true,
+            position: 'top',
+            fontSize: '14px',
+            fontFamily: '"Nunito Sans", sans-serif',
+            fontWeight: 600,
+            markers: {
+                width: 18,
+                height: 18,
+                strokeWidth: 5,
+                colors: '#fff',
+                strokeColors: 'rgba(43, 95, 96, 0.03)',
+                radius: 20,
+            },
+        },
+        responsive: [
+            {
+                breakpoint: 1600,
+                options: {
+                    chart: {
+                        height: 600,
+                    },
+                    plotOptions: {
+                        radialBar: {
+                            hollow: {
+                                size: '70%',
+                                imageWidth: 110,
+                                imageHeight: 110,
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                breakpoint: 676,
+                options: {
+                    chart: {
+                        height: 350,
+                    },
+                    plotOptions: {
+                        radialBar: {
+                            hollow: {
+                                size: '68%',
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                breakpoint: 576,
+                options: {
+                    chart: {
+                        height: 320,
+                    },
+                    plotOptions: {
+                        radialBar: {
+                            hollow: {
+                                size: '70%',
+                                imageWidth: 120,
+                                imageHeight: 120,
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                breakpoint: 531,
+                options: {
+                    chart: {
+                        height: 300,
+                    },
+                    plotOptions: {
+                        radialBar: {
+                            hollow: {
+                                size: '70%',
+                                imageWidth: 100,
+                                imageHeight: 100,
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                breakpoint: 426,
+                options: {
+                    chart: {
+                        height: 280,
+                    },
+                    plotOptions: {
+                        radialBar: {
+                            hollow: {
+                                size: '70%',
+                                imageWidth: 100,
+                                imageHeight: 100,
+                            },
+                        },
+                    },
+                },
+            },
+        ],
     };
-    SalesStatsChart();
+
+    const salesStatsChartEl = new ApexCharts(document.querySelector('#salesStatsRadialChart'), salesStatsOption);
+    salesStatsChartEl.render();
+});
+
+//     const SalesStatsChart = async () => {
+//         const { met_percent, met_sum, not_met_sum } = await fetchData("daily");
+//         x = document.getElementById("qachartlegend");
+//         // x.value = 23;
+// const salesStatsChartEl = new ApexCharts(document.querySelector('#salesStatsRadialChart'), {
+//     series: [met_percent], // Change this to your desired value
+//     chart: {
+//         height: 370,
+//         type: 'radialBar',
+//         offsetY: 0,
+//     },
+//     stroke: {
+//         dashArray: 25,
+//         curve: 'smooth',
+//         lineCap: 'round',
+//     },
+//     grid: {
+//         padding: {
+//             top: 0,
+//             left: 0,
+//             right: 0,
+//             bottom: 0,
+//         },
+//     },
+//     plotOptions: {
+//         radialBar: {
+//             startAngle: -135,
+//             endAngle: 135,
+//             hollow: {
+//                 size: '75%',
+//                 // Adjust the image path as needed
+//                 image: '../assets/images/apexchart/radial-image.png', // Ensure this image path is correct
+//                 imageWidth: 140,
+//                 imageHeight: 140,
+//                 imageClipped: false,
+//             },
+//             track: {
+//                 show: true,
+//                 background: 'rgba(43, 94, 94, 0.1)',
+//                 strokeWidth: '97%',
+//                 opacity: 0.4,
+//             },
+//             dataLabels: {
+//                 show: true,
+//                 name: {
+//                     show: true,
+//                     fontSize: '16px',
+//                     fontWeight: 600,
+//                 },
+//                 value: {
+//                     show: true,
+//                     colors: x,
+//                     fontFamily: '"Nunito Sans", sans-serif',
+//                     fontWeight: 600,
+//                     fontSize: '20px',
+//                     color: x,
+//                     offsetY: 6,
+//                     formatter: function (val) {
+//                         return val + '%';
+//                     },
+//                 },
+//             },
+//         },
+//     },
+//     labels: ['Met: ' + met_sum, 'Total QA: ' + not_met_sum],
+//     colors: [x, 'rgba(43, 94, 94, 0.1)'], // Change colors as needed
+//     legend: {
+//         show: true,
+//         position: 'bottom',
+//         colors: x,
+//         fontSize: '14px',
+//         fontFamily: '"Nunito Sans", sans-serif',
+//         fontWeight: 600,
+//         markers: {
+//             width: 18,
+//             height: 18,
+//             strokeWidth: 5,
+//             colors: '#fff',
+//             strokeColors: 'rgba(43, 95, 96, 0.03)',
+//             radius: 20,
+//         },
+//     },
+//     responsive: [
+//         {
+//             breakpoint: 1600,
+//             options: {
+//                 chart: {
+//                     height: 600,
+//                 },
+//                 plotOptions: {
+//                     radialBar: {
+//                         hollow: {
+//                             size: '70%',
+//                             imageWidth: 110,
+//                             imageHeight: 110,
+//                         },
+//                     },
+//                 },
+//             },
+//         },
+//         {
+//             breakpoint: 676,
+//             options: {
+//                 chart: {
+//                     height: 350,
+//                 },
+//                 plotOptions: {
+//                     radialBar: {
+//                         hollow: {
+//                             size: '68%',
+//                         },
+//                     },
+//                 },
+//             },
+//         },
+//         {
+//             breakpoint: 576,
+//             options: {
+//                 chart: {
+//                     height: 320,
+//                 },
+//                 plotOptions: {
+//                     radialBar: {
+//                         hollow: {
+//                             size: '70%',
+//                             imageWidth: 120,
+//                             imageHeight: 120,
+//                         },
+//                     },
+//                 },
+//             },
+//         },
+//         {
+//             breakpoint: 531,
+//             options: {
+//                 chart: {
+//                     height: 300,
+//                 },
+//                 plotOptions: {
+//                     radialBar: {
+//                         hollow: {
+//                             size: '70%',
+//                             imageWidth: 100,
+//                             imageHeight: 100,
+//                         },
+//                     },
+//                 },
+//             },
+//         },
+//         {
+//             breakpoint: 426,
+//             options: {
+//                 chart: {
+//                     height: 280,
+//                 },
+//                 plotOptions: {
+//                     radialBar: {
+//                         hollow: {
+//                             size: '70%',
+//                             imageWidth: 100,
+//                             imageHeight: 100,
+//                         },
+//                     },
+//                 },
+//             },
+//         },
+//     ],
+// });
+// salesStatsChartEl.render();
+
+//     };
+//     SalesStatsChart();
 // salesStatsChartEl.series = [20];
 // salesStatsChartEl.update();
 
