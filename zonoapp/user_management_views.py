@@ -27,7 +27,7 @@ def list_of_user(request, user_id:int=None):
                 return render(request,'pages/user_management/add_user.html', {'users': user_list, 'roles': role_list, 'organisation_list': organisation_list,"breadcrumb":{"title":"User Management","parent":"Pages", "child":"User Management"}})
             
             if request.user.role.role == 'Admin':
-                user_list = User.objects.all().filter(organisation_name=request.user.organisation_name,is_deleted=False)
+                user_list = User.objects.all().filter(organisation_name=request.user.organisation_name,is_deleted=False,is_superuser=False)
                 role_list = Role.objects.values('role','id').distinct('role')
                 organisation_list = User.objects.values('organisation_name').filter(organisation_name=request.user.organisation_name).distinct()
                 paginator = Paginator(user_list, 10)  # Show 10 campaigns per page
