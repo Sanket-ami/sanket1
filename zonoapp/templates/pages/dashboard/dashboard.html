@@ -718,7 +718,7 @@ const failedCallsCart = async (timeFrame, button) => {
     //     salesStatsChartEl.render();
     // });
     document.addEventListener("DOMContentLoaded", async function() {
-    const { met_percent, met_sum, not_met_sum } = await fetchData("daily");
+    const { met_percent, met_sum, not_met_sum } = await fetchData("monthly");
 
     //const x = '#2b5e5e'; // Define 'x' or replace with your desired color
 
@@ -728,6 +728,9 @@ const failedCallsCart = async (timeFrame, button) => {
             height: 370,
             type: 'radialBar',
             offsetY: 0,
+            events: {
+            dataPointSelection: null, // Ensures no click events are active
+        }
         },
         stroke: {
             dashArray: 25,
@@ -780,7 +783,7 @@ const failedCallsCart = async (timeFrame, button) => {
                 },
             },
         },
-        labels: ['Meet Count: ' + met_percent, 'Total QA: ' +  (Number(met_sum) + Number(not_met_sum)).toString()],
+        labels: ['Met Count: ' + met_sum, 'Total QA: ' +  (Number(met_sum) + Number(not_met_sum)).toString()],
         colors: [x, 'rgba(43, 94, 94, 0.1)'], // Set colors as needed
         legend: {
             show: true,
