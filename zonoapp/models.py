@@ -40,5 +40,9 @@ class Credits(models.Model):
     is_deleted = models.BooleanField(default=True)
     class meta:
         db_table = "credits"
-    def __str__(self):
-        return self.user.username
+
+class CreditRate(models.Model):
+    organisation_name=models.CharField(max_length=255, unique=True)
+    rate=models.IntegerField(default=10)
+    class meta:
+        db_table='credit_rate'
