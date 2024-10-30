@@ -141,17 +141,36 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
+# STATICFILES_FINDERS = [
+#     'django.contrib.staticfiles.finders.FileSystemFinder',
+#     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+#     'sass_processor.finders.CssFinder',
+# ]
+
+# STATIC_URL = '/zono/zonoapp/static/'
+
+# STATIC_ROOT = BASE_DIR / 'zonoapp/static'
+
+# SASS_PROCESSOR_ROOT = BASE_DIR / 'static'
+
+
+# Static files configuration
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'zonoapp' / 'static',
+]
+
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'sass_processor.finders.CssFinder',
 ]
 
-STATIC_URL = '/zono/zonoapp/static/'
-
-STATIC_ROOT = BASE_DIR / 'zonoapp/static'
-
-SASS_PROCESSOR_ROOT = BASE_DIR / 'static'
+# Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'mediafiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
