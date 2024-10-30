@@ -1371,20 +1371,45 @@ def support_ticket(request):
 
 
 #---------------------------------------------------------------------------------------
-
 def signup_home(request):
     if request.method == "POST":
         email = request.POST['email']
         username = request.POST['username']
         password = request.POST['password']
+        organisation_name = request.POST['organisation_name']# Adding organisation name
         user = User.objects.filter(email=email).exists()
-        if user:
+        user_name = User.objects.filter(username=username).exists()
+        print(user_name)
+        if user_name :
+            messages.error(request,"username already exists") 
+        elif user:
             messages.error(request,"Email already exists")
         else:
-            new_user = User.objects.create_user(username=username,email=email,password=password)
+            new_user = User.objects.create_user(username=username,email=email,password=password,organisation_name=organisation_name,
+                                                role_id=1)
             new_user.save()
+            messages.success(request,"Account created successfully")
+
             return redirect('login_home')
+    else :
+        if request.user.is_authenticated:
+            return redirect('dashboard')    
+
     return render(request,'sign-up.html')
+
+# def signup_home(request):
+#     if request.method == "POST":
+#         email = request.POST['email']
+#         username = request.POST['username']
+#         password = request.POST['password']
+#         user = User.objects.filter(email=email).exists()
+#         if user:
+#             messages.error(request,"Email already exists")
+#         else:
+#             new_user = User.objects.create_user(username=username,email=email,password=password)
+#             new_user.save()
+#             return redirect('login_home')
+#     return render(request,'sign-up.html')
 
 
 def login_home(request):

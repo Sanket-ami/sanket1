@@ -4,9 +4,148 @@
 {% load widget_tweaks %}
 {% block content %}
 
+<div class="container-fluid p-0"> 
+  <div class="row m-0">
+    <div class="col-12 p-0">
+      <div class="login-card login-dark">
+        <div>
+          <div><a class="logo" href="/signup_home"><img class="img-fluid for-light" src="{% static 'assets/images/logo/logo.png' %}" alt="looginpage"><img class="img-fluid for-dark m-auto" src="{% static 'assets/images/logo/logo_dark.png' %}" alt="looginpage"></a></div>
+          {% include "includes/alert.html" %}
+          <div class="login-main">
+            <form class="theme-form" method="post" action="{% url 'signup_home' %}" onsubmit="return validateForm()">
+              {% csrf_token %}
+              <h4>Create your account</h4>
+              <p>Enter your personal details to create account</p>
+              <div class="form-group">
+                <label class="col-form-label">User Name</label>
+                <input class="form-control" id="id_username" type="text" name="username" required="username" placeholder="username">
+                <div id="username-error" style="color: red; display: none;">Username cannot be empty or consist only of spaces.</div>
+              </div>
+              <div class="form-group">
+                <label class="col-form-label">Email Address</label>
+                <input class="form-control" id="id_email" type="email" name="email" required placeholder="Test@gmail.com" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+                <div id="email-error" style="color: red; display: none;">email cannot be empty or consist only of spaces.</div>
+              </div>
+              <div class="form-group">
+                <label class="col-form-label">Organisation Name</label>
+                <input class="form-control" id = "id_organisation" type="text" name="organisation_name" required placeholder="Organisation Name">
+                <div id="organisation-error" style="color: red; display: none;">Organisation cannot be empty or consist only of spaces.</div>
+              </div>                
+              <div class="form-group">
+                <label class="col-form-label">Password</label>
+                <div class="form-input position-relative">
+                  <input class="form-control" id="id_password" type="password" name="password" required  placeholder="*********" minlength="8" oninput="validatePassword(this.value)">
+                  <!-- <div class="show-hide"><span class="toggle-password">Show</span></div> -->
+                  <div class="show-hide">
+                    <span class="toggle-password" style="cursor: pointer;"></span>
+                  </div>
+                  
+                </div>
+                <div id="password-error" style="color: red; display: none;">Password must be at least 8 characters long, contain one uppercase letter, one special character, and one number.</div>
+              </div>
+              <div class="form-group mb-0">
+                <div class="checkbox p-0">
+                  <input id="checkbox1" type="checkbox" required>
+                  <label class="text-muted" for="checkbox1">Agree with<a class="ms-2" href="#" required>Privacy Policy</a></label>
+                </div>
+                <button class="btn btn-primary btn-block w-100" type="submit">Create Account</button>
+              </div>
+              
+              <!-- <p class="mt-4 mb-0">Already have an account?<a class="ms-2" href="/login_home">Sign in</a></p> -->
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    
+{% endblock %}      
 
+{% block scriptcontent %}
+<script>
+document.getElementById('id_username').value = ''
+document.getElementById('id_password').value = ''
+document.addEventListener("DOMContentLoaded", function() {
+      const togglePassword = document.querySelector('.toggle-password');
+      const passwordInput = document.querySelector('input[name="password"]');
+
+      togglePassword.addEventListener('click', function() {
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+          this.textContent = type === 'password' ? '' : '';
+      });
+  });
+
+function validatePassword(password) {
+  const errorElement = document.getElementById('password-error');
+  const passwordPattern = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+  
+  if (passwordPattern.test(password)) {
+      errorElement.style.display = 'none';
+  } else {
+      errorElement.style.display = 'block';
+  }
+}
+function validatedPassword(password) {
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const isValidLength = password.length >= 8;
+
+  return hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar && isValidLength;
+}
+
+function validateForm() {
+  const username = document.getElementById('id_username').value.trim();
+  const organisation = document.getElementById('id_organisation').value.trim();
+  const email = document.getElementById('id_email').value.trim();
+  const password = document.getElementById('id_password').value;
+
+  // Username validation
+  const usernameError = document.getElementById('username-error');
+  if (username === "") {
+    usernameError.style.display = "block";
+    return false;
+  } else {
+    usernameError.style.display = "none";
+  }
+
+  // email validation
+  const emailError = document.getElementById('email-error');
+  if (email === ""){
+    emailError.style.display = "block";
+    return false;
+  }else{
+    emailError.style.display = "none";
+  }
+
+  // organisation validation
+
+  const organisationError = document.getElementById('organisation-error');
+  if (organisation === ""){
+    organisationError.style.display = "block";
+    return false;
+  }else{
+    organisationError.style.display = "none";
+  }
+
+  // Password validation
+  const passwordError = document.getElementById('password-error');
+  if (!validatedPassword(password)) {
+    passwordError.style.display = "block";
+    return false;
+  } else {
+    passwordError.style.display = "none";
+  }
+
+  return true; // Form is valid
+}
+
+
+</script>
   <!-- login page start-->
-  <div class="container-fluid p-0"> 
+  <!-- <div class="container-fluid p-0"> 
     <div class="row m-0">
       <div class="col-12 p-0">
         <div class="login-card login-dark">
@@ -48,5 +187,5 @@
         </div>
       </div>
     </div>
-      
+       -->
 {% endblock %}      
