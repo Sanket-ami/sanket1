@@ -40,14 +40,16 @@
 
 
     <!-- Bootstrap Table for Call Logs -->
-    <table class="table table-inverse table-striped dataTable" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
+    <div class="table-responsive table-striped">
+    <table class="table" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
 
-        <thead>
+        <thead class="table-dark">
             <tr>
-                <th>Call ID</th>
-                <th>Created At</th>
-                <th>Call Status</th>
-                <th>Action</th>
+                <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Call ID</span></th>
+                <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Created At</span></th>
+                <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Call Status</span></th>
+                <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Action</span></th>
+
             </tr>
         </thead>
         <tbody>
@@ -69,11 +71,12 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="4">No logs available</td>
+                    <td colspan="4"><h6>No logs available</h6></td>
                 </tr>
             {% endif %}
         </tbody>
     </table>
+    </div>
     
     <!-- Modal Structure -->
     <div class="modal fade" id="transcriptModal" tabindex="-1" aria-labelledby="transcriptModalLabel" aria-hidden="true">
