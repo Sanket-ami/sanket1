@@ -29,7 +29,7 @@ def home(request):
             cancel_url=request.build_absolute_uri(reverse("cancel")),
         )
         request.session['amount_paid'] = user_price / 100  
-        request.session['payment_response'] = price.id
+        request.session['payment_response'] = price.idPse
 
         return redirect(checkout_session.url, code=303)
 
@@ -40,13 +40,13 @@ def success(request):
     request.session.pop('amount_paid', None)    
     try:
         credits_remaining = Credits.objects.get(organisation_name=request.user.organisation_name)
-    except Exception as e:
+    except Credits.DoesNotExist:
         credits_remaining = Credits.objects.create(
                 organisation_name=request.user.organisation_name,
         )
     try:
         rate=CreditRate.objects.get(organisation_name=request.user.organisation_name)
-    except Exception as e:
+    except CreditRate.DoesNotExist:
         rate=CreditRate.objects.create(
             organisation_name=request.user.organisation_name
         )
