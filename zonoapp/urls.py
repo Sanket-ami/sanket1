@@ -5,7 +5,7 @@ from .views import all_notifications_view, contact_sale, count_notification, fet
 from django.conf import settings
 from django.conf.urls.static import static
 from dashboard.views import  calls_per_hour
-
+from .stripe_views import *
 
 
 
@@ -24,7 +24,9 @@ urlpatterns = [
     path('dashboard_02', views.dashboard_02, name="dashboard_02"),
     path('get_credits',views.get_credits,name="get_credits"),
     
-    
+    path("add_payment/", home, name="add_payment"),
+    path("success/", success, name="success"),
+    path("cancel/", cancel, name="cancel"),
     # #-----------------------Widgets
     path('general_widget', views.general_widget, name="general_widget"),
     path('chart_widget', views.chart_widget, name="chart_widget"),
