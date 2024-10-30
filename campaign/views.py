@@ -192,10 +192,10 @@ def campaign_list(request):
         search_query = request.GET.get('q', '')  # Get the search query from the URL
         if request.user.is_superuser:
             user_organization = request.user.organisation_name  # Adjust this based on your user model
-            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query).order_by('-id')  # Filter campaigns based on the search query
+            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query,is_delete = False).order_by('-id')  # Filter campaigns based on the search query
         else:
             user_organization = request.user.organisation_name  # Adjust this based on your user model
-            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query,organisation_name=user_organization).order_by('-id')  # Filter campaigns based on the search query
+            campaigns = Campaign.objects.filter(campaign_name__icontains=search_query,organisation_name=user_organization,is_delete = False).order_by('-id')  # Filter campaigns based on the search query
              
         paginator = Paginator(campaigns, 10)  # Show 10 campaigns per page
         page_number = request.GET.get('page')
@@ -244,17 +244,27 @@ def contact_list(request, campaign_id):
             #     contact_list = contact_list.filter(patient_name = search)
             if search is None :
                 search = ""
-            if selected_list:
+
+            # check if selected_contact_list is actual id
+            try:
+                selected_list=int(selected_list)
+
+            except:
+                selected_list=None
+
+            if selected_list: # on default list none is given as 'None' in str
                 contact_list = contact_list.filter(id = selected_list)
                 contact_list_id = contact_list[0].id
                 is_active = contact_list[0].is_active
                 contact_list = list(contact_list[0].contact_list)
+                print(contact_list_id)
             else:
                 if contact_list and all_contact_list_names: # filter only is main contact list is not empty
                     contact_list = contact_list.filter(id = all_contact_list_names[0][1] ) # id of the contact_list
                     contact_list_id = contact_list[0].id
                     is_active = contact_list[0].is_active
                     contact_list = list(contact_list[0].contact_list)
+                    print(contact_list_id)
             if search :
                 contact_list = [patient for patient in contact_list if  patient['patient_name'].lower().startswith(search.lower()) ]
 
@@ -264,7 +274,7 @@ def contact_list(request, campaign_id):
             page = request.GET.get('page')
             contact_list = paginator.get_page(page)
             context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Contact List"},"contact_list": contact_list,"campaign_id":campaign_id,
-                        "all_contact_list_names":all_contact_list_names, "selected_contact_list":selected_list,"contact_list_id":contact_list_id,
+                        "all_contact_list_names":all_contact_list_names, "selected_contact_list":str(selected_list),"contact_list_id":contact_list_id,
                         "is_active":is_active , "patient_name":search,"page":page
                     }
             
@@ -369,7 +379,7 @@ def start_campaign(request):
                 contact_list = [contact for contact in contact_list if contact['contact_id'] in selected_contact_ids]
 
             voice_config = campaign_obj.agent.voice.voice_configuration
-            qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
+            qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters if campaign_obj.qa_parameters else None, campaign_obj.summarization_prompt
 
             # start a thread 
             wait_time_after_call,wait_time_after_5_calls = 1,1
@@ -728,6 +738,7 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
             transcript_obj.call_logs = call_status_id
             transcript_obj.summary = summary
             transcript_obj.transcript = transcript
+            transcript_obj.organisation_name = organisation_name
             
             ############### Perform the call QA if the qa_params is given else skip ########
             try:
