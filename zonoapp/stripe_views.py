@@ -38,8 +38,18 @@ def home(request):
 def success(request):
     amount_paid = request.session.get('amount_paid')
     request.session.pop('amount_paid', None)    
-    credits_remaining = Credits.objects.get(organisation_name=request.user.organisation_name)
-    rate=CreditRate.objects.get(organisation_name=request.user.organisation_name)
+    try:
+        credits_remaining = Credits.objects.get(organisation_name=request.user.organisation_name)
+    except Exception as e:
+        credits_remaining = Credits.objects.create(
+                organisation_name=request.user.organisation_name,
+        )
+    try:
+        rate=CreditRate.objects.get(organisation_name=request.user.organisation_name)
+    except Exception as e:
+        rate=CreditRate.objects.create(
+            organisation_name=request.user.organisation_name
+        )
     PaymentStatus.objects.create(
         organisation_name=request.user.organisation_name,
         user_id=request.user.id,
