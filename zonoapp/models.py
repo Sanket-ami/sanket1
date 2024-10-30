@@ -13,7 +13,6 @@ class User(AbstractUser):
 class Role(models.Model):
     role = models.CharField(max_length=255, blank=False)
     is_deleted = models.BooleanField(default=True)
-    
     class meta:
         db_table = "role"
     def __str__(self):
@@ -46,3 +45,10 @@ class CreditRate(models.Model):
     rate=models.IntegerField(default=10)
     class meta:
         db_table='credit_rate'
+
+class PaymentStatus(models.Model):
+    organisation_name=models.CharField(max_length=255)
+    user_id=models.IntegerField()
+    status=models.CharField(max_length=255)
+    amount=models.IntegerField()
+    payment_response=models.CharField(max_length=255)

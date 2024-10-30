@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect  # new
 from django.conf import settings  # new
 from django.urls import reverse  # new
-from .models import Credits, CreditRate
+from .models import Credits, CreditRate, PaymentStatus
 import stripe  # new
 
 
@@ -29,6 +29,7 @@ def home(request):
             cancel_url=request.build_absolute_uri(reverse("cancel")),
         )
         request.session['amount_paid'] = user_price / 100  
+        request.session['payment_response'] = price.id
 
         return redirect(checkout_session.url, code=303)
 
@@ -39,12 +40,17 @@ def success(request):
     request.session.pop('amount_paid', None)    
     credits_remaining = Credits.objects.get(organisation_name=request.user.organisation_name)
     rate=CreditRate.objects.get(organisation_name=request.user.organisation_name)
-    print('int(amount_paid*100/rate.rate)', amount_paid, rate.rate, credits_remaining.credits)
+    PaymentStatus.objects.create(
+        organisation_name=request.user.organisation_name,
+        user_id=request.user.id,
+        status="success",
+        amount=amount_paid,
+        payment_response=request.session.get('payment_response')
+    )
     credits_remaining.credits += int((amount_paid*100)/rate.rate)
     credits_remaining.save()
-    print(int(amount_paid*100/rate.rate))
-    return render(request, "pages/payment//success.html", {"amount_paid": amount_paid})
+    return render(request, "pages/payment/success.html", {"amount_paid": amount_paid})
 
 
 def cancel(request):
-    return render(request, "pages/payment//cancel.html")
+    return render(request, "pages/payment/cancel.html")
