@@ -56,9 +56,9 @@
             {% if call_logs_data %}
                 {% for log in call_logs_data %}
                 <tr id="trigger-btn"  >
-                    <td>{{ log.call_id }}</td>
-                    <td>{{ log.created_at }}</td>
-                    <td>{{ log.call_status }}</td>
+                    <td><h6>{{ log.call_id }}</h6></td>
+                    <td><h6>{{ log.created_at }}</h6></td>
+                    <td><h6>{{ log.call_status }}</h6></td>
                     <td>
                         <button class="btn btn-primary " title="Live Transcript" onclick="viewTranscriptLive('{{ log.call_id }}')">
                             <i class="fa fa-file-audio-o"></i> Live
