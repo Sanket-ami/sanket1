@@ -31,6 +31,7 @@ from qa_parameters.models import QAParameters
 from zono.settings import CALL_SERVER_BASE_URL
 import boto3
 import pandas as pd 
+from collections import defaultdict
 
 ## render create campaign page
 @login_required(login_url="/login_home")
@@ -375,13 +376,14 @@ def start_campaign(request):
             wait_time_after_call,wait_time_after_5_calls = 1,1
             organisation_name = campaign_obj.organisation_name
             print("organisation name",organisation_name)
+            process_type = campaign_obj.process_type
             try:
                 credits_remaining = 0
                 credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits    
                 pass
                 if credits_remaining <= 0:
                     return JsonResponse({'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}, status=200)
-                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider))
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider,process_type))
                 thread.start()
             except Exception as err:
                 print("error in campaign start: ", err)
@@ -427,7 +429,7 @@ def start_campaign_secheduler(request):
                 pass
                 if credits_remaining <= 0:
                     return JsonResponse({'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}, status=200)
-                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider))
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider,process_type))
                 thread.start()
             except Exception as err:
                 print("error in campaign start: ", err)
@@ -443,7 +445,7 @@ def start_campaign_secheduler(request):
 
 
 # call queue thread
-def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, organisation_name, provider):
+def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, organisation_name, provider,process_type=""):
     # if the campaign is scheduled mark is_schedule as false as the campaign is already started
     campaign_obj = Campaign.objects.get(id=campaign_id)
     organisation_name = campaign_obj.organisation_name
@@ -465,90 +467,218 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
         print("error updating scheduled: ",error) 
     # print(contact_list  )
     counter = 0
-    for call_details in contact_list:
-        try:
-            raw_text = prompt
-            # format the prompt as the requirement
-            print(raw_text)    
-            formatted_prompt = prompt.format(**call_details)
+    if  "RCM" in process_type:
+        patient_wise_contact_list = [] # contains multiple claim of patient with same payer and same contact_number
+        rcm_contact_list = []    
+        # Initialize the aggregated contact list
+        rcm_contact_list = []
 
-            to_phone = call_details["contact_number"] # phone_number
+        # Dictionary to accumulate data for each patient
+        patient_records = defaultdict(lambda: defaultdict(list))
 
-            # call log creation
-            call_log = call_details
-            call_log["call_status"] = "not_started"
-            call_log['campaign_id'] = int(campaign_id)
+        for call_details in contact_list:
+            # Check if required keys are present
+            required_keys = ['patient_name', 'contact_number', 'payer_name']
+            if not all(key in call_details for key in required_keys):
+                raise Exception("patient_name, contact_number, and payer_name are required for RCM call.")
             
-            try:
-                context={"prompt" : formatted_prompt}
-                           # Before starting the call check credits of the organization
-                credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits
-                if credits_remaining <= 0:
-                    print("You do not have enough credits to start this campaign. Please add credits to your account.")
-                    return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
-                # hit a post request on api
-                url = f"{settings.CALL_SERVER_BASE_URL}/start_call"
-                print('provider', type(provider))
-                payload = json.dumps({
-                    "to_phone": to_phone,
-                    "context":context,
-                    "voice_configuration":voice_config,
-                    "telephony_name":provider.provider_name
-                })
-                headers = {
-                'Content-Type': 'application/json'
+            # Unique identifier for each patient + payer facility combination
+            patient_key = (call_details['patient_name'], call_details['contact_number'], call_details['payer_name'])
+
+            # Initialize the patient record if it doesn't exist
+            if patient_key not in patient_records:
+                patient_records[patient_key] = {
+                    "patient_name": call_details['patient_name'],
+                    "contact_number": call_details['contact_number'],
+                    "payer_name": call_details['payer_name'],
+                    "bill_amount": [],
+                    "bill_number": [],
+                    "dos": [],
+                    "claim_number": []
                 }
+            
+            # Append specified fields to arrays
+            for key in ['bill_amount', 'bill_number', 'dos', 'claim_number']:
+                # Append values from call_details if they exist and are lists, otherwise add as is
+                if isinstance(call_details.get(key), list):
+                    patient_records[patient_key][key].extend(call_details[key])
+                else:
+                    patient_records[patient_key][key].append(call_details.get(key))
 
-                response = requests.request("POST", url, headers=headers, data=payload)
+            # Add other fields as single string values
+            for key, value in call_details.items():
+                if key not in required_keys and key not in ['bill_amount', 'bill_number', 'dos', 'claim_number']:
+                    # Store the first value if it’s a list, or store the value directly
+                    patient_records[patient_key][key] = value[0] if isinstance(value, list) else value
 
-                # print(response.text)
-                response = response.json()
-                print("call_create api=> ", response)
-                call_status_id = response["call_id"]
-                call_log["call_id"] = call_status_id
-                call_status = 'ongoing'
+        # Convert the dictionary to the final list format
+        rcm_contact_list = list(patient_records.values())
+        print(rcm_contact_list)
+        for call_details in rcm_contact_list:
+            try:
+                raw_text = prompt
+                # format the prompt as the requirement
+                print(raw_text)    
+                formatted_prompt = prompt.format(**call_details)
 
-                if 'error' in response and response['error']: 
-                    call_status = 'not_started'
-                    
-                call_status= "ongoing"
+                to_phone = call_details["contact_number"] # phone_number
+
+                # call log creation
+                call_log = call_details
+                call_log["call_status"] = "not_started"
+                call_log['campaign_id'] = int(campaign_id)
                 
+                try:
+                    context={"prompt" : formatted_prompt}
+                            # Before starting the call check credits of the organization
+                    credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits
+                    if credits_remaining <= 0:
+                        print("You do not have enough credits to start this campaign. Please add credits to your account.")
+                        return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
+                    # hit a post request on api
+                    url = f"{settings.CALL_SERVER_BASE_URL}/start_call"
+                    print('provider', type(provider))
+                    payload = json.dumps({
+                        "to_phone": to_phone,
+                        "context":context,
+                        "voice_configuration":voice_config,
+                        "telephony_name":provider.provider_name
+                    })
+                    headers = {
+                    'Content-Type': 'application/json'
+                    }
 
-            except Exception as error:
-                print("error in call create patient id --> ", to_phone,'\n',error)
-                call_status = 'not_started'
+                    response = requests.request("POST", url, headers=headers, data=payload)
 
-            call_log["call_status"] = call_status
-            call_log["start_time"] = datetime.now()
-            call_log["end_time"] = None
-            call_log['organisation_name']=organisation_name
+                    # print(response.text)
+                    response = response.json()
+                    print("call_create api=> ", response)
+                    call_status_id = response["call_id"]
+                    call_log["call_id"] = call_status_id
+                    call_status = 'ongoing'
 
-            # Create an instance of CallLogs with the dynamic fields
-            call_log_entry = CallLogs(**call_log)
+                    if 'error' in response and response['error']: 
+                        call_status = 'not_started'
+                        
+                    call_status= "ongoing"
+                    
 
-            # Save the call log to the database
-            call_log_entry.save()
-            mongo_id = call_log_entry.id
+                except Exception as error:
+                    print("error in call create patient id --> ", to_phone,'\n',error)
+                    call_status = 'not_started'
 
-            # monitoring the call status
-            monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"], organisation_name, provider))
-            monitor_thread.start()
-            # Increment the counter and add delay after each call
-            counter += 1
-            time.sleep(wait_time_after_call * 60)
+                call_log["call_status"] = call_status
+                call_log["start_time"] = datetime.now()
+                call_log["end_time"] = None
+                call_log['organisation_name']=organisation_name
 
-            # Add additional delay after every 5 calls
-            if counter % 5 == 0:
-                print(f"Waiting for {wait_time_after_5_calls} minutes after 5 calls.")
-                time.sleep(wait_time_after_5_calls * 60)
+                # Create an instance of CallLogs with the dynamic fields
+                call_log_entry = CallLogs(**call_log)
 
-        except Exception as err:
-            print(f"error while calling: {call_details['contact_number']} error- {err}")
+                # Save the call log to the database
+                call_log_entry.save()
+                mongo_id = call_log_entry.id
 
-    # once all the calls are over update the campaign object to completed
-        campaign_obj.status="completed"
-        campaign_obj.save()
-    # once all the calls are over update the schedule campaign object to completed
+                # monitoring the call status
+                monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"], organisation_name, provider))
+                monitor_thread.start()
+                # Increment the counter and add delay after each call
+                counter += 1
+                time.sleep(wait_time_after_call * 60)
+
+                # Add additional delay after every 5 calls
+                if counter % 5 == 0:
+                    print(f"Waiting for {wait_time_after_5_calls} minutes after 5 calls.")
+                    time.sleep(wait_time_after_5_calls * 60)
+
+            except Exception as err:
+                print(f"error while calling: {call_details['contact_number']} error- {err}")
+
+    else:  
+        for call_details in contact_list:
+            try:
+                raw_text = prompt
+                # format the prompt as the requirement
+                print(raw_text)    
+                formatted_prompt = prompt.format(**call_details)
+
+                to_phone = call_details["contact_number"] # phone_number
+
+                # call log creation
+                call_log = call_details
+                call_log["call_status"] = "not_started"
+                call_log['campaign_id'] = int(campaign_id)
+                
+                try:
+                    context={"prompt" : formatted_prompt}
+                            # Before starting the call check credits of the organization
+                    credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits
+                    if credits_remaining <= 0:
+                        print("You do not have enough credits to start this campaign. Please add credits to your account.")
+                        return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
+                    # hit a post request on api
+                    url = f"{settings.CALL_SERVER_BASE_URL}/start_call"
+                    print('provider', type(provider))
+                    payload = json.dumps({
+                        "to_phone": to_phone,
+                        "context":context,
+                        "voice_configuration":voice_config,
+                        "telephony_name":provider.provider_name
+                    })
+                    headers = {
+                    'Content-Type': 'application/json'
+                    }
+
+                    response = requests.request("POST", url, headers=headers, data=payload)
+
+                    # print(response.text)
+                    response = response.json()
+                    print("call_create api=> ", response)
+                    call_status_id = response["call_id"]
+                    call_log["call_id"] = call_status_id
+                    call_status = 'ongoing'
+
+                    if 'error' in response and response['error']: 
+                        call_status = 'not_started'
+                        
+                    call_status= "ongoing"
+                    
+
+                except Exception as error:
+                    print("error in call create patient id --> ", to_phone,'\n',error)
+                    call_status = 'not_started'
+
+                call_log["call_status"] = call_status
+                call_log["start_time"] = datetime.now()
+                call_log["end_time"] = None
+                call_log['organisation_name']=organisation_name
+
+                # Create an instance of CallLogs with the dynamic fields
+                call_log_entry = CallLogs(**call_log)
+
+                # Save the call log to the database
+                call_log_entry.save()
+                mongo_id = call_log_entry.id
+
+                # monitoring the call status
+                monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"], organisation_name, provider))
+                monitor_thread.start()
+                # Increment the counter and add delay after each call
+                counter += 1
+                time.sleep(wait_time_after_call * 60)
+
+                # Add additional delay after every 5 calls
+                if counter % 5 == 0:
+                    print(f"Waiting for {wait_time_after_5_calls} minutes after 5 calls.")
+                    time.sleep(wait_time_after_5_calls * 60)
+
+            except Exception as err:
+                print(f"error while calling: {call_details['contact_number']} error- {err}")
+
+        # once all the calls are over update the campaign object to completed
+            campaign_obj.status="completed"
+            campaign_obj.save()
+        # once all the calls are over update the schedule campaign object to completed
     try:
         # update the scheduled table
         schedule_obj = ScheduleCampaign.objects.filter(campaign_id=campaign_id, is_ongoing=False).first()
