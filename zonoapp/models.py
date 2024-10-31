@@ -37,14 +37,28 @@ class Credits(models.Model):
     created_by = models.CharField(max_length=255, null=True,default='SYSTEM')
     modified_by = models.CharField(max_length=255, null=True,default='SYSTEM')    
     is_deleted = models.BooleanField(default=True)
-    class meta:
-        db_table = "credits"
 
-class CreditRate(models.Model):
-    organisation_name=models.CharField(max_length=255, unique=True)
-    rate=models.IntegerField(default=10)
-    class meta:
-        db_table='credit_rate'
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    status_balance = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    call_rate = models.DecimalField(max_digits=10, decimal_places=2, default=10, null=True)  # Avoid division by zero
+    status_rate = models.DecimalField(max_digits=10, decimal_places=2, default=10, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.balance != 0:
+            self.credits = (self.balance  / self.call_rate) * 100
+        else:
+            self.credits = 0  
+
+        if self.balance != 0:
+            self.status_balance = (self.balance  / self.status_rate) * 100
+        else:
+            self.status_balance = 0  
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Account {self.id} - Balance: {self.balance}, Call Balance: {self.call_balance}"
+
 
 class PaymentStatus(models.Model):
     organisation_name=models.CharField(max_length=255)

@@ -627,7 +627,8 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
                 else:
                     # Reduce credits
                     print("call started")
-                    credits_obj.credits = credits_obj.credits - 1  
+                    credits_obj.balance = credits_obj.balance - (credits_obj.call_rate/100)
+                    
                 
                     credits_obj.save()
             except Exception:

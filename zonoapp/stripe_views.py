@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect  # new
 from django.conf import settings  # new
 from django.urls import reverse  # new
-from .models import Credits, CreditRate, PaymentStatus
+from .models import Credits, PaymentStatus
 import stripe  # new
 
 
@@ -40,15 +40,9 @@ def success(request):
     request.session.pop('amount_paid', None)    
     try:
         credits_remaining = Credits.objects.get(organisation_name=request.user.organisation_name)
-    except Exception as e:
+    except Credits.DoesNotExist:
         credits_remaining = Credits.objects.create(
                 organisation_name=request.user.organisation_name,
-        )
-    try:
-        rate=CreditRate.objects.get(organisation_name=request.user.organisation_name)
-    except Exception as e:
-        rate=CreditRate.objects.create(
-            organisation_name=request.user.organisation_name
         )
     PaymentStatus.objects.create(
         organisation_name=request.user.organisation_name,
@@ -57,7 +51,7 @@ def success(request):
         amount=amount_paid,
         payment_response=request.session.get('payment_response')
     )
-    credits_remaining.credits += int((amount_paid*100)/rate.rate)
+    credits_remaining.balance += int(amount_paid)
     credits_remaining.save()
     return render(request, "pages/payment/success.html", {"amount_paid": amount_paid})
 
