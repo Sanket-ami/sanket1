@@ -99,47 +99,54 @@
     </div>
     <div class="card-block row">
         <div class="col-sm-12 col-lg-12 col-xl-12">
-            <div class="table-responsive custom-scrollbar">
-                <table class="table table-inverse table-striped">
-                    <thead>
+            <div class="table-responsive table-striped">
+                <table class="table"  id="callLogsTable">
+                    <thead class="table-dark">
                         <tr>
-                            <th scope="col">Organisation Name</th>
-                            <th scope="col">Name</th>
+                            <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Organisation Name</span></th>
+
+                            <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Name</span></th>
                             <th></th>
-                            <th scope="col">Action</th>
+                            <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Action</span></th>
                         </tr>
                     </thead>
                     <tbody>
+                        {% if qa_parameters %}
                         <!-- Loop through organisations and their parameters -->
-                        {% for organisation in qa_parameters %}
-                        <tr>
-                            <td>{{ organisation.organisation_name }}</td>
-                            <td>{{ organisation.parameters_name }}</td>
-                            <!-- Loop through key-value pairs for each organisation -->
+                            {% for organisation in qa_parameters %}
+                            <tr>
+                                <td>{{ organisation.organisation_name }}</td>
+                                <td>{{ organisation.parameters_name }}</td>
+                                <!-- Loop through key-value pairs for each organisation -->
 
-                                <td></td> <!-- Empty cell to skip repeated organisation name -->
-                                <!-- <td>{{ key }}</td>
-                                <td>{{ value }}</td> -->
-                                <!-- <td>
-                                    Edit Button
-                                    <button class="btn-info edit-parameter-button" 
-                                            data-organisation-id="{{ organisation.id }}" 
-                                            data-parameter-name="{{ organisation.parameters_name }}" 
-                                            data-key="{{ key }}" 
-                                            data-value="{{ value }}" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#editParameterModal" onclick=openEditModal(this)>
-                                        <i class="fa fa-edit"></i>
-                                    </button>
-                                </td> -->
-                                <td>
-                                    <!-- Delete Button -->
-                                    <button class="btn-danger" onclick=deleteParameter("{{ organisation.id }}")>
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </td>
+                                    <td></td> <!-- Empty cell to skip repeated organisation name -->
+                                    <!-- <td>{{ key }}</td>
+                                    <td>{{ value }}</td> -->
+                                    <!-- <td>
+                                        Edit Button
+                                        <button class="btn-info edit-parameter-button" 
+                                                data-organisation-id="{{ organisation.id }}" 
+                                                data-parameter-name="{{ organisation.parameters_name }}" 
+                                                data-key="{{ key }}" 
+                                                data-value="{{ value }}" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editParameterModal" onclick=openEditModal(this)>
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                    </td> -->
+                                    <td>
+                                        <!-- Delete Button -->
+                                        <button class="btn-danger" onclick=deleteParameter("{{ organisation.id }}")>
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="4"><h6>No logs available</h6></td>
                         </tr>
-                        {% endfor %}
+                        {% endif %}
                     </tbody>
                 </table>
             </div>

@@ -46,7 +46,7 @@
             <tr>
                 {% if call_logs_data %}
                     {% for key in call_logs_data.0.keys %}
-                    <th class=""><span style="font-size: 19px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
+                    <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
                     {% endfor %}
                 {% endif %}
             </tr>
@@ -62,7 +62,7 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="{{ call_logs_data.0.keys|length }}">No logs available</td>
+                    <td colspan="{{ call_logs_data.0.keys|length }}"><h6>No logs available </h6></td>
                 </tr>
             {% endif %}
         </tbody>

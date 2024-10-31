@@ -40,23 +40,25 @@
 
 
     <!-- Bootstrap Table for Call Logs -->
-    <table class="table table-inverse table-striped dataTable" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
+    <div class="table-responsive table-striped">
+    <table class="table" style="width: 100%; margin: 0 auto; overflow-x: auto; white-space: nowrap;" id="callLogsTable">
 
-        <thead>
+        <thead class="table-dark">
             <tr>
-                <th>Call ID</th>
-                <th>Created At</th>
-                <th>Call Status</th>
-                <th>Action</th>
+                <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Call ID</span></th>
+                <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Created At</span></th>
+                <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Call Status</span></th>
+                <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Action</span></th>
+
             </tr>
         </thead>
         <tbody>
             {% if call_logs_data %}
                 {% for log in call_logs_data %}
                 <tr id="trigger-btn"  >
-                    <td>{{ log.call_id }}</td>
-                    <td>{{ log.created_at }}</td>
-                    <td>{{ log.call_status }}</td>
+                    <td><h6>{{ log.call_id }}</h6></td>
+                    <td><h6>{{ log.created_at }}</h6></td>
+                    <td><h6>{{ log.call_status }}</h6></td>
                     <td>
                         <button class="btn btn-primary " title="Live Transcript" onclick="viewTranscriptLive('{{ log.call_id }}')">
                             <i class="fa fa-file-audio-o"></i> Live
@@ -69,12 +71,32 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="4">No logs available</td>
+                    <td colspan="4"><h6>No logs available</h6></td>
                 </tr>
             {% endif %}
         </tbody>
     </table>
+    </div>
     
+    <!-- Modal Structure -->
+    <div class="modal fade" id="transcriptModal" tabindex="-1" aria-labelledby="transcriptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title" id="transcriptModalLabel"><strong>Live Transcript</strong></h4> 
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <!-- The live transcript content will be loaded here -->
+              <div id="transcriptContent" style="min-height: 200px;">Loading transcript...</div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
     <!-- Pagination -->
     <br>
@@ -131,19 +153,47 @@
    
 
     // >>>>>>>>>> Trascript Start<<<<<<<<<<<<
-    function viewTranscriptLive(callId) {
+    // function viewTranscriptLive(callId) {
 
+    //     const campaign_id = "{{ campaign_id }}";
+    //     const call_id = callId;
+    //     console.log(callId)
+
+    //     // Construct the URL with campaign_id and call_id as query parameters
+    //     const base_url = '{% url "live_transcript" %}'
+    //     const url = base_url+`?campaign_id=${campaign_id}&call_id=${call_id}`;
+    //     console.log(url)
+    //     // Open the URL in a new tab
+    //     window.open(url, '_blank');        
+    // }    
+
+    // >>>>>>>>>> Trascript Start<<<<<<<<<<<<
+    // View Live Transcript inside modal
+    function viewTranscriptLive(callId) {
         const campaign_id = "{{ campaign_id }}";
         const call_id = callId;
-        console.log(callId)
 
         // Construct the URL with campaign_id and call_id as query parameters
-        const base_url = '{% url "live_transcript" %}'
-        const url = base_url+`?campaign_id=${campaign_id}&call_id=${call_id}`;
-        console.log(url)
-        // Open the URL in a new tab
-        window.open(url, '_blank');        
-    }    
+        const url = `{% url "live_transcript" %}?campaign_id=${campaign_id}&call_id=${call_id}`;
+
+        // Show the modal
+        const transcriptModal = new bootstrap.Modal(document.getElementById('transcriptModal'));
+        transcriptModal.show();
+
+        // Load content via AJAX
+        $.ajax({
+                url: url,
+                method: 'GET',
+                success: function(data) {
+                    // Populate the modal with the response content
+                    $('#transcriptContent').html(data);
+                },
+                error: function(xhr, status, error) {
+                    // Handle error
+                    $('#transcriptContent').html('<p class="text-danger">Failed to load transcript. Please try again later.</p>');
+                }
+        });
+    }
 
 
     // >>>>>>>>>> End Call  Start<<<<<<<<<<<<

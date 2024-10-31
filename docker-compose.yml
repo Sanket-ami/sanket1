@@ -1,0 +1,178 @@
+# version: '3.4'
+
+# services:
+#   callboticsrevamp:
+#     image: callboticsrevamp
+#     build:
+#       context: .
+#       dockerfile: ./Dockerfile
+#     ports:
+#       - 8000:8000
+
+
+# version: '3.8'
+
+# services:
+#   web:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     image: callbotics:latest
+#     restart: unless-stopped
+#     depends_on:
+#       - postgres
+#       - mongodb
+#     environment:
+#       - DB_ENGINE=postgresql
+#       - DB_NAME=${DB_NAME:-callbotics2}
+#       - DB_USER=${DB_USER:-postgres}
+#       - DB_PASSWORD=${DB_PASSWORD:-password}
+#       - DB_HOST=postgres
+#       - DB_PORT=5432
+#       - MONGO_URI=mongodb://mongodb:27017/callbotics
+#       - DJANGO_SETTINGS_MODULE=zono.settings
+#       - SECRET_KEY=${SECRET_KEY}
+#       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+#       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+#     volumes:
+#       - static_volume:/app/zonoapp/static
+#     networks:
+#       - callbotics_net
+
+#   nginx:
+#     image: nginx:alpine
+#     restart: unless-stopped
+#     volumes:
+#       - static_volume:/app/static
+#       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+#     ports:
+#       - "80:80"
+#     depends_on:
+#       - web
+#     networks:
+#       - callbotics_net
+
+#   postgres:
+#     image: postgres:15-alpine
+#     restart: unless-stopped
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     environment:
+#       - POSTGRES_DB=${DB_NAME:-callbotics2}
+#       - POSTGRES_USER=${DB_USER:-postgres}
+#       - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - callbotics_net
+
+#   mongodb:
+#     image: mongo:6-jammy
+#     restart: unless-stopped
+#     command: ["mongod", "--bind_ip_all"]
+#     volumes:
+#       - mongodb_data:/data/db
+#     healthcheck:
+#       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - callbotics_net
+
+# volumes:
+#   postgres_data:
+#   mongodb_data:
+#   static_volume:
+
+# networks:
+#   callbotics_net:
+#     driver: bridge
+
+
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: callbotics:latest
+    container_name: callbotics_web
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - mongodb
+    environment:
+      - DB_ENGINE=postgresql
+      - DB_NAME=${DB_NAME:-callbotics2}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - MONGO_URI=mongodb://mongodb:27017/callbotics
+      - DJANGO_SETTINGS_MODULE=zono.settings
+      - SECRET_KEY=${SECRET_KEY}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+    networks:
+      - callbotics_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: callbotics_nginx
+    restart: unless-stopped
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+    networks:
+      - callbotics_net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: callbotics_postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME:-callbotics2}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    networks:
+      - callbotics_net
+
+  mongodb:
+    image: mongo:6-jammy
+    container_name: callbotics_mongodb
+    restart: unless-stopped
+    command: ["mongod", "--bind_ip_all"]
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - callbotics_net
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  static_volume:
+  media_volume:
+
+networks:
+  callbotics_net:
+    driver: bridge

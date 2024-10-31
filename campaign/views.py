@@ -234,7 +234,6 @@ def contact_list(request, campaign_id):
             # Fetch the contact list based on the campaign_id
             campaign = Campaign.objects.get(id=campaign_id)
             all_contact_list_names = ContactList.objects.filter(is_deleted = False, campaign=campaign).values_list('list_name','id')
-
             # import pdb;pdb.set_trace()
             contact_list = ContactList.objects.filter(is_deleted = False, campaign=campaign)
             # select the specfic list from a campaign
@@ -258,13 +257,15 @@ def contact_list(request, campaign_id):
                     contact_list = list(contact_list[0].contact_list)
             if search :
                 contact_list = [patient for patient in contact_list if  patient['patient_name'].lower().startswith(search.lower()) ]
-            print("final_conact_list_b4 uload + ",contact_list)
+
+            # print("final_conact_list_b4 uload + ",contact_list)
+
             paginator = Paginator(contact_list, 10)  # Show 10 campaigns per page
-            page_number = request.GET.get('page')
-            contact_list = paginator.get_page(page_number)
+            page = request.GET.get('page')
+            contact_list = paginator.get_page(page)
             context = {"breadcrumb":{"title":"Contact List","parent":"Pages", "child":"Contact List"},"contact_list": contact_list,"campaign_id":campaign_id,
                         "all_contact_list_names":all_contact_list_names, "selected_contact_list":selected_list,"contact_list_id":contact_list_id,
-                        "is_active":is_active , "patient_name":search
+                        "is_active":is_active , "patient_name":search,"page":page
                     }
             
             return render(request, 'pages/campaign/contact_list.html', context)
@@ -288,6 +289,11 @@ def contact_list(request, campaign_id):
             contact_list = ContactList.objects.get(id=contact_list_id)
             contact_list.is_active = True
             contact_list.save()
+            
+            # link the contact list in the campaign 
+            campaign_obj = Campaign.objects.get(id=campaign_id)
+            campaign_obj.contact_list_id = contact_list_id
+            campaign_obj.save()
 
             return JsonResponse({'status': 'success', 'message': 'Contact list marked as active.'})
         else:
@@ -352,6 +358,16 @@ def start_campaign(request):
             provider = campaign_obj.provider
             # Iterate over the data
             contact_list = campaign_obj.contact_list.contact_list
+            #selec
+
+            if not contact_list:
+                return JsonResponse({'message': 'No valid contacts selected for this campaign', "success": False, "error": True}, status=200)
+            
+            if 'selected_contact_list' in request_body and request_body['selected_contact_list']:
+                selected_contact_ids = request_body['selected_contact_list']
+                # Filter contact_list to include only selected contacts
+                contact_list = [contact for contact in contact_list if contact['contact_id'] in selected_contact_ids]
+
             voice_config = campaign_obj.agent.voice.voice_configuration
             qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
 
@@ -447,7 +463,8 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
 
     except Exception as error:
         print("error updating scheduled: ",error) 
-    print(contact_list  )
+    # print(contact_list  )
+    counter = 0
     for call_details in contact_list:
         try:
             raw_text = prompt
@@ -516,6 +533,15 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
             # monitoring the call status
             monitor_thread = threading.Thread(target=monitor_call, args=( mongo_id,call_status_id,campaign_id,qa_params, summarization_prompt,call_log["start_time"], organisation_name, provider))
             monitor_thread.start()
+            # Increment the counter and add delay after each call
+            counter += 1
+            time.sleep(wait_time_after_call * 60)
+
+            # Add additional delay after every 5 calls
+            if counter % 5 == 0:
+                print(f"Waiting for {wait_time_after_5_calls} minutes after 5 calls.")
+                time.sleep(wait_time_after_5_calls * 60)
+
         except Exception as err:
             print(f"error while calling: {call_details['contact_number']} error- {err}")
 
@@ -591,7 +617,8 @@ def monitor_call(mongo_id,call_status_id,campaign_id,qa_params, summarization_pr
                 else:
                     # Reduce credits
                     print("call started")
-                    credits_obj.credits = credits_obj.credits - 1  
+                    credits_obj.balance = credits_obj.balance - (credits_obj.call_rate/100)
+                    
                 
                     credits_obj.save()
             except Exception:

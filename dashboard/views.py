@@ -25,7 +25,6 @@ def update_interval_count(intervals, durations):
     return intervals
 
 def qa_analysis(request):
-    print(request.user.organisation_name)
     last_10_call = Transcript.objects.all().filter(organisation_name=request.user.organisation_name).exclude(transcript__isnull=True, qa_analysis__isnull=True).order_by('-id')[:10]
     met = []
     not_met = []
@@ -75,13 +74,16 @@ def calls_per_hour(request):
             event_date_range = {'daily': 1, 'weekly': 7, 'monthly': 30}
             date_range = event_date_range[request.GET.get('event')]
             connected_call = 0
-
+            total_calls = []
+            daily_failed_call = 0
+            failed_calls = []
             for date in range(date_range):  # Assuming 'monthly' as the default event type
                 start_time = datetime.combine(today.date() - timedelta(days=date), time.min)
                 end_time = datetime.combine(today.date()-timedelta(days=date+1), time.min)
                 data = CallLogs.objects.filter(created_at__lte=start_time, created_at__gte=end_time, campaign_id__in=campaign_ids)
                 total_dur = 0
                 total_call = data.count() 
+                total_calls.append(data.count())
                 results = []
                 for call in data:
                     results.append({'created_at': call.created_at})
@@ -91,10 +93,12 @@ def calls_per_hour(request):
                         connected_call += 1
                         if int(call.call_duration) < 10:
                             failedCalls += 1
+                            daily_failed_call += 1
                             pass
                         total_dur += int(call.call_duration)
                         total_dur_list.append(int(int(call.call_duration) / 60))
-
+                failed_calls.append(daily_failed_call)
+                daily_failed_call = 0
                 dates.append(end_time.strftime("%d"))
                 avg_handling_time.append(int(total_dur / 60) / connected_call if connected_call > 0 else 0)
 
@@ -106,19 +110,17 @@ def calls_per_hour(request):
             else:
                 organisation_list = [{'organisation_name': request.user.organisation_name}]
             met, not_met = qa_analysis(request)
-            print(met, not_met)
             response_data ={
                 'results': results,
                 'avg_handling_time': avg_handling_time,
-                'total_call': total_call,
                 'connected_call': connected_call,
                 'not_connected_call': total_call - connected_call,
                 'dates': dates,
                 'number_of_calls': number_of_calls,
-                'total_calls': [1, 2, 3, 4,5, 6, 7],
+                'total_calls': total_calls,
                 'number_of_calls_labels': number_of_calls_labels,
-                'call_overview':['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                'failed_calls': [7, 2, 6, 4,5, 6, 7],
+                'call_overview':dates,
+                'failed_calls': failed_calls,
                 'totalDialedCalls': connected_call,
                 'compromised_call':connected_call - failedCalls,
                 'failed_call': failedCalls, 
