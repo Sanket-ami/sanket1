@@ -174,7 +174,10 @@
             success: function(data) {
                 // Clear existing notifications
                 $('#notification-list').empty();
+                
+                if (data.notification > 0){
                 $('#notification-count').text(data.notification);
+                }
                 // Append new notifications
                 if (data.notifications.length > 0) {
                     
