@@ -26,7 +26,7 @@
         <h4 class="sub-title" style="width: 190px; padding-bottom: 0px; font-weight: bold; padding-left: 4px;">Select Organisation:</h4>
         <select class="form-select" style="width: 200px;" name="organisation" id="organisationName" required onchange="onOrganisationChange()">
          {% for org in organisation_list %}
-         <option value="{{ org.organisation_name }}" {{ org.organisation_name }} {% if org.organisation_name == organisation %} selected {% endif %}>{{ org.organisation_name }}</option>
+         <option value="{{ org.organisation_name }}" {{ org.organisation_name }} {% if org.organisation_name == request.user.organisation_name %} selected {% endif %}>{{ org.organisation_name }}</option>
           {% endfor %}
           <!-- Options will be dynamically populated by JavaScript -->
         </select>
