@@ -216,7 +216,7 @@
                     <input type="hidden" value="{{ page }}" name="page" id="page">
                     <input type="hidden" value="Completed" name="status" id="status">
                     {% if request.user.is_superuser or request.user.role == 'QA' %}
-                        <button id="edit_qa_submit" class="btn btn-primary mt-2" type="Save">Edit QA</button>
+                        <button id="edit_qa_submit" class="btn btn-primary mt-2" type="Save">Save QA</button>
                     {% endif %}
                 </form>
             </div>
