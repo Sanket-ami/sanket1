@@ -370,7 +370,7 @@ def start_campaign(request):
                 contact_list = [contact for contact in contact_list if contact['contact_id'] in selected_contact_ids]
 
             voice_config = campaign_obj.agent.voice.voice_configuration
-            qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters, campaign_obj.summarization_prompt
+            qa_params, summarization_prompt = campaign_obj.qa_parameters.qa_parameters if campaign_obj.qa_parameters else None, campaign_obj.summarization_prompt
 
             # start a thread 
             wait_time_after_call,wait_time_after_5_calls = 1,1
@@ -619,12 +619,19 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
                     # hit a post request on api
                     url = f"{settings.CALL_SERVER_BASE_URL}/start_call"
                     print('provider', type(provider))
-                    payload = json.dumps({
+                    payload =  {
                         "to_phone": to_phone,
                         "context":context,
                         "voice_configuration":voice_config,
                         "telephony_name":provider.provider_name
-                    })
+                    }
+
+                    # adding rcm_denial action
+                    if 'RCM_DENIAL' in process_type:
+                        payload["RCM_DENIAL"] = True
+
+                    payload = json.dumps(payload)
+
                     headers = {
                     'Content-Type': 'application/json'
                     }
