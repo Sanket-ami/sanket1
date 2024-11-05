@@ -40,6 +40,7 @@
 
         <!-- Third Column: Active Button (right-aligned) -->
         <div class="col-auto text-end">
+            <input type="hidden" id="statusInput" value="{% if is_active %}active{% endif %}">
             {% if is_active %}
             <button type="button" class="btn btn-secondary" disabled>Active</button>
             {% else %}
@@ -307,6 +308,15 @@
                     Swal.fire({
                         icon: 'warning',
                         text: 'No contacts selected for deletion.',
+                    });
+                    return;
+                }
+                let statusValue = document.getElementById('statusInput').value;
+                if (statusValue != "active"){
+                    Swal.fire({
+                        icon: 'warning',
+                        text: 'Contact list is not active.',
+                        
                     });
                     return;
                 }
