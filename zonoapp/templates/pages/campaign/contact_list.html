@@ -88,37 +88,40 @@
 </div>
 
 <div class="container-fluid mt-4">
-<div class="table-responsive table-striped">
-    <table id="contactTable" class="table" >
-        <thead class="table-dark">
-            <tr>
-                <th class="" >
-                    <button class="btn btn-pill btn-primary btn-air-primary" id="deleteSelected" type="button">
-                        <i class="icofont icofont-ui-delete"></i>
-                    </button>
-                </th>
-                {% if contact_list %}
-                    {% for key in contact_list.0.keys %}
-                        <th class="sorting_asc"> <span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
-                    {% endfor %}
-                {% endif %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for contact in contact_list %}
-            <tr>
-                <td class="sorting_1">
-                    <!-- Assign class 'contact-checkbox' to the actual checkbox input -->
-                    <input class="form-switch contact-checkbox" data-contact-id="{{ contact.contact_id }}" type="checkbox">
-                </td>
-                {% for value in contact.values %}
-                    <td><h6>{{ value }}</h6></td>
+    <div class="table-responsive table-striped" style="max-height: 65vh; overflow-y: auto;">
+        <table id="contactTable" class="table">
+            <thead class="table-dark">
+                <tr>
+                    <th style="position: sticky; top: 0; z-index: 1; background-color: #343a40;">
+                        <button class="btn btn-pill btn-primary btn-air-primary" id="deleteSelected" type="button">
+                            <i class="icofont icofont-ui-delete"></i>
+                        </button>
+                    </th>
+                    {% if contact_list %}
+                        {% for key in contact_list.0.keys %}
+                            <th class="sorting_asc" style="position: sticky; top: 0; z-index: 1; background-color: #343a40;">
+                                <span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span>
+                            </th>
+                        {% endfor %}
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in contact_list %}
+                    <tr>
+                        <td class="sorting_1">
+                            <input class="form-switch contact-checkbox" data-contact-id="{{ contact.contact_id }}" type="checkbox">
+                        </td>
+                        {% for value in contact.values %}
+                            <td><h6>{{ value }}</h6></td>
+                        {% endfor %}
+                    </tr>
                 {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
     </div>
+    
+    
     <div class="job-pagination">
         <nav aria-label="Page navigation example">
             <ul class="pagination pagination-primary">
