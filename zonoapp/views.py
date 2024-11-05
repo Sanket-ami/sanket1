@@ -283,41 +283,41 @@ def chart_widget(request):
 
 
 # #-----------------Layout
-@login_required(login_url="/login_home")
-def box_layout(request):
-    context = {'layout':'box-layout', "breadcrumb":{"title":"Box Layout","parent":"Page Layout", "child":"Box Layout"}}
-    return render(request,"general/page-layout/box-layout.html",context)
+# @login_required(login_url="/login_home")
+# def box_layout(request):
+#     context = {'layout':'box-layout', "breadcrumb":{"title":"Box Layout","parent":"Page Layout", "child":"Box Layout"}}
+#     return render(request,"general/page-layout/box-layout.html",context)
 
-@login_required(login_url="/login_home")
-def layout_rtl(request):
-    context = {'layout':'rtl', "breadcrumb":{"title":"RTL Layout","parent":"Page Layout", "child":"RTL Layout"}}
-    return render(request,"general/page-layout/layout-rtl.html",context)
+# @login_required(login_url="/login_home")
+# def layout_rtl(request):
+#     context = {'layout':'rtl', "breadcrumb":{"title":"RTL Layout","parent":"Page Layout", "child":"RTL Layout"}}
+#     return render(request,"general/page-layout/layout-rtl.html",context)
 
-@login_required(login_url="/login_home")
-def layout_dark(request):
-    context = {'layout':'dark-only', "breadcrumb":{"title":"Layout Dark","parent":"Page Layout", "child":"Layout Dark"}}
-    return render(request,"general/page-layout/layout-dark.html",context)
+# @login_required(login_url="/login_home")
+# def layout_dark(request):
+#     context = {'layout':'dark-only', "breadcrumb":{"title":"Layout Dark","parent":"Page Layout", "child":"Layout Dark"}}
+#     return render(request,"general/page-layout/layout-dark.html",context)
 
-@login_required(login_url="/login_home")
-def hide_on_scroll(request):
-    context = { "breadcrumb":{"title":"Hide Menu On Scroll","parent":"Page Layout", "child":"Hide Menu On Scroll"}}
-    return render(request,"general/page-layout/hide-on-scroll.html",context)
+# @login_required(login_url="/login_home")
+# def hide_on_scroll(request):
+#     context = { "breadcrumb":{"title":"Hide Menu On Scroll","parent":"Page Layout", "child":"Hide Menu On Scroll"}}
+#     return render(request,"general/page-layout/hide-on-scroll.html",context)
 
 
-@login_required(login_url="/login_home")
-def footer_light(request):
-    context = { "breadcrumb":{"title":"Footer Light","parent":"Page Layout", "child":"Footer Light"}}
-    return render(request,"general/page-layout/footer-light.html",context)
+# @login_required(login_url="/login_home")
+# def footer_light(request):
+#     context = { "breadcrumb":{"title":"Footer Light","parent":"Page Layout", "child":"Footer Light"}}
+#     return render(request,"general/page-layout/footer-light.html",context)
 
-@login_required(login_url="/login_home")
-def footer_dark(request):
-    context = { 'footer':'footer-dark',"breadcrumb":{"title":"Footer Dark","parent":"Page Layout", "child":"Footer Dark"}}
-    return render(request,"general/page-layout/footer-dark.html",context)
+# @login_required(login_url="/login_home")
+# def footer_dark(request):
+#     context = { 'footer':'footer-dark',"breadcrumb":{"title":"Footer Dark","parent":"Page Layout", "child":"Footer Dark"}}
+#     return render(request,"general/page-layout/footer-dark.html",context)
 
-@login_required(login_url="/login_home")
-def footer_fixed(request):
-    context = { 'footer':'footer-fix',"breadcrumb":{"title":"Footer Fixed","parent":"Page Layout", "child":"Footer Fixed"}}
-    return render(request,"general/page-layout/footer-fixed.html",context)
+# @login_required(login_url="/login_home")
+# def footer_fixed(request):
+#     context = { 'footer':'footer-fix',"breadcrumb":{"title":"Footer Fixed","parent":"Page Layout", "child":"Footer Fixed"}}
+#     return render(request,"general/page-layout/footer-fixed.html",context)
 
 
 
