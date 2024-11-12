@@ -513,9 +513,14 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
 
         # Convert the dictionary to the final list format
         rcm_contact_list = list(patient_records.values())
-        print(rcm_contact_list)
         for call_details in rcm_contact_list:
             try:
+                
+                credits = Credits.objects.get(organisation_name=organisation_name)
+                onging_call =CallLogs.objects.filter(organisation_name=organisation_name, call_status='ongoing')
+                while credits.calls_threshold <= len(onging_call):
+                    onging_call =CallLogs.objects.filter(organisation_name=organisation_name, call_status='ongoing')
+                    time.sleep(10)
                 raw_text = prompt
                 # format the prompt as the requirement
                 print(raw_text)    
