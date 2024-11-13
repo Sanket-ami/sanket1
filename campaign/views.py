@@ -1192,6 +1192,13 @@ Display call logs of a perticular campaign
 def list_call_logs(request):
     if request.method == "GET":
         try:
+            print(request.GET.get('search'), "request.GET.get('search')")
+            # if request.GET.get('search') is not None:
+            #     call_log_search(request)
+            searchfield = request.GET.get('fieldselect')
+            search_text = request.GET.get('search_text', '')
+
+
             campaign_list = Campaign.objects.filter(is_delete=False)
             if not request.user.is_superuser:
                 campaign_list = campaign_list.filter(organisation_name=request.user.organisation_name)
@@ -1208,7 +1215,20 @@ def list_call_logs(request):
             page = 1
             paginated_logs =[]
             if campaign_id:
-                call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-id')
+                if len(search_text) > 1:
+                    if searchfield == "npi":
+                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), npi=int(search_text)).order_by('-id')
+                    elif searchfield == "dos":
+                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), dos=search_text).order_by('-id')
+                    elif searchfield == "call_id":
+                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), call_id=search_text).order_by('-id')
+                    elif searchfield == 'patient_name':
+                        call_logs =  CallLogs.objects(campaign_id=int(campaign_id), patient_name=search_text).order_by('-id')
+                    elif searchfield == 'payer_name':
+                        call_logs =  CallLogs.objects(campaign_id=int(campaign_id), payer_name=search_text).order_by('-id')
+
+                else:
+                    call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-id')
                 if call_status:
                     call_logs = call_logs.filter(call_status=call_status)
 
@@ -1253,7 +1273,9 @@ def list_call_logs(request):
                 "success": True,
                 "page": page,
                 "paginated_logs":paginated_logs,
-                "campaign_id":str(campaign_id)
+                "campaign_id":str(campaign_id),
+                "search_field": searchfield,
+                "search_text": search_text
             }
             return render(request, 'pages/campaign/call_logs.html', context)
 
