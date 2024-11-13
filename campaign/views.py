@@ -1226,7 +1226,8 @@ def list_call_logs(request):
                         call_logs =  CallLogs.objects(campaign_id=int(campaign_id), patient_name=search_text).order_by('-id')
                     elif searchfield == 'payer_name':
                         call_logs =  CallLogs.objects(campaign_id=int(campaign_id), payer_name=search_text).order_by('-id')
-
+                    else:
+                        call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-id')
                 else:
                     call_logs = CallLogs.objects(campaign_id=int(campaign_id)).order_by('-id')
                 if call_status:
