@@ -23,7 +23,7 @@
   <div class="row">
     <div class="card border rounded-3 checkbox-checked" style="padding:1%;">
       <div class="dropdown-form" style="display: flex; flex-direction: column; justify-content: flex-end; ">
-        <h4 class="sub-title" style="width: 190px; padding-bottom: 0px; font-weight: bold; padding-left: 4px;">Select Organisation:</h4>
+        <h4 class="sub-title" style="width: 190px; padding-bottom: 0px; font-weight: bold; padding-left: 4px;">Select Organization:</h4>
         <select class="form-select" style="width: 200px;" name="organisation" id="organisationName" required onchange="onOrganisationChange()">
          {% for org in organisation_list %}
          <option value="{{ org.organisation_name }}" {{ org.organisation_name }} {% if org.organisation_name == request.user.organisation_name %} selected {% endif %}>{{ org.organisation_name }}</option>
@@ -53,8 +53,10 @@
                         <button type="button" class="nav-link avg" role="tab" onclick="updateAverageHandlingTimeChart('monthly', this)">Monthly</button>
                     </li>
                   </ul>
-                <canvas id="callDurationChart" height="100"></canvas>
-            </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="callDurationChart" height="100"></canvas>
+                </div>
           </div>
         </div>
       </div>
@@ -84,8 +86,7 @@
             </div>      
           
           <div class="card-body" style="display: flex;
-          justify-content: center;
-          height: 400px;">
+          justify-content: center;">
           <button class="btn p-0" type="button" id="durationOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="bx bx-dots-vertical-rounded bx-lg text-muted"></i>
         </button>
@@ -94,7 +95,8 @@
             <div class="table-responsive custom-scrollbar">
 
             </div>
-             <canvas id="callFailureChart" ></canvas>
+            
+             <canvas id="callFailureChart"  style="max-width: 343px; max-height: 343px; "></canvas>
           </div>
         </div>
         </div>

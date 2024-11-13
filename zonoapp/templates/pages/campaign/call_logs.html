@@ -11,8 +11,8 @@
 
     <!-- Dropdown for selecting campaign -->
     <div class="mb-3 d-flex justify-content-between" style="align-items: center;">
-        <form method="GET" action='{% url "list_call_logs" %}' style=" width: 30%; display: flex; ">
-            <select class="form-select" id="campaignSelect" name="campaign_id">
+        <form method="GET" action='{% url "list_call_logs" %}' style=" width: 80%; display: flex; ">
+            <select class="form-select" id="campaignSelect" name="campaign_id" style="width: 20%;">
                 <option value="">----</option>
                 {% for campaign in campaign_list %}
                 <option value="{{ campaign.id }}" {% if campaign.id|stringformat:"s" == campaign_id|stringformat:"s" %}selected{% endif %}>
@@ -21,7 +21,7 @@
                 {% endfor %}
             </select>
             {% if request.user.role.role != "QA" %}
-            <select class="form-select" id="statusSelect" name="call_status">
+            <select class="form-select" id="statusSelect" name="call_status" style="width: 20%;">
                 <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>ongoing</option>
                 <option value="completed" {% if call_status == "completed" %}selected{% endif %}>completed</option>
                 <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>not_started</option>
@@ -29,9 +29,40 @@
             {% endif %}
             <input type="hidden" name="page" value="{{ page }}">
             <input type="hidden" name="per_page" value="10">&nbsp;
-            <input type="submit" class="btn btn-primary" value="Filter">
+            <input type="submit" class="btn btn-primary" value="Filter" style="margin-right:30px" >
+           
+            {% if request.user.role.role != "QA" %}
+            <select class="form-select" id="fieldselect" name="fieldselect" style="width: 18%;">
+                <option value="dos"  {% if search_field == "dos" %}selected{% endif %}>dos</option>
+                <option value="call_id"  {% if search_field == "call_id" %}selected{% endif %}>call_id</option>
+                <option value="patient_name"  {% if search_field == "patient_name" %}selected{% endif %}>patient_name</option>
+                <option value="Payer_name"  {% if search_field == "Payer_name" %}selected{% endif %}>payer_name</option>
+                <option value="npi"  {% if search_field == "npi" %}selected{% endif %}>npi</option>
+            </select>
+            {% endif %}
+            <input class="form-control" type="text" id="search_text" name="search_text"  style="width: 28%;" placeholder="Search here..." value={{search_text}} >
+            <input type="hidden" name="page" value="{{ page }}">
+            <input type="hidden" name="per_page" value="10">&nbsp;
+            <input type="submit" name="search" class="btn btn-primary" value="search">
         </form>
-    
+
+<!-- 
+        <form style=" width: 30%; display: flex; ">
+            {% if request.user.role.role != "QA" %}
+            <select class="form-select" id="fieldselect" name="fieldselect">
+                <option value="dos">Dos</option>
+                <option value="call_id">call_id</option>
+                <option value="patient_name">patient_name</option>
+                <option value="Payer_name">Payer_name</option>
+                <option value="npi">npi</option>
+            </select>
+            {% endif %}
+            <input type="text" id="search_text" name="search_text">
+            <input type="hidden" name="page" value="{{ page }}">
+            <input type="hidden" name="per_page" value="10">&nbsp;
+            <button type="button" id="searchBtn" class="btn btn-primary">Search</button>
+        </form> -->
+
         <div class="ms-3"> <!-- Add margin on the left for spacing -->
             <label for="sortSelect" class="form-label">Sort by Created At</label>
             <select id="sortSelect" class="form-select" onchange="sortTable()" style="width: 100%;"> <!-- Adjust width if needed -->
@@ -40,13 +71,13 @@
             </select>
         </div>
     </div>
-    <div class="table-responsive table-striped">
+    <div class="table-responsive table-striped" style="max-height: 60vh; overflow-y: auto;">
     <table class="table"  id="callLogsTable">
         <thead class="table-dark">
             <tr>
                 {% if call_logs_data %}
                     {% for key in call_logs_data.0.keys %}
-                    <th class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
+                    <th style="position: sticky; top: 0; z-index: 1; background-color: #343a40;" class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
                     {% endfor %}
                 {% endif %}
             </tr>
@@ -216,7 +247,7 @@
                     <input type="hidden" value="{{ page }}" name="page" id="page">
                     <input type="hidden" value="Completed" name="status" id="status">
                     {% if request.user.is_superuser or request.user.role == 'QA' %}
-                        <button id="edit_qa_submit" class="btn btn-primary mt-2" type="Save">Edit QA</button>
+                        <button id="edit_qa_submit" class="btn btn-primary mt-2" type="Save">Save QA</button>
                     {% endif %}
                 </form>
             </div>
@@ -263,6 +294,47 @@
 <script src="{% static 'assets/js/jquery.min.js' %}"></script>
 
 <script>
+
+
+document.getElementById('searchBtn').addEventListener('click', async () => {
+        const field = document.getElementById('fieldselect').value;
+        const searchText = document.getElementById('search_text').value;
+        const status = document.getElementById('statusSelect').value;
+        const campaign = document.getElementById('campaignSelect').value;
+        const response = await fetch(`/content/call_log_search?fieldselect=${field}&searchText=${searchText}&status=${status}&campaign=${campaign}`);
+        //const data = await response.json();
+        console.log("erbvejnx,mel")
+        // console.log(data);
+        //updateTable(data);
+
+        // // Set new data in AG-Grid
+        // gridOptions.api.setRowData(data);
+    });
+
+    function updateTable(data) {
+    console(data);
+    const tableBody = document.querySelector("#callLogsTable tbody");
+    tableBody.innerHTML = ''; // Clear current table rows
+    if (data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5"><h6>No logs available</h6></td></tr>'; // Update with no data message
+    } else {
+        data.forEach(log => {
+            const row = document.createElement("tr");
+            row.setAttribute("onclick", `showDetails(${JSON.stringify(log)})`);
+            row.setAttribute("data-bs-toggle", "modal");
+            row.setAttribute("data-bs-target", "#myModal");
+
+            // Loop through each field in log object and add to row
+            Object.values(log).forEach(value => {
+                const cell = document.createElement("td");
+                cell.innerHTML = `<h6>${value}</h6>`;
+                row.appendChild(cell);
+            });
+
+            tableBody.appendChild(row);
+        });
+    }
+}
 function sortTable() {
     const tableBody = document.getElementById("callLogsTable").querySelector("tbody");
     const rows = Array.from(tableBody.rows);

@@ -68,6 +68,7 @@
                           <select class="form-control" id="processType" required>
                             <option value="" disabled selected>Select process type</option>
                             <option value="RCM">RCM</option>
+                            <option value="RCM">RCM_DENIAL</option>
                             <option value="RETRIEVAL">RETRIEVAL</option>
                             <option value="OTHER">OTHER</option>
                           </select>
@@ -131,10 +132,10 @@
                       </form>
                   </div>
                   <div class="tab-pane fade shipping-wizard" id="payment-wizard" role="tabpanel" aria-labelledby="payment-wizard-tab"   >
-                    <h5 class="f-w-600">Agent Information</h5>
-                    <p class="f-light">Select the agent for the calls</p>
+                    <!-- <h5 class="f-w-600">Agent Information</h5>
+                    <p class="f-light">Select the agent for the calls</p> -->
                     <div class="shipping-title">
-                      <h6 class="mb-2">Available Agents</h6>
+                      <h6 class="mb-2">Available Agent</h6>
                       <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#exampleModalgetbootstrap" data-whatever="@getbootstrap"> <i class="fa fa-plus-square f-20"></i></button>
 
                     </div>
@@ -158,20 +159,24 @@
                             <label class="form-label">Voice<span class="txt-danger">*</span></label>
                             <input type="hidden" id="actualvoiceid">
                             <span id="voice" class="form-control-plaintext"></span> <!-- Non-editable span for displaying the voice name -->
+                            <button id="play-pause-button" class="btn btn-success" onclick="toggleAudio()">▶ Play</button>
+
                           </div>
                         </div>  
                       
                         <div class="d-flex justify-content-between mt-3">
+
                           <audio id="audio-player" controls="" style="display: none;">
                             <source id="audio-source-mp3" src="" type="audio/mpeg">
                             <source id="audio-source-wav" src="" type="audio/wav">
                             Your browser does not support the audio tag.
                           </audio>
-                          <button id="play-pause-button" class="btn btn-success" onclick="toggleAudio()">▶ Play</button>
                         </div>
                       </div>
                       
-                      <h5 class="f-w-600 mt-4 mb-2">Prompt</h5>
+                      <!-- <h5 class="f-w-600 mt-4 mb-2">Prompt</h5> -->
+                      <label class="form-label"><h5>Prompt<span class="txt-danger">*</span></h5></label>
+
                       <div class="row shipping-method g-3">
                         <div class="col-12">
                           <label class="form-label" for="agentPrompt">Add variable in the prompt by using {variable_name} syntax.</label>
@@ -373,11 +378,12 @@
     // e.preventDefault(); // Prevent the default form submission
 
     // validation logic. For example:
-    const campaignName = $("#campaignName").val();
-    const organisationName = $("#organisationName").val();
-    const processType = $("#processType").val();
-    const provider = $("#provider").val();
-    const summarizationPrompt = $("#summarization_prompt").val();
+    const campaignName = $("#campaignName").val().trim();
+    
+    const organisationName = $("#organisationName").val().trim();
+    const processType = $("#processType").val().trim();
+    const provider = $("#provider").val().trim();
+    const summarizationPrompt = $("#summarization_prompt").val().trim();
 
     // Check if the required fields are filled (basic validation)
     if (campaignName && organisationName && processType && provider) {
@@ -389,7 +395,8 @@
 
     } else {
         // Handle validation failure (e.g., show an alert or highlight invalid fields)
-        alert("Please fill in all required fields.");
+        showToast("error", "Please fill in all required fields.");
+        // alert("Please fill in all required fields.");
     }
   }
 
