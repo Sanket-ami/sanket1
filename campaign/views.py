@@ -1891,3 +1891,23 @@ def upload_csv(request):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+
+################################# get prompt ##############
+def get_prompt(request):
+    campaign_id = request.GET.get('campaign_id')
+    campaign = Campaign.objects.get(id=campaign_id)
+    prompt = campaign.agent.agent_prompt
+    return JsonResponse({"prompt": prompt})
+
+def edit_prompt(request):
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'Not Allowed.', 'status': 405})
+
+    data = json.loads(request.body)
+    campaign_id = data.get('campaign_id')
+    prompt = data.get('new_prompt')
+    agent_prompt = Campaign.objects.get(id=campaign_id).agent
+    agent_prompt.agent_prompt = prompt
+    agent_prompt.save()
+    return JsonResponse({'message': 'Prompt updated successfully.'}, status=200)
