@@ -63,7 +63,7 @@
                                 <i class="fa fa-list"></i> Contact List
                             </a>
                             {% if request.user.is_superuser %}
-                            <a href="javascript:void(0);" class="btn btn-sm btn-primary" style="margin-left: 3px;" onclick="openEditPromptModal({{ campaign.id }}, '{{ campaign.agent.agent_prompt }}')">
+                            <a href="javascript:void(0);" class="btn btn-sm btn-primary" style="margin-left: 3px;" onclick="openEditPromptModal({{ campaign.id }})">
                                 <i class="fa fa-edit"></i> Edit Prompt
                             </a>      
                             {% endif %}
