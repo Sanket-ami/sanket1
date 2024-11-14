@@ -295,6 +295,13 @@
 <script src="{% static 'assets/js/jquery.min.js' %}"></script>
 
 <script>
+const audio = document.getElementById('callDetailsDrawerHideBtn');
+const pauseButton = document.getElementById('call_recording_audio');
+
+
+pauseButton.addEventListener('click', function() {
+            audio.pause(); // Pauses the audio
+});
 
     function updateTable(data) {
     console(data);
