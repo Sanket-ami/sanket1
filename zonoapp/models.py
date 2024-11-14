@@ -44,6 +44,8 @@ class Credits(models.Model):
     call_rate = models.DecimalField(max_digits=10, decimal_places=2, default=10, null=True)  # Avoid division by zero
     status_rate = models.DecimalField(max_digits=10, decimal_places=2, default=10, null=True)
 
+    calls_threshold = models.IntegerField(default=3)
+
     def save(self, *args, **kwargs):
         if self.balance != 0:
             self.credits = (self.balance  / self.call_rate) * 100

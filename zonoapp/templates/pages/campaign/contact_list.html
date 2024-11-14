@@ -388,7 +388,7 @@ function startCampaign(campaign_id, selected_contact_list) {
                     Swal.fire({
                         icon: 'success',
                         text: response.message
-                    });
+                    }).then(() => {  location.reload(); });;
                 },
                 error: function(xhr, status, error) {
                     Swal.fire({
