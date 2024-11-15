@@ -33,6 +33,7 @@
            
             {% if request.user.role.role != "QA" %}
             <select class="form-select" id="fieldselect" name="fieldselect" style="width: 18%;">
+                <option value="">--------</option>
                 <option value="dos"  {% if search_field == "dos" %}selected{% endif %}>dos</option>
                 <option value="call_id"  {% if search_field == "call_id" %}selected{% endif %}>call_id</option>
                 <option value="patient_name"  {% if search_field == "patient_name" %}selected{% endif %}>patient_name</option>
@@ -294,6 +295,8 @@
 <script src="{% static 'assets/js/jquery.min.js' %}"></script>
 
 <script>
+const audio = document.getElementById('callDetailsDrawerHideBtn');
+const pauseButton = document.getElementById('call_recording_audio');
 
 const audio = document.getElementById('callDetailsDrawerHideBtn');
 const pauseButton = document.getElementById('call_recording_audio');
@@ -304,20 +307,9 @@ pauseButton.addEventListener('click', function() {
 });
 
 
-document.getElementById('searchBtn').addEventListener('click', async () => {
-        const field = document.getElementById('fieldselect').value;
-        const searchText = document.getElementById('search_text').value;
-        const status = document.getElementById('statusSelect').value;
-        const campaign = document.getElementById('campaignSelect').value;
-        const response = await fetch(`/content/call_log_search?fieldselect=${field}&searchText=${searchText}&status=${status}&campaign=${campaign}`);
-        //const data = await response.json();
-        console.log("erbvejnx,mel")
-        // console.log(data);
-        //updateTable(data);
-
-        // // Set new data in AG-Grid
-        // gridOptions.api.setRowData(data);
-    });
+pauseButton.addEventListener('click', function() {
+            audio.pause(); // Pauses the audio
+});
 
     function updateTable(data) {
     console(data);
@@ -372,6 +364,17 @@ function sortTable() {
     // offcanvas details
     // offcanvas details
     function showDetails(log) {
+        var textarea = document.getElementById('editTranscript');
+             var transcriptSpan = document.getElementById('call_transcript');
+
+        console.log(textarea.style.display)
+        console.log("ts", transcriptSpan.style.display)
+        if (textarea.style.display==="block"){
+            console.log("dfkjvbekrnclermc");
+            textarea.style.display="none";
+        }
+
+            transcriptSpan.style.display="block";        
         console.log(log.call_id);
 
         // hit api to fetch call details
@@ -474,8 +477,6 @@ function sortTable() {
         document.getElementById('edit_transcript_form').submit();
     }
     
-    // edit transcript
-    // format text area
     function editTranscriptText( ){
         console.log("clicked edit transcript")
         var transcriptSpan = document.getElementById('call_transcript');
