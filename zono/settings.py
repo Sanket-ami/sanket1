@@ -22,7 +22,7 @@ load_dotenv()
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = "os.getenv('SECRET_KEY')"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -62,6 +62,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'zono.middleware.SessionTimeoutMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'zono.urls'
@@ -93,7 +95,7 @@ DATABASES = {
     'default': {
 
   'ENGINE': 'django.db.backends.' + os.getenv('DB_ENGINE', 'postgresql'),  # Append the correct backend prefix
-        'NAME': os.getenv('DB_NAME', 'callbotics2'),
+        'NAME': os.getenv('DB_NAME', 'new_callbotics'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
@@ -104,7 +106,7 @@ DATABASES = {
 }
 
 import mongoengine
-mongoengine.connect(db='callbotics',port=27017, host="localhost" )
+mongoengine.connect(db='callbotics_rcm',port=27017, host="localhost" )
  
 
 # Password validation
@@ -196,8 +198,13 @@ EMAIL_HOST_USER = str(os.getenv('EMAIL_HOST_USER'))
 EMAIL_HOST_PASSWORD = str(os.getenv('EMAIL_HOST_PASSWORD'))
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
 
-from decouple import config
+# from decouple import config
 
 # Stripe
-STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
-STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+
+SESSION_EXPIRE_SECONDS = 10
+SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
+SESSION_EXPIRE_AFTER_LAST_ACTIVITY_GRACE_PERIOD = 10 
+SESSION_TIMEOUT_REDIRECT = '/logout_view'
