@@ -150,11 +150,24 @@
                 <label class="col-sm-12 col-form-label" for="inputPassword2">Confirm Password</label>
                 <input class="form-control" id="inputPassword2" type="password" required="">
             </div>
-            <div class="col-12">
+            {% if request.user.is_superuser %}
+            <div class="col-12" >
+                <div class="form-check form-switch">
+                    <input class="form-check-input" id="addorganisation" type="checkbox" role="switch" >
+                    <label class="form-check-label" for="addorganisation"> Add external input organisation .</label>
+                </div>
+            </div>
+
+            <div class="col-12" id="inputOrganisationWrapper">
+                <label class="col-sm-12 col-form-label" for="inputOrganisation">Organisation </label>
+                <input class="form-control" name="inputOrganisation" id="inputOrganisation" type="text" >
+            </div>
+            {% endif %}
+            <div class="col-12" id="selectOrganisationWrapper">
                 <div class="card-wrapper border rounded-3 checkbox-checked">
                     <h6 class="sub-title">Select Organisation</h6>
                     <div class="dropdown-form">
-                        <select class="form-select" name="organisation" id="organisationName" required>
+                        <select class="form-select" name="organisationName" id="organisationName" >
                             <option value="" disabled selected>Select Organisation</option>
                             {% for user in organisation_list %}
                                 <option value="{{ user.organisation_name }}">{{ user.organisation_name }}</option>
@@ -162,7 +175,8 @@
                         </select>
                     </div>
                 </div>
-            </div>          
+            </div> 
+                     
             <div class="col-12">
                 <div class="card-wrapper border rounded-3 checkbox-checked">
                     <h6 class="sub-title">Select Role</h6>
@@ -178,7 +192,7 @@
             </div>
             <div class="col-12">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" id="flexSwitchCheckDefault" type="checkbox" role="switch" required="">
+                    <input class="form-check-input" id="flexSwitchCheckDefault" type="checkbox" role="switch" required>
                     <label class="form-check-label" for="flexSwitchCheckDefault"> I hereby declare that the information provided is true and correct.</label>
                 </div>
             </div>
@@ -190,7 +204,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
 
-
+        
         document.addEventListener("DOMContentLoaded", function () {
             const editButtons = document.querySelectorAll(".edit-agent-button");
             const editModal = document.getElementById("editAgentModal");
@@ -199,7 +213,33 @@
             // const editEmailField = document.getElementById("edit-email");
             const editOrganisationField = document.getElementById("editOrganisationName");
             const editRoleRadios = document.getElementsByName("editRole");
-        
+            const addOrganisationSwitch = document.getElementById('addorganisation');
+            const inputOrganisationWrapper = document.getElementById('inputOrganisationWrapper');
+            const selectOrganisationWrapper = document.getElementById('selectOrganisationWrapper');
+            const inputOrganisationField = document.getElementById("inputOrganisation");
+            const organisationNameField = document.getElementById("organisationName");
+            // Function to toggle visibility based on checkbox state
+            function toggleOrganisationFields() {
+                if (addOrganisationSwitch.checked) {
+                inputOrganisationWrapper.style.display = 'block';  // Show input field
+                selectOrganisationWrapper.style.display = 'none';  // Hide select field
+                inputOrganisationField.setAttribute("required", ""); // Make input required
+                organisationNameField.removeAttribute("required"); // 
+                } else {
+                inputOrganisationWrapper.style.display = 'none';   // Hide input field
+                selectOrganisationWrapper.style.display = 'block'; // Show select field
+                inputOrganisationField.removeAttribute("required"); // Remove "required" from input
+                organisationNameField.setAttribute("required", ""); 
+                
+                
+                }
+            }
+
+            // Initialize visibility on page load
+            toggleOrganisationFields();
+
+            // Add event listener for checkbox state change
+            addOrganisationSwitch.addEventListener('change', toggleOrganisationFields);
             // Event Listener for Edit Buttons
             editButtons.forEach(button => {
                 button.addEventListener("click", function () {
@@ -389,8 +429,39 @@
         
                     $("#submitAdd").on("click", function(event) {
                         event.preventDefault();
-        
-                        let formData = {
+                        console.log("selected organisation  : ",document.getElementById("organisationName").value);
+                        console.log("input organisation  : ", document.getElementById("inputOrganisation").value);
+                        const OrganisationSwitch = document.getElementById('addorganisation');
+                        const InformationSwitch = document.getElementById('flexSwitchCheckDefault')
+                        const organisationName = document.getElementById("organisationName").value;
+                        const inputOrganisation = document.getElementById("inputOrganisation").value;
+    
+                        // Validation: Check if either the 'organisationName' or 'inputOrganisation' field is empty
+                        if ((OrganisationSwitch.checked && inputOrganisation.trim() === "") || (!OrganisationSwitch.checked && organisationName.trim() === "")) {
+                            showToast('error', 'Please fill in the organisation name!');
+                            return; // Stop form submission if validation fails
+                        }
+                        if(!InformationSwitch.checked){
+                            showToast('error', 'Please switch toggle of Information Provided !');
+                            return; 
+                        }
+                        console.log("organisation  ",OrganisationSwitch.checked);
+                        let formData = {} ;
+
+                        if(OrganisationSwitch.checked){
+                            formData = {
+                            'username': document.getElementById("user-name").value,
+                            'first_name': document.getElementById("first-name").value,
+                            'last_name': document.getElementById("last-name").value,
+                            'email': document.getElementById("exampleFormControlInput1").value,
+                            'password': document.getElementById("inputPassword1").value,
+                            'confirm_password': document.getElementById("inputPassword2").value,
+                            'role': document.getElementById("roleName").value,
+                            'organisation_name':  document.getElementById("inputOrganisation").value 
+                            };
+                            
+                        }else{
+                            formData = {
                             'username': document.getElementById("user-name").value,
                             'first_name': document.getElementById("first-name").value,
                             'last_name': document.getElementById("last-name").value,
@@ -399,7 +470,12 @@
                             'confirm_password': document.getElementById("inputPassword2").value,
                             'role': document.getElementById("roleName").value,
                             'organisation_name':  document.getElementById("organisationName").value
-                        };
+                            };
+                            
+                        }
+                        
+                        
+                        
                         console.log(formData);
                         if (formData.password !== formData.confirm_password) {
                             showToast('error', 'Passwords do not match!');
