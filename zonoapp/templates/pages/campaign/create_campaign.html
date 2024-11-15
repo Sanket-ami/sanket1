@@ -196,6 +196,13 @@
                   <div class="tab-pane fade shipping-wizard" id="ship-wizard" role="tabpanel" aria-labelledby="ship-wizard-tab">
                     <h3>Contacts Information</h3>
                     <p class="f-light">Upload a csv file with "contact_number" as a column</p>
+                    <div class="mt-2" style="margin-left: 1%;">
+                      <div class="quick-box">
+                         <a href="{% url 'sample_csv' %}"> <i class="fa fa-download font-primary"></i>
+                           Download Sample CSV
+                          </a>
+                      </div>
+                    </div>
                     <div class="payment-info-wrapper">
                         <div class="row shipping-method g-3">
                             <div class="col-12">
@@ -483,8 +490,13 @@
         success: function(response) {
             // Handle the successful response, maybe show a success message
             console.log("Campaign created successfully");
+            console.log(response["message"]);
+            if (response["message"] == "Campaign with this name and organisation already exists!"){
+              showToast("Same campaign name already present", "Same campaign name already present");
             // alert("Campaign created successfully!");
+            }else{
             showToastSuccessCampaign("success", "Campaign added successfully!");
+            }
         },
         error: function(xhr, status, error) {
             // Handle errors here

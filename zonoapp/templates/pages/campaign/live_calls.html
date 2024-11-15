@@ -13,7 +13,7 @@
      <div class="mb-3">
         <form method="GET" action='{% url "live_call_list" %}' style=" width: 30%; display: flex; ">
             <select class="form-select" id="campaignSelect" name="campaign_id">
-                <option value="">----</option>
+                <option value="">None</option>
                 {% for campaign in campaign_list %}
                 <option value="{{ campaign.id }}" {% if campaign.id|stringformat:"s" == campaign_id|stringformat:"s" %}selected{% endif %}>
                     {{ campaign.campaign_name }}
@@ -71,7 +71,7 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="4"><h6>No logs available</h6></td>
+                    <td colspan="4"><h6>Please Select the Campaign.</h6></td>
                 </tr>
             {% endif %}
         </tbody>
@@ -209,6 +209,7 @@
             confirmButtonText: 'Yes, End the call!',
             cancelButtonText: 'Cancel'
         }).then((result) => {
+            if (result.isConfirmed) {
         $.ajax({
             url:"{% url 'end_call' %}",
             method: 'POST',
@@ -239,6 +240,10 @@
                     }
                     
             })
+        } else {
+            
+            console.log('Call not ended (cancelled)');
+        }
         });
             
     }

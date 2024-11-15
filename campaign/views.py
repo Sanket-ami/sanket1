@@ -69,8 +69,9 @@ def create_campaign(request):
     elif request.method == "POST":
         try:
             data = json.loads(request.body)
-           
-
+            if Campaign.objects.filter(campaign_name=data['campaign_name'], organisation_name=data['organisation_name']).exists():
+                return JsonResponse({"message": "Campaign with this name and organisation already exists!", "success": False})
+            
             provider = Provider.objects.get(id=data['provider'])
             agent = Agent.objects.get(id=data['agent'])
             agent.agent_prompt = data['prompt']
@@ -145,7 +146,7 @@ def upload_contact_list(request, campaign_id):
             keys_to_match = []
         current_columns = keys_to_match   
         print("current_columns ==> ",current_columns)
-
+        
         # Parse and validate the CSV file
         try:
             csv_data = csv.DictReader(csv_file.read().decode('utf-8').splitlines())
@@ -1799,28 +1800,42 @@ def sample_csv(request):
     # Download a sample CSV for demo call
     try:
         # import pdb;pdb.set_trace()
-        campaign_id = request.GET.get("campaign_id")
-        if not campaign_id:
-            return JsonResponse({'message': 'Campaign ID is required'}, status=400)
+        col = request.GET.get("campaign_id")
+        if col is None:
+            column_names = ["claim_id","claim_amount","claim_status","patient_name","contact_number","submission_date"]
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="sample.csv"'
 
-        # Get the campaign details
-        column_names = get_csv_coulmns(campaign_id)
-        if 'contact_number' not in column_names:
-            column_names.append('contact_number')
-        try:
-            column_names.remove('contact_id')
-        except:
-            pass
-        # Generate the CSV content
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="sample.csv"'
+            writer = csv.writer(response)
+            # Writing CSV headers and sample data
+            writer.writerow(column_names)  # Add actual headers here
+            # writer.writerow(['Sample1', 'Sample2', 'Sample3'])  # Add sample data here
 
-        writer = csv.writer(response)
-        # Writing CSV headers and sample data
-        writer.writerow(column_names)  # Add actual headers here
-        # writer.writerow(['Sample1', 'Sample2', 'Sample3'])  # Add sample data here
+            return response
+        else:
+            campaign_id = request.GET.get("campaign_id")
+            if not campaign_id:
+                return JsonResponse({'message': 'Campaign ID is required'}, status=400)
 
-        return response
+            # Get the campaign details
+            column_names = get_csv_coulmns(campaign_id)
+            if 'contact_number' not in column_names:
+                column_names.append('contact_number')
+            try:
+                column_names.remove('contact_id')
+            except:
+                pass
+            # Generate the CSV content
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="sample.csv"'
+
+            writer = csv.writer(response)
+            # Writing CSV headers and sample data
+            writer.writerow(column_names)  # Add actual headers here
+            # writer.writerow(['Sample1', 'Sample2', 'Sample3'])  # Add sample data here
+
+            return response
+        
 
     except Exception as e:
         print("Error in sample_csv: ",e)
