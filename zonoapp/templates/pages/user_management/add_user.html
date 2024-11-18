@@ -54,12 +54,12 @@
                         <table class="table">
                             <thead  class="table-dark" >
                                 <tr>
-                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;"> User Name </span></th>
-                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Email</span></th>
-                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Role</span></th>
-                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Organization</span></th>
-                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Date Joined</span></th>
-                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">Action</span></th>    
+                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;" class="text-uppercase"> User Name </span></th>
+                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;" class="text-uppercase">Email</span></th>
+                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;" class="text-uppercase">Role</span></th>
+                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;" class="text-uppercase">Organization</span></th>
+                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;" class="text-uppercase">Date Joined</span></th>
+                                    <th scope="col"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;" class="text-uppercase">Action</span></th>    
                                 </tr>
                             </thead>
                             <tbody>
@@ -167,7 +167,7 @@
                 <div class="card-wrapper border rounded-3 checkbox-checked">
                     <h6 class="sub-title">Select Organisation</h6>
                     <div class="dropdown-form">
-                        <select class="form-select" name="organisationName" id="organisationName" >
+                        <select class="form-select" name="organisationName" id="organisationName" required>
                             <option value="" disabled selected>Select Organisation</option>
                             {% for user in organisation_list %}
                                 <option value="{{ user.organisation_name }}">{{ user.organisation_name }}</option>
@@ -430,23 +430,40 @@
                     $("#submitAdd").on("click", function(event) {
                         event.preventDefault();
                         console.log("selected organisation  : ",document.getElementById("organisationName").value);
-                        console.log("input organisation  : ", document.getElementById("inputOrganisation").value);
+                        //console.log("input organisation  : ", document.getElementById("inputOrganisation").value);
                         const OrganisationSwitch = document.getElementById('addorganisation');
                         const InformationSwitch = document.getElementById('flexSwitchCheckDefault')
                         const organisationName = document.getElementById("organisationName").value;
-                        const inputOrganisation = document.getElementById("inputOrganisation").value;
-    
-                        // Validation: Check if either the 'organisationName' or 'inputOrganisation' field is empty
-                        if ((OrganisationSwitch.checked && inputOrganisation.trim() === "") || (!OrganisationSwitch.checked && organisationName.trim() === "")) {
-                            showToast('error', 'Please fill in the organisation name!');
-                            return; // Stop form submission if validation fails
+                        const first_name = document.getElementById('first-name').value ;
+                        const last_name = document.getElementById('last-name').value ;
+                        const rolename = document.getElementById('roleName').value ;
+                        let formData = {} ;
+                        if(first_name.trim()===""){
+                            showToast('error','please provide first name.');
+                            return;
                         }
+                        if(last_name.trim() === ""){
+                            showToast('error','please provide last name.');
+                            return;
+                        }
+                        if(rolename.trim() === ""){
+                            showToast('error','please provide role .');
+                            return;
+                        }
+
                         if(!InformationSwitch.checked){
                             showToast('error', 'Please switch toggle of Information Provided !');
                             return; 
                         }
+                        if(OrganisationSwitch !== null){
+                        const inputOrganisation = document.getElementById("inputOrganisation").value;
+                        if ((OrganisationSwitch.checked && inputOrganisation.trim() === "") || (!OrganisationSwitch.checked && organisationName.trim() === "")) {
+                            showToast('error', 'Please fill in the organisation name!');
+                            return; 
+                        }
+                        
                         console.log("organisation  ",OrganisationSwitch.checked);
-                        let formData = {} ;
+                        
 
                         if(OrganisationSwitch.checked){
                             formData = {
@@ -473,8 +490,22 @@
                             };
                             
                         }
-                        
-                        
+                        }else{
+                            formData = {
+                            'username': document.getElementById("user-name").value,
+                            'first_name': document.getElementById("first-name").value,
+                            'last_name': document.getElementById("last-name").value,
+                            'email': document.getElementById("exampleFormControlInput1").value,
+                            'password': document.getElementById("inputPassword1").value,
+                            'confirm_password': document.getElementById("inputPassword2").value,
+                            'role': document.getElementById("roleName").value,
+                            'organisation_name':  document.getElementById("organisationName").value
+                            };
+                            if (organisationName.trim() === ""){
+                            showToast('error','fill organisation field ');
+                            return;
+                            }
+                        }
                         
                         console.log(formData);
                         if (formData.password !== formData.confirm_password) {

@@ -3,7 +3,9 @@
 {% load sass_tags %}
 
 {% block content %}
+{% if request.user.role.role != 'Admin' %}
 <button class="btn btn-primary" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Agent</button>
+{% endif %}
 <form method="GET" action="{% url 'agent_create' %}" style="display: flex; flex-direction: row; justify-content: flex-end;">
     <div class="form-group" style="margin-right: 0.5%;">
         <input type="text" name="search" class="form-control" placeholder="Search Agents" value="{{ search_query }}">
@@ -164,12 +166,15 @@
                         </div>
                         <div>
                             <!-- Edit Agent Button -->
+                             
+                            {% if request.user.role.role != 'Admin' %}
                             <button class="btn btn-info edit-agent-button" data-agent-id="{{ agent.id }}" data-agent-name="{{ agent.agent_name }}" data-agent-organisation="{{ agent.organisation_name }}" data-agent-provider="{{ agent.agent_provider.provider_name }}" data-agent-config='{{ agent.agent_configuration }}' data-agent-voice="{{ agent.voice.id }}">
                                 <i class="fa fa-edit"></i>
                             </button>
                             <button class="btn btn-danger" onclick="deleteAgent({{ agent.id }},'{{ agent.agent_name }}')">
                                 🗑️
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="card-body">
@@ -402,7 +407,7 @@
                     showToast("success", "Agent added successfully!");
                     // alert('Agent added successfully!')
                 } else {
-                    showToast("danger", "Error adding agent: " + (data.error || "Unknown error"));
+                    showToast("danger", "Error adding agent: " + (data.message || "Unknown error"));
                 }
             })
             .catch(error => {
