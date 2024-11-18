@@ -49,6 +49,8 @@ def voice_view(request):
         try:
             data = json.loads(request.body)
             voice_provider = Provider.objects.get(id=data['voice_provider'])
+            if Voice.objects.filter(voice_name=data['voice_name'], organisation_name=data['organisation_name']).exists():
+                return JsonResponse({"message": "Voice with this name in organisation already exists!", "success": False})
             voice = Voice.objects.create(
                 voice_id=data['voice_id'],
                 voice_provider=voice_provider,

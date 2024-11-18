@@ -10,8 +10,9 @@
 <!-- Add Voice Button -->
 <div class="d-flex justify-content-between align-items-center" style="margin: 1%;">
     <!-- Add Voice Button -->
+     {% if request.user.is_superuser %}
     <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Voice</button>
-
+    {% endif %}
     <!-- Search Form -->
     <form method="GET" action="{% url 'voice_view' %}" style="display: flex; flex-direction: row; align-items: center;">
         <div class="form-group" style="margin-right: 0.5%;">
@@ -52,6 +53,7 @@
                     <div class="mb-3">
                         <label for="organisationName" class="form-label">Organisation Name</label>
                         <select class="form-select" id="organisationName" name="organisation_name" required>
+                            <option selected disabled value="">Choose...</option>
                             {% for org in org_names %}
                             <option value="{{ org.organisation_name }}">{{ org.organisation_name }}</option>
                             {% endfor %}
@@ -95,7 +97,9 @@
         <div class="card h-100 shadow-sm">
             <div class="card-body">
                 <h5 class="card-title" style="font-weight: bold;">{{ voice.voice_name }}</h5>
+                {% if request.user.is_superuser %}
                 <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
+                {% endif %}
                 <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <audio id="audio-player-{{ forloop.counter }}" controls="" style="display: none;">
@@ -104,9 +108,11 @@
                     </audio>
                     <button id="play-pause-button-{{ forloop.counter }}" class="btn btn-success" onclick="toggleAudio({{ forloop.counter }})">▶ Play</button>
                     <div>
-                        <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editVoiceModal" onclick="populateEditModal({{ voice.id }}, '{{ voice.voice_configuration|escapejs }}')">Edit</button>
+                        {% if request.user.is_superuser %}
+                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editVoiceModal" onclick="populateEditModal({{ voice.id }}, '{{ voice.voice_configuration|escapejs }}')">Edit</button>
                         <button class="btn btn-danger" type="button" onclick="deleteVoice({{ voice.id }})">Delete Voice</button>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
