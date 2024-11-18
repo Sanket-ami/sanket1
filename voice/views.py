@@ -170,3 +170,13 @@ def edit_voice(request):
 
         return JsonResponse({'status': 'success', 'voice_id': voice.id})
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+def delete_voice(request, voice_id):
+    try:
+        voice = get_object_or_404(Voice, id=voice_id)
+        voice.is_delete=True
+        voice.save()
+        return JsonResponse({'message': 'Voice deleted successfully.'}, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
