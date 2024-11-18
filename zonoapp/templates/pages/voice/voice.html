@@ -97,13 +97,16 @@
                 <h5 class="card-title" style="font-weight: bold;">{{ voice.voice_name }}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
                 <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
-                <div class="d-flex justify-content-between">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
                     <audio id="audio-player-{{ forloop.counter }}" controls="" style="display: none;">
                         <source src="{% static 'assets/audio/' %}{{ voice.voice_id }}.mp3" type="audio/mpeg">
                         <source src="{% static 'assets/audio/' %}{{ voice.voice_name }}.wav" type="audio/wav">
                     </audio>
                     <button id="play-pause-button-{{ forloop.counter }}" class="btn btn-success" onclick="toggleAudio({{ forloop.counter }})">▶ Play</button>
-                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editVoiceModal" onclick="populateEditModal({{ voice.id }}, '{{ voice.voice_configuration|escapejs }}')">Edit</button>
+                    <div>
+                        <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editVoiceModal" onclick="populateEditModal({{ voice.id }}, '{{ voice.voice_configuration|escapejs }}')">Edit</button>
+                        <button class="btn btn-danger" type="button" onclick="deleteVoice({{ voice.id }})">Delete Voice</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -173,6 +176,55 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+
+function deleteVoice(voiceId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`voice/voice/delete/${voiceId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer your-auth-token-here' // Add token if authentication is required
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.json().then(error => {
+                            throw new Error(error.message || 'Failed to delete the voice.');
+                        });
+                    }
+                })
+                .then(data => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: data.message || 'Voice deleted successfully.'
+                    }).then(() => {
+                        location.reload(); // Reload the page to reflect changes
+                    });
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to delete voice: ' + error.message
+                    });
+                });
+            }
+        });
+    }
+
+
 function toggleAudio(counter) {
     // Get the currently playing audio player
     const currentlyPlaying = document.querySelector('audio.playing');
