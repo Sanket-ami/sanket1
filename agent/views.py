@@ -51,7 +51,9 @@ def agent_create(request):
             agent_provider_name = data.get('agent_provider')
             voice_id = data.get('voice')
             agent_configuration = data.get('agent_configuration')
-            
+
+            if Agent.objects.filter(agent_name=agent_name, organisation_name=organisation_name).exists():
+                return JsonResponse({"message": "Agent with this name in organisation already exists!", "success": False})
             # Validate the form fields
             if not agent_name or not organisation_name or not agent_provider_name or not voice_id or not agent_configuration:
                 return JsonResponse({"success": False, "error": "All fields are required."}, status=400)

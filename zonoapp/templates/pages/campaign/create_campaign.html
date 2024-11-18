@@ -79,6 +79,7 @@
                           <label class="form-label" for="provider">Provider<span class="txt-danger">*</span></label>
                           <select class="form-select" id="provider" required="">
                             {<!-- dynamically populate provider options -->}
+                            
                             {% for provider in telephony_providers_list %}
                                <option value="{{ provider.id }}">{{ provider.provider_name }}</option>
                             {% endfor %}
@@ -196,6 +197,13 @@
                   <div class="tab-pane fade shipping-wizard" id="ship-wizard" role="tabpanel" aria-labelledby="ship-wizard-tab">
                     <h3>Contacts Information</h3>
                     <p class="f-light">Upload a csv file with "contact_number" as a column</p>
+                    <div class="mt-2" style="margin-left: 1%;">
+                      <div class="quick-box">
+                         <a href="{% url 'sample_csv' %}"> <i class="fa fa-download font-primary"></i>
+                           Download Sample CSV
+                          </a>
+                      </div>
+                    </div>
                     <div class="payment-info-wrapper">
                         <div class="row shipping-method g-3">
                             <div class="col-12">
@@ -302,7 +310,24 @@
   let contactList;
   let agent_prompt;
 
+  const processTypeSelect = document.getElementById('processType');
+const summarizationPrompt = document.getElementById('summarization_prompt');
 
+// Event listener for the change event on the dropdown
+processTypeSelect.addEventListener('change', function() {
+  const selectedValue = processTypeSelect.value;
+
+  // Set the value of the textarea based on the selected option
+  if (selectedValue === 'RCM') {
+    summarizationPrompt.value = 'default prompt for RCM value';
+  } else if (selectedValue === 'RCM_DENIAL') {
+    summarizationPrompt.value = 'default prompt for RCM DENIAL';
+  } else if (selectedValue === 'RETRIEVAL') {
+    summarizationPrompt.value = 'default prompt for RETRIEVAL'; 
+  } else if (selectedValue === 'OTHER') {
+    summarizationPrompt.value = 'other prompt .'; 
+  }
+});
   // Function to show toast
   function showToast(type, message) {
     Swal.fire({
@@ -483,8 +508,13 @@
         success: function(response) {
             // Handle the successful response, maybe show a success message
             console.log("Campaign created successfully");
+            console.log(response["message"]);
+            if (response["message"] == "Campaign with this name and organisation already exists!"){
+              showToast("Same campaign name already present", "Same campaign name already present");
             // alert("Campaign created successfully!");
+            }else{
             showToastSuccessCampaign("success", "Campaign added successfully!");
+            }
         },
         error: function(xhr, status, error) {
             // Handle errors here

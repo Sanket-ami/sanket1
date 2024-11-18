@@ -13,7 +13,7 @@
     <div class="mb-3 d-flex justify-content-between" style="align-items: center;">
         <form method="GET" action='{% url "list_call_logs" %}' style=" width: 80%; display: flex; ">
             <select class="form-select" id="campaignSelect" name="campaign_id" style="width: 20%;">
-                <option value="">----</option>
+                <option value="">None</option>
                 {% for campaign in campaign_list %}
                 <option value="{{ campaign.id }}" {% if campaign.id|stringformat:"s" == campaign_id|stringformat:"s" %}selected{% endif %}>
                     {{ campaign.campaign_name }}
@@ -22,9 +22,9 @@
             </select>
             {% if request.user.role.role != "QA" %}
             <select class="form-select" id="statusSelect" name="call_status" style="width: 20%;">
-                <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>ongoing</option>
-                <option value="completed" {% if call_status == "completed" %}selected{% endif %}>completed</option>
-                <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>not_started</option>
+                <option value="ongoing" {% if call_status == "ongoing" %}selected{% endif %}>Ongoing</option>
+                <option value="completed" {% if call_status == "completed" %}selected{% endif %}>Completed</option>
+                <option value="not_started" {% if call_status == "not_started" %}selected{% endif %}>Not Started</option>
             </select>
             {% endif %}
             <input type="hidden" name="page" value="{{ page }}">
@@ -33,12 +33,12 @@
            
             {% if request.user.role.role != "QA" %}
             <select class="form-select" id="fieldselect" name="fieldselect" style="width: 18%;">
-                <option value="">--------</option>
-                <option value="dos"  {% if search_field == "dos" %}selected{% endif %}>dos</option>
-                <option value="call_id"  {% if search_field == "call_id" %}selected{% endif %}>call_id</option>
-                <option value="patient_name"  {% if search_field == "patient_name" %}selected{% endif %}>patient_name</option>
-                <option value="Payer_name"  {% if search_field == "Payer_name" %}selected{% endif %}>payer_name</option>
-                <option value="npi"  {% if search_field == "npi" %}selected{% endif %}>npi</option>
+                <option value="">None</option>
+                <option value="dos"  {% if search_field == "dos" %}selected{% endif %}>DOS</option>
+                <option value="call_id"  {% if search_field == "call_id" %}selected{% endif %}>Call_id</option>
+                <option value="patient_name"  {% if search_field == "patient_name" %}selected{% endif %}>Patient_name</option>
+                <option value="Payer_name"  {% if search_field == "Payer_name" %}selected{% endif %}>Payer_name</option>
+                <option value="npi"  {% if search_field == "npi" %}selected{% endif %}>NPI</option>
             </select>
             {% endif %}
             <input class="form-control" type="text" id="search_text" name="search_text"  style="width: 28%;" placeholder="Search here..." value={{search_text}} >
@@ -78,7 +78,7 @@
             <tr>
                 {% if call_logs_data %}
                     {% for key in call_logs_data.0.keys %}
-                    <th style="position: sticky; top: 0; z-index: 1; background-color: #343a40;" class=""><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
+                    <th style="position: sticky; top: 0; z-index: 1; background-color: #343a40;" class="text-uppercase"><span style="font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: 0.5px;">{{ key }}</span></th>
                     {% endfor %}
                 {% endif %}
             </tr>
@@ -88,8 +88,9 @@
                 {% for log in call_logs_data %}
                 <tr onclick="showDetails({{log}})" id="trigger-btn" data-bs-toggle="modal" data-bs-target="#myModal">
                     {% for value in log.values %}
-                    <td><h6>{{ value }}</h6></td>
+                        <td class="log-value"><h6>{{ value }}</h6></td>
                     {% endfor %}
+                    
                 </tr>
                 {% endfor %}
             {% else %}
@@ -231,7 +232,7 @@
 
             <div id="qa_div"> <br>
                 <!-- <span class="h5 fw-bold text-dark">Call Summary</span><br> -->
-                <h4 class="mb-4">Call Qa</h4>
+                <h4 class="mb-4">Call QA</h4>
       
 
 
@@ -295,6 +296,58 @@
 <script src="{% static 'assets/js/jquery.min.js' %}"></script>
 
 <script>
+const audio = document.getElementById('callDetailsDrawerHideBtn');
+const pauseButton = document.getElementById('call_recording_audio');
+
+
+document.addEventListener("DOMContentLoaded", function() {
+        // Get all td elements with the class 'log-value'
+        const tdElements = document.querySelectorAll('.log-value');
+        console.log("Bracket : ");
+        
+        tdElements.forEach(function(td) {
+            // Parse the content inside the td (if it's a JSON list)
+            let value = td.innerHTML.trim();
+            console.log(value);
+            if (value.length > 8){
+            let new_value = value.substring(4,value.length-5)
+            if(new_value[0]=='[' && new_value[new_value.length - 1] == ']'){
+                let array_str ;
+                if(new_value[1] == "'"){
+                array_str = new_value.substring(2,new_value.length-2)
+                console.log(array_str);
+                }else{
+                array_str = new_value.substring(1,new_value.length-1)
+                console.log(array_str);  
+                }
+                td.innerHTML = `<h6>${array_str}</h6>`;  ;
+            }
+            }
+            try {
+                // Try to parse the content into a JavaScript object (like an array)
+                let parsedValue = JSON.parse(value);
+                console.log(parsedValue);
+                
+                // If parsedValue is an array, update the content with the first item
+                if (Array.isArray(parsedValue) && parsedValue.length > 0) {
+                    td.innerHTML = parsedValue[0];
+                }
+            } catch (e) {
+                // If parsing fails, do nothing (the value is not a list)
+                
+            }
+        });
+    });
+
+
+pauseButton.addEventListener('click', function() {
+            audio.pause(); // Pauses the audio
+});
+
+
+pauseButton.addEventListener('click', function() {
+            audio.pause(); // Pauses the audio
+});
 
     function updateTable(data) {
     console(data);
@@ -529,5 +582,6 @@ function sortTable() {
     
 
     });
+
 </script>
 {% endblock %}

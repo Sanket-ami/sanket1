@@ -176,7 +176,11 @@
                 $('#notification-list').empty();
                 
                 if (data.notification > 0){
-                $('#notification-count').text(data.notification);
+                  if(data.notification <= 3 ){
+                  $('#notification-count').text(data.notification);
+                  }else{
+                  $('#notification-count').text("3+");
+                  }
                 }
                 // Append new notifications
                 if (data.notifications.length > 0) {
