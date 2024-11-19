@@ -68,7 +68,7 @@
                           <select class="form-control" id="processType" required>
                             <option value="" disabled selected>Select process type</option>
                             <option value="RCM">RCM</option>
-                            <option value="RCM">RCM_DENIAL</option>
+                            <option value="RCM_DENIAL">RCM_DENIAL</option>
                             <option value="RETRIEVAL">RETRIEVAL</option>
                             <option value="OTHER">OTHER</option>
                           </select>
@@ -79,10 +79,13 @@
                           <label class="form-label" for="provider">Provider<span class="txt-danger">*</span></label>
                           <select class="form-select" id="provider" required="">
                             {<!-- dynamically populate provider options -->}
-                            
+                            {% if request.user.role.role != 'Admin' %}
                             {% for provider in telephony_providers_list %}
                                <option value="{{ provider.id }}">{{ provider.provider_name }}</option>
                             {% endfor %}
+                            {% else %}
+                              <option value="1"> Telnyx </option>
+                            {% endif %}
                           </select>
                           <div class="invalid-feedback">Please select a valid provider.</div>
                         </div>
@@ -98,11 +101,14 @@
                           </select>
                           <div class="invalid-feedback">Please select a valid QA Parameter.</div>
                         </div>
-
+                        
+                        
+                        
                         <div class="col-sm-6">
                           <label class="form-label" for="summarization_prompt">Summarization Prompt<span class="txt-danger">*</span></label>
-                          <textarea class="form-control" id="summarization_prompt" rows="10" cols="100" placeholder="Instruction to describe about how a call should be summarized. Call will not be summarized if left blank."></textarea>
-                        </div>                          
+                          <textarea {% if request.user.role.role == 'Admin' %} readonly="readonly" {% endif %} class="form-control" id="summarization_prompt" rows="4" cols="100" placeholder="Instruction to describe about how a call should be summarized. Call will not be summarized if left blank."></textarea>
+                        </div> 
+                                         
                         <br>
                         
                         <div class="row" style="margin-top: 1%;">
@@ -195,7 +201,7 @@
                   </div>
                   
                   <div class="tab-pane fade shipping-wizard" id="ship-wizard" role="tabpanel" aria-labelledby="ship-wizard-tab">
-                    <h3>Contacts Information</h3>
+                    <h3>Sample Contacts </h3>
                     <p class="f-light">Upload a csv file with "contact_number" as a column</p>
                     <div class="mt-2" style="margin-left: 1%;">
                       <div class="quick-box">
@@ -401,7 +407,8 @@ processTypeSelect.addEventListener('change', function() {
   // step1 validataion
   function validateStep1(e) {
     // e.preventDefault(); // Prevent the default form submission
-
+    
+    
     // validation logic. For example:
     const campaignName = $("#campaignName").val().trim();
     
