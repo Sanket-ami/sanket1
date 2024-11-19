@@ -92,6 +92,7 @@
 </div>
 
 <div class="row">
+
     {% for voice in voices %}
     <div class="col-md-6 mb-4">
         <div class="card h-100 shadow-sm">
@@ -101,18 +102,19 @@
                 <h6 class="card-subtitle mb-2 text-muted">{{ voice.voice_provider }}</h6>
                 {% endif %}
                 <p class="card-text">{{ voice.voice_configuration.voice_type }}</p>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="d-flex justify-content-between">
                     <audio id="audio-player-{{ forloop.counter }}" controls="" style="display: none;">
                         <source src="{% static 'assets/audio/' %}{{ voice.voice_id }}.mp3" type="audio/mpeg">
                         <source src="{% static 'assets/audio/' %}{{ voice.voice_name }}.wav" type="audio/wav">
                     </audio>
                     <button id="play-pause-button-{{ forloop.counter }}" class="btn btn-success" onclick="toggleAudio({{ forloop.counter }})">▶ Play</button>
-                    <div>
-                        {% if request.user.is_superuser %}
-                    <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editVoiceModal" onclick="populateEditModal({{ voice.id }}, '{{ voice.voice_configuration|escapejs }}')">Edit</button>
-                        <button class="btn btn-danger" type="button" onclick="deleteVoice({{ voice.id }})">Delete Voice</button>
-                    </div>
-                    {% endif %}
+                   
+                                            {% if request.user.is_superuser %}
+                                            <div>
+                                                <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editVoiceModal" onclick="populateEditModal({{ voice.id }}, '{{ voice.voice_configuration|escapejs }}')">Edit</button>
+                                                    <button class="btn btn-danger" type="button" onclick="deleteVoice({{ voice.id }})">Delete Voice</button>
+                                                </div>
+                                            {% endif %}
                 </div>
             </div>
         </div>
