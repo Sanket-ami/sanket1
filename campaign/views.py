@@ -43,8 +43,6 @@ def create_campaign(request):
                 org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
             else:
                 org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
-            print('org_names ',org_names)
-
             available_agents = Agent.objects.filter(is_deleted=False)
             
             #### QA parameters list
@@ -102,7 +100,7 @@ def create_campaign(request):
             #######################################################
             """ #### New Logic for adding contact list ######## """
             campaign_id = campaign.id
-
+            print(" campaign id : ",campaign_id)
             # Save the campaign contact list and mark it as active
             campaign_contact_list = ContactList.objects.create(
                 list_name="default",
@@ -1695,7 +1693,7 @@ def live_call_list(request):
                         call_logs_data.append(
                             current_log
                         )
-                    
+
                     # Extract dynamic columns from the first log
                     if call_logs_data:
                         dynamic_columns = list(call_logs_data[0].keys())
@@ -1871,12 +1869,12 @@ def upload_csv(request):
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
             # Replace NaN with an empty string
-            df = df.fillna('')
-
+            df = df.fillna('')            
             # Check if 'contact_number' exists
             if 'contact_number' not in df.columns:
                 return JsonResponse({'success': False, 'error': 'CSV must contain a "contact_number" column.'})
-            
+            if df.shape[0] < 1 :
+                return JsonResponse({'success': False, 'error': 'CSV must contain atleast one row of data .'})
             # Remove rows where contact_number is empty or null
             df = df[df['contact_number'].notna()]
 

@@ -232,7 +232,7 @@
                   <div class="tab-pane fade shipping-wizard finish-wizard1" id="finish-wizard" role="tabpanel" aria-labelledby="finish-wizard-tab" disabled>
                     <div class="order-confirm"><img src="{% static 'assets/images/gif/successful.gif' %}" alt="popper">
                       <h5>Confirm the Campaign details before submitting.</h5>
-                      <p class="mb-0">The created Campaign can be accessed in Campaign Managent page.</p>
+                      <p class="mb-0">The created Campaign can be accessed in Campaign Management page.</p>
                     </br>
                       <!-- <p class="text-center f-w-600 mt-2">Order ID: <a class="text-decoration-underline" href="javascript:void(0)">GE34598 </a></p> -->
                       <div class="col-12 text-center">
@@ -431,9 +431,35 @@ processTypeSelect.addEventListener('change', function() {
         // alert("Please fill in all required fields.");
     }
   }
+  function sendFileToServer(file) {
+    return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('csv_file', file);
 
+        
+
+        $.ajax({
+            url: "{% url 'upload_csv' %}", // Your Django URL for processing the file
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                // Resolve the promise with the response data
+                resolve(response);
+            },
+            error: function(xhr, status, error) {
+                // Reject the promise if an error occurs
+                reject(new Error("An error occurred during file upload."));
+            }
+        });
+    });
+}
   // step2 validataion
-    function validateStep2(e){
+ async   function validateStep2(e){
     // alert("step2 clicked")
     uploadedFile = $("#formFile3");
     
@@ -444,8 +470,16 @@ processTypeSelect.addEventListener('change', function() {
     // }else{
     //   alert("upload the contact list correctly")
     // }
-
+    
     const fileInput = document.getElementById('formFile3');
+    const file = fileInput.files[0];
+        const result = await sendFileToServer(file);
+        if (!result.success) {             
+            showToast("error", result.error);  
+            return;  
+        }
+    
+
     const filePath = fileInput.value;
     const allowedExtension = /\.csv$/i;
     const errorMsg = document.getElementById('fileError');
@@ -454,7 +488,8 @@ processTypeSelect.addEventListener('change', function() {
       showToast("error", "Upload the contact list correctly.");
       return;
     }
-
+    console.log("new loggg jjj ");
+    
         if (!allowedExtension.exec(filePath)) {
             // Prevent the form submission or proceeding to the next step
             event.preventDefault();
