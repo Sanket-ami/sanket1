@@ -1926,3 +1926,13 @@ def edit_prompt(request):
     agent_prompt.agent_prompt = prompt
     agent_prompt.save()
     return JsonResponse({'message': 'Prompt updated successfully.'}, status=200)
+
+
+def delete_campaign(request, campaign_id):
+    try:
+        campaign = get_object_or_404(Campaign, id=campaign_id)
+        campaign.is_delete = True
+        campaign.save()
+        return JsonResponse({'message': 'Campaign deleted successfully.'}, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

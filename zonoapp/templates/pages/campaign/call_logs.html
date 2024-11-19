@@ -303,12 +303,10 @@ const pauseButton = document.getElementById('call_recording_audio');
 document.addEventListener("DOMContentLoaded", function() {
         // Get all td elements with the class 'log-value'
         const tdElements = document.querySelectorAll('.log-value');
-        console.log("Bracket : ");
         
         tdElements.forEach(function(td) {
             // Parse the content inside the td (if it's a JSON list)
             let value = td.innerHTML.trim();
-            console.log(value);
             if (value.length > 8){
             let new_value = value.substring(4,value.length-5)
             if(new_value[0]=='[' && new_value[new_value.length - 1] == ']'){
@@ -326,7 +324,6 @@ document.addEventListener("DOMContentLoaded", function() {
             try {
                 // Try to parse the content into a JavaScript object (like an array)
                 let parsedValue = JSON.parse(value);
-                console.log(parsedValue);
                 
                 // If parsedValue is an array, update the content with the first item
                 if (Array.isArray(parsedValue) && parsedValue.length > 0) {
@@ -350,7 +347,6 @@ pauseButton.addEventListener('click', function() {
 });
 
     function updateTable(data) {
-    console(data);
     const tableBody = document.querySelector("#callLogsTable tbody");
     tableBody.innerHTML = ''; // Clear current table rows
     if (data.length === 0) {
@@ -405,15 +401,12 @@ function sortTable() {
         var textarea = document.getElementById('editTranscript');
              var transcriptSpan = document.getElementById('call_transcript');
 
-        console.log(textarea.style.display)
-        console.log("ts", transcriptSpan.style.display)
+
         if (textarea.style.display==="block"){
-            console.log("dfkjvbekrnclermc");
             textarea.style.display="none";
         }
 
             transcriptSpan.style.display="block";        
-        console.log(log.call_id);
 
         // hit api to fetch call details
         let mongo_id = log._id;
@@ -430,7 +423,6 @@ function sortTable() {
                 },
                 success: function(response) {
  
-                    console.log(response)
                     // set the drawer values
                     $("#call_call_id").html(call_id)
                     $("#call_duration").html(log.call_duration)
@@ -496,7 +488,6 @@ function sortTable() {
             loader.classList.add("d-none");
         })
         .catch(error => {
-            console.error('There has been a problem with your fetch operation:', error);
             audioPlayer.style.display = 'none';
             loader.classList.add("d-none");
             noRecordingMessage.style.display = 'block';
@@ -516,7 +507,6 @@ function sortTable() {
     }
     
     function editTranscriptText( ){
-        console.log("clicked edit transcript")
         var transcriptSpan = document.getElementById('call_transcript');
         var textarea = document.getElementById('editTranscript');
 
@@ -543,8 +533,7 @@ function sortTable() {
             // Modify hidden input fields before submission
             var summaryText = $('#editSummary').val(); // Update Summary
             document.getElementById('editedSummary').value = summaryText;
-            console.log(summaryText)
-            console.log(document.getElementById('editedSummary').value)
+
 
             // Update other hidden fields if necessary
 
@@ -555,7 +544,6 @@ function sortTable() {
 
     // format text area
     function editSummaryText(e){
-            console.log("clicked edit summary")
             var summarySpan = document.getElementById('call_summary');
             var textarea = document.getElementById('editSummary');
 
@@ -566,7 +554,6 @@ function sortTable() {
             $("#edit_Summary_submit").css("display", "unset") // unhide submit button
         }    
     function editQaText(e){
-            console.log("clicked edit summary")
             var summarySpan = document.getElementById('call_Qa');
             var textarea = document.getElementById('editQa');
 

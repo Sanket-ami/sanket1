@@ -66,6 +66,9 @@
                             <a href="javascript:void(0);" class="btn btn-sm btn-primary" style="margin-left: 3px;" onclick="openEditPromptModal({{ campaign.id }})">
                                 <i class="fa fa-edit"></i> Edit Prompt
                             </a>      
+                            <a href="javascript:void(0);" class="btn btn-sm btn-danger" style="margin-left: 3px;" onclick="deleteCampaign({{ campaign.id }})">
+                                <i class="fa fa-edit"></i> Delete Campaign
+                            </a> 
                             {% endif %}
                                           </div>
                         {% if campaign.status == 'ongoing' %}
@@ -197,6 +200,53 @@
 //     $('#edit_prompt').val(current_prompt);
 //     $('#editPromptModal').modal('show');
 // }
+function deleteCampaign(campaignId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to undo this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`delete/campaign/${campaignId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json(); // Parse the JSON response
+                    } else {
+
+                        return response.json().then(error => {
+                            throw new Error('Failed to delete the campaign.');
+                        });
+                    }
+                })
+                .then(data => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: data.message || 'Campaign deleted successfully.'
+                    }).then(() => {
+                        location.reload(); // Reload the page
+                    });
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to delete campaign ' 
+                    });
+                });
+            }
+        });
+    }
 function submitEditPrompt() {
     const campaign_id = $('#edit_campaign_id').val();
     const new_prompt = $('#edit_prompt').val();
