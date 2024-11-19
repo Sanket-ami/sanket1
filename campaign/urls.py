@@ -25,7 +25,8 @@ urlpatterns = [
         path('update_campaign/', views.update_campaign, name='update_campaign'),
         path('api/upload-csv/', views.upload_csv, name='upload_csv'),
         path('/get_prompt', views.get_prompt,name="get_campaign_prompt"),
-        path('/edit_campaign_prompt', views.edit_prompt, name='edit_campaign_prompt')
+        path('/edit_campaign_prompt', views.edit_prompt, name='edit_campaign_prompt'),  
+        path('/delete/campaign/<int:campaign_id>', views.delete_campaign, name='delete_campaign')
 
 
 ]
