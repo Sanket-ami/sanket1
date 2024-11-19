@@ -15,12 +15,13 @@ import json
 @login_required(login_url="/login_home")
 def agent_create(request):
     if request.method == "GET":
-
         llm_providers_list =  Provider.objects.filter(provider_type="llm")
         if request.user.is_superuser:
             org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
         else:
             org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
+            if request.user.role.role == 'Caller' or request.user.role.role == 'QA':
+                return render(request,'pages/error-pages/error-403.html')
             
         # voices list
         voices = Voice.objects.filter(is_delete=False)
@@ -36,7 +37,7 @@ def agent_create(request):
         paginator = Paginator(agents, 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        context = {"breadcrumb":{"title":"Create Agent","parent":"Pages", "child":"Agent Management "},"llm_providers_list":llm_providers_list,"org_names":org_names,'page_obj': page_obj, 'search_query': search_query,'voices':voices}   
+        context = {"breadcrumb":{"title":"Agent","parent":"Pages", "child":"Agent Management "},"llm_providers_list":llm_providers_list,"org_names":org_names,'page_obj': page_obj, 'search_query': search_query,'voices':voices}   
         
         return render(request,'pages/agent/agent_list.html',context)
     elif request.method == "POST":
