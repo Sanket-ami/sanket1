@@ -3,7 +3,7 @@
 {% load sass_tags %}
 
 {% block content %}
-{% if request.user.role.role != 'Admin' %}
+{% if request.user.is_superuser %}
 <button class="btn btn-primary" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Agent</button>
 {% endif %}
 <form method="GET" action="{% url 'agent_create' %}" style="display: flex; flex-direction: row; justify-content: flex-end;">
