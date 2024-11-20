@@ -79,12 +79,10 @@
                           <label class="form-label" for="provider">Provider<span class="txt-danger">*</span></label>
                           <select class="form-select" id="provider" required="">
                             {<!-- dynamically populate provider options -->}
-                            {% if request.user.role.role != 'Admin' %}
+                            {% if request.user.is_superuser %}
                             {% for provider in telephony_providers_list %}
                                <option value="{{ provider.id }}">{{ provider.provider_name }}</option>
                             {% endfor %}
-                            {% else %}
-                              <option value="1"> Telnyx </option>
                             {% endif %}
                           </select>
                           <div class="invalid-feedback">Please select a valid provider.</div>
