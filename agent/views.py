@@ -99,8 +99,8 @@ def agent_create(request):
             agent_provider_name = data.get('agent_provider')
             voice_id = data.get('voice')
             agent_configuration = data.get('agent_configuration')
-
-            if not agent_id or not agent_name or not organisation_name or not agent_provider_name or not voice_id or not agent_configuration:
+            agent_telephony_name = data.get('agent_telephony')
+            if not agent_id or not agent_name or not organisation_name or not agent_provider_name or not voice_id or not agent_configuration or not agent_telephony_name:
                 return JsonResponse({"success": False, "error": "All fields are required."}, status=400)
 
             agent = get_object_or_404(Agent, id=agent_id)
@@ -108,7 +108,7 @@ def agent_create(request):
             agent.organisation_name = organisation_name
             agent.agent_provider = get_object_or_404(Provider, provider_name=agent_provider_name)
             agent.voice = get_object_or_404(Voice, id=voice_id)
-
+            agent.agent_telephony = get_object_or_404(Provider,provider_name=agent_telephony_name)
             try:
                 agent.agent_configuration = json.loads(agent_configuration)
             except json.JSONDecodeError:
