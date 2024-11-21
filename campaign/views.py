@@ -44,13 +44,14 @@ def create_campaign(request):
             else:
                 org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
             available_agents = Agent.objects.filter(is_deleted=False)
-            
+            if not request.user.is_superuser :
+                if request.user.role.role == 'Caller' or request.user.role.role == 'QA' :
+                    return render(request,'pages/error-pages/error-403.html')
             #### QA parameters list
             qa_parameters = QAParameters.objects.filter(is_deleted=False,organisation_name__in = org_names)
             
             if not request.user.is_superuser:
                 available_agents = available_agents.filter(organisation_name__in=org_names)
-            print('available_agents ',available_agents)
             # available_voice = Agent.objects.filter(is_deleted=False)
 
             context = {"breadcrumb":{"title":"Create Campaign","parent":"Pages", "child":"Create Campaign"},
@@ -61,7 +62,6 @@ def create_campaign(request):
             return render(request,'pages/campaign/create_campaign.html',context)
             
         except Exception as error :
-            print("error in create_campaign :  ",error)
             return render(request,'pages/error-pages/error-500.html',{"error":error})
 
     elif request.method == "POST":
@@ -69,18 +69,17 @@ def create_campaign(request):
             data = json.loads(request.body)
             if Campaign.objects.filter(campaign_name=data['campaign_name'], organisation_name=data['organisation_name']).exists():
                 return JsonResponse({"message": "Campaign with this name and organisation already exists!", "success": False})
-            
-            provider = Provider.objects.get(id=data['provider'])
+            # provider = Provider.objects.get(id=data['provider'])
             agent = Agent.objects.get(id=data['agent'])
             agent.agent_prompt = data['prompt']
             agent.save()
-
+            provider = Provider.objects.get(id=agent.agent_telephony_id)
             new_contact_list = []
             for contact in data['contact_list']:
                 # add a unique identifiier to each contact
                 contact["contact_id"] = "contact_"+str(uuid.uuid4().hex)
                 new_contact_list.append(contact)
-
+            
             campaign = Campaign.objects.create(
                 campaign_name=data['campaign_name'],
                 is_schedule=data['is_schedule'],
@@ -100,7 +99,6 @@ def create_campaign(request):
             #######################################################
             """ #### New Logic for adding contact list ######## """
             campaign_id = campaign.id
-            print(" campaign id : ",campaign_id)
             # Save the campaign contact list and mark it as active
             campaign_contact_list = ContactList.objects.create(
                 list_name="default",
@@ -118,10 +116,10 @@ def create_campaign(request):
             #######################################################
             return JsonResponse({"message": "Campaign created successfully!", "campaign_id": campaign.id,"success":True})
         except Exception as error :
-            print("error in create_campaign :  ",error)
             return render(request,'pages/error-pages/error-500.html',{"error":error})
     return JsonResponse({"error": "Invalid request method","success":False, "error":True }, status=500)
-    
+
+
 ############ upload new contacts csv #######
 def upload_contact_list(request, campaign_id):
     if request.method == "POST":
@@ -356,6 +354,9 @@ def start_campaign(request):
 
             prompt = campaign_obj.agent.agent_prompt
             provider = campaign_obj.provider
+            llm_provider = campaign_obj.agent.agent_provider
+            llm_config = llm_provider.provider_config
+            telephony = campaign_obj.agent.agent_telephony.provider_name
             # Iterate over the data
             contact_list = campaign_obj.contact_list.contact_list
             #selec
@@ -374,7 +375,6 @@ def start_campaign(request):
             # start a thread 
             wait_time_after_call,wait_time_after_5_calls = 1,1
             organisation_name = campaign_obj.organisation_name
-            print("organisation name",organisation_name)
             process_type = campaign_obj.process_type
             try:
                 credits_remaining = 0
@@ -382,7 +382,7 @@ def start_campaign(request):
                 pass
                 if credits_remaining <= 0:
                     return JsonResponse({'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}, status=200)
-                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider,process_type))
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider,llm_config,telephony,process_type))
                 thread.start()
             except Exception as err:
                 print("error in campaign start: ", err)
@@ -413,6 +413,9 @@ def start_campaign_secheduler(request):
 
             prompt = campaign_obj.agent.agent_prompt
             provider = campaign_obj.provider
+            llm_provider = campaign_obj.agent.agent_provider
+            llm_config = llm_provider.provider_config
+            telephony = campaign_obj.agent.agent_telephony.provider_name
             # Iterate over the data
             contact_list = campaign_obj.contact_list.contact_list
             voice_config = campaign_obj.agent.voice.voice_configuration
@@ -421,14 +424,14 @@ def start_campaign_secheduler(request):
             # start a thread 
             wait_time_after_call,wait_time_after_5_calls = 1,1
             organisation_name = campaign_obj.organisation_name
-            print("organisation name",organisation_name)
+            process_type = campaign_obj.process_type
             try:
                 credits_remaining = 0
                 credits_remaining = Credits.objects.get(organisation_name=organisation_name).credits    
                 pass
                 if credits_remaining <= 0:
                     return JsonResponse({'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}, status=200)
-                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider,process_type))
+                thread = threading.Thread(target=start_call_queue, args=(contact_list, voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, campaign_obj.organisation_name, provider,llm_config,telephony,process_type))
                 thread.start()
             except Exception as err:
                 print("error in campaign start: ", err)
@@ -444,7 +447,7 @@ def start_campaign_secheduler(request):
 
 
 # call queue thread
-def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, organisation_name, provider,process_type=""):
+def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_after_call,wait_time_after_5_calls,qa_params, summarization_prompt, organisation_name, provider,llm_config,telephony,process_type=""):
     # if the campaign is scheduled mark is_schedule as false as the campaign is already started
     campaign_obj = Campaign.objects.get(id=campaign_id)
     organisation_name = campaign_obj.organisation_name
@@ -531,7 +534,7 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
                 call_log = call_details
                 call_log["call_status"] = "not_started"
                 call_log['campaign_id'] = int(campaign_id)
-                
+                # print("provider config",provider.provider_config)
                 try:
                     context={"prompt" : formatted_prompt}
                             # Before starting the call check credits of the organization
@@ -541,17 +544,19 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
                         return {'message': 'You do not have enough credits to start this campaign. Please add credits to your account.',"success":False,"error":True}
                     # hit a post request on api
                     url = f"{settings.CALL_SERVER_BASE_URL}/start_call"
-                    print('provider', type(provider))
+                    
                     payload = json.dumps({
                         "to_phone": to_phone,
                         "context":context,
                         "voice_configuration":voice_config,
-                        "telephony_name":provider.provider_name
+                        "telephony_name":telephony,  # twillio
+                        "llm_config":llm_config ,
                     })
                     headers = {
                     'Content-Type': 'application/json'
                     }
 
+                     
                     response = requests.request("POST", url, headers=headers, data=payload)
 
                     # print(response.text)
@@ -627,9 +632,9 @@ def start_call_queue(contact_list,voice_config,prompt,campaign_id,wait_time_afte
                         "to_phone": to_phone,
                         "context":context,
                         "voice_configuration":voice_config,
-                        "telephony_name":provider.provider_name
+                        "telephony_name":telephony,  # twillio
+                        "llm_config":llm_config ,
                     }
-
                     # adding rcm_denial action
                     if 'RCM_DENIAL' in process_type:
                         payload["RCM_DENIAL"] = True
@@ -1216,13 +1221,13 @@ def list_call_logs(request):
             if campaign_id:
                 if len(search_text) > 1:
                     if searchfield == "npi":
-                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), npi=int(search_text)).order_by('-id')
+                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), npi__icontains=int(search_text)).order_by('-id')
                     elif searchfield == "dos":
-                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), dos=search_text).order_by('-id')
+                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), dos__icontains=search_text).order_by('-id')
                     elif searchfield == "call_id":
-                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), call_id=search_text).order_by('-id')
+                        call_logs = CallLogs.objects(campaign_id=int(campaign_id), call_id__icontains=search_text).order_by('-id')
                     elif searchfield == 'patient_name':
-                        call_logs =  CallLogs.objects(campaign_id=int(campaign_id), patient_name=search_text).order_by('-id')
+                        call_logs =  CallLogs.objects(campaign_id=int(campaign_id), patient_name__icontains=search_text).order_by('-id')
                     elif searchfield == 'payer_name':
                         call_logs =  CallLogs.objects(campaign_id=int(campaign_id), payer_name=search_text).order_by('-id')
                     else:
@@ -1641,7 +1646,9 @@ def live_call_list(request):
                 campaign_list = Campaign.objects.filter(is_delete=False)
                 if not request.user.is_superuser:
                     campaign_list = campaign_list.filter(organisation_name=request.user.organisation_name)
-
+                if not request.user.is_superuser :
+                    if request.user.role.role == 'QA' :
+                        return render(request,'pages/error-pages/error-403.html')
                 campaign_list = list(campaign_list.values("id", "campaign_name"))
 
                 campaign_id = request.GET.get('campaign_id',0)
