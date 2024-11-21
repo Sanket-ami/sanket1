@@ -3,7 +3,7 @@
 {% load sass_tags %}
 
 {% block content %}
-{% if request.user.role.role != 'Admin' %}
+{% if request.user.is_superuser %}
 <button class="btn btn-primary" style="margin: 1%;" type="button" data-bs-toggle="modal" data-bs-target="#addAgentModal">Add Agent</button>
 {% endif %}
 <form method="GET" action="{% url 'agent_create' %}" style="display: flex; flex-direction: row; justify-content: flex-end;">
@@ -57,6 +57,20 @@
                         <div class="invalid-feedback">Please select a valid provider.</div>
                     </div>
 
+                    <!-- Agent Telephony-->
+                    <div class="mb-3">
+                    <label class="form-label" for="agentTelephony">Agent Telephony</label>
+                    <select class="form-select" id="agentTelephony" required>
+                            
+                            <!-- {% if request.user.is_superuser %} -->
+                            {% for provider in telephony_providers_list %}
+                               <option value="{{ provider.id }}">{{ provider.provider_name }}</option>
+                            {% endfor %}
+                            <!-- {% endif %} -->
+                    </select>
+                    
+                    </div>
+
                     <!-- Ace Code Editor Container -->
                     <div id="jsonEditorContainer" class="mt-3" style="display:none;">
                         <label for="providerConfigEditor" class="form-label">Provider Configuration</label>
@@ -74,6 +88,8 @@
                         </select>
                         <div class="invalid-feedback">Please select a valid voice.</div>
                     </div>
+
+
                     
                     <!-- Submit Button -->
                     <div class="d-grid gap-2">
@@ -142,6 +158,16 @@
                         </select>
                         <div class="invalid-feedback">Please select a valid voice.</div>
                     </div>
+                    <!-- Telephony -->
+                    <div class="mb-3">
+                        <label class="form-label" for="editagentTelephony">Agent Telephony</label>
+                        <select class="form-select" id="editagentTelephony" required>                             
+                                {% for provider in telephony_providers_list %}
+                                   <option value="{{ provider.provider_name }}">{{ provider.provider_name }}</option>
+                                {% endfor %}                            
+                        </select>
+                        
+                    </div>
                     <!-- Submit Button -->
                     <div class="d-grid gap-2">
                         <button class="btn btn-primary" type="submit">Save Changes</button>
@@ -168,7 +194,7 @@
                             <!-- Edit Agent Button -->
                              
                             {% if request.user.role.role != 'Admin' %}
-                            <button class="btn btn-info edit-agent-button" data-agent-id="{{ agent.id }}" data-agent-name="{{ agent.agent_name }}" data-agent-organisation="{{ agent.organisation_name }}" data-agent-provider="{{ agent.agent_provider.provider_name }}" data-agent-config='{{ agent.agent_configuration }}' data-agent-voice="{{ agent.voice.id }}">
+                            <button class="btn btn-info edit-agent-button" data-agent-id="{{ agent.id }}" data-agent-name="{{ agent.agent_name }}" data-agent-organisation="{{ agent.organisation_name }}" data-agent-provider="{{ agent.agent_provider.provider_name }}" data-agent-config='{{ agent.agent_configuration }}' data-agent-voice="{{ agent.voice.id }}" data-telephony="{{ agent.agent_telephony.provider_name }}">
                                 <i class="fa fa-edit"></i>
                             </button>
                             <button class="btn btn-danger" onclick="deleteAgent({{ agent.id }},'{{ agent.agent_name }}')">
@@ -286,13 +312,19 @@
                 const agentProvider = this.getAttribute("data-agent-provider");
                 let agentConfig = this.getAttribute("data-agent-config");
                 const agentVoice = this.getAttribute("data-agent-voice");
-
+                const agentTelephony = this.getAttribute("data-telephony");
+                console.log("telephonty ");
+                
+                console.log(agentTelephony);
+                
                 // Set modal form values
                 document.getElementById("editAgentId").value = agentId;
                 document.getElementById("editAgentName").value = agentName;
                 document.getElementById("editOrganisationName").value = organisationName;
                 document.getElementById("editAgentProvider").value = agentProvider;
                 document.getElementById("editAgentVoice").value = agentVoice;
+                document.getElementById("editagentTelephony").value = agentTelephony;
+                
                 console.log(agentConfig)
                 if (agentConfig) {
                 // Replace single quotes with double quotes to make it valid JSON
@@ -318,6 +350,7 @@
                     organisation_name: document.getElementById("editOrganisationName").value,
                     agent_provider: document.getElementById("editAgentProvider").value,
                     voice: document.getElementById("editAgentVoice").value,
+                    agent_telephony : document.getElementById("editagentTelephony").value,
                     agent_configuration: aceEditor.getValue()
                 };
 
@@ -378,10 +411,12 @@
             }
 
             // Get form data
+            
             const jsonData = {
                 agent_name: document.getElementById("agentName").value,
                 organisation_name: document.getElementById("organisationName").value,
                 agent_provider: document.getElementById("agentProvider").value,
+                agent_telephony : document.getElementById("agentTelephony").value ,
                 voice: document.getElementById("agentVoice").value,
                 agent_configuration: editor.getValue()  // Ensure this gets Ace editor content
             };

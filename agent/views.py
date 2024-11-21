@@ -15,12 +15,14 @@ import json
 @login_required(login_url="/login_home")
 def agent_create(request):
     if request.method == "GET":
-
+        telephony_providers_list =  Provider.objects.filter(provider_type="telephony")
         llm_providers_list =  Provider.objects.filter(provider_type="llm")
         if request.user.is_superuser:
             org_names = User.objects.filter(is_deleted=False).values_list('organisation_name',flat=True).distinct()
         else:
             org_names = User.objects.filter(is_deleted=False,username=request.user).values_list('organisation_name',flat=True).distinct()
+            if request.user.role.role == 'Caller' or request.user.role.role == 'QA':
+                return render(request,'pages/error-pages/error-403.html')
             
         # voices list
         voices = Voice.objects.filter(is_delete=False)
@@ -36,7 +38,7 @@ def agent_create(request):
         paginator = Paginator(agents, 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        context = {"breadcrumb":{"title":"Create Agent","parent":"Pages", "child":"Agent Management "},"llm_providers_list":llm_providers_list,"org_names":org_names,'page_obj': page_obj, 'search_query': search_query,'voices':voices}   
+        context = {"breadcrumb":{"title":"Agent","parent":"Pages", "child":"Agent Management "},"llm_providers_list":llm_providers_list,"org_names":org_names,'page_obj': page_obj, 'search_query': search_query,'voices':voices,"telephony_providers_list":telephony_providers_list}   
         
         return render(request,'pages/agent/agent_list.html',context)
     elif request.method == "POST":
@@ -51,6 +53,7 @@ def agent_create(request):
             agent_provider_name = data.get('agent_provider')
             voice_id = data.get('voice')
             agent_configuration = data.get('agent_configuration')
+            agent_telephony_id = data.get('agent_telephony')
 
             if Agent.objects.filter(agent_name=agent_name, organisation_name=organisation_name).exists():
                 return JsonResponse({"message": "Agent with this name in organisation already exists!", "success": False})
@@ -66,6 +69,7 @@ def agent_create(request):
 
             # Get the related provider and voice
             agent_provider = get_object_or_404(Provider, provider_name=agent_provider_name)
+            agent_telephony = get_object_or_404(Provider,id = agent_telephony_id)
             voice = get_object_or_404(Voice, id=voice_id)
 
             # Create a new Agent object
@@ -73,6 +77,7 @@ def agent_create(request):
                 agent_name=agent_name,
                 organisation_name=organisation_name,
                 agent_provider=agent_provider,
+                agent_telephony = agent_telephony,
                 voice=voice,
                 agent_configuration=agent_config_json,
                 created_by="system",  # Assuming system is creating it, modify as needed
@@ -94,8 +99,8 @@ def agent_create(request):
             agent_provider_name = data.get('agent_provider')
             voice_id = data.get('voice')
             agent_configuration = data.get('agent_configuration')
-
-            if not agent_id or not agent_name or not organisation_name or not agent_provider_name or not voice_id or not agent_configuration:
+            agent_telephony_name = data.get('agent_telephony')
+            if not agent_id or not agent_name or not organisation_name or not agent_provider_name or not voice_id or not agent_configuration or not agent_telephony_name:
                 return JsonResponse({"success": False, "error": "All fields are required."}, status=400)
 
             agent = get_object_or_404(Agent, id=agent_id)
@@ -103,7 +108,7 @@ def agent_create(request):
             agent.organisation_name = organisation_name
             agent.agent_provider = get_object_or_404(Provider, provider_name=agent_provider_name)
             agent.voice = get_object_or_404(Voice, id=voice_id)
-
+            agent.agent_telephony = get_object_or_404(Provider,provider_name=agent_telephony_name)
             try:
                 agent.agent_configuration = json.loads(agent_configuration)
             except json.JSONDecodeError:
